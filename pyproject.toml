@@ -1,0 +1,23 @@
+[project]
+name = "task-graph"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "dependency-injector>=4.48.3",
+    "mcp>=1.26.0",
+    "pydantic>=2.12.5",
+    "pyyaml>=6.0.3",
+]
+
+[project.scripts]
+task-graph-mcp = "task_graph.planning.interfaces.mcp_server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]

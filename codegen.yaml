@@ -1,0 +1,704 @@
+# yaml-language-server: $schema=./codegen.schema.json
+name: TaskGraph
+description: ''
+contexts:
+- name: Shared
+- name: Planning
+  domain:
+    aggregates:
+    - name: Task
+      description: The atomic unit of planning, representing a node in the DAG.
+      attributes:
+      - name: id
+        type: TaskId
+      - name: name
+        type: str
+      - name: description
+        type: str
+      - name: status
+        type: TaskStatus
+      - name: completion_logic
+        type: CompletionLogic
+      - name: effort
+        type: StoryPoint
+      - name: base_value
+        type: ValueScore
+      - name: dependencies
+        type: set[TaskId]
+      - name: dependents
+        type: set[TaskId]
+        optional: true
+      - name: planning_level
+        type: PlanningLevel
+      - name: recurrence
+        type: RecurrencePolicy | None
+        optional: true
+      - name: output
+        type: TaskOutput | None
+        optional: true
+      - name: review_feedback
+        type: ReviewFeedback | None
+        optional: true
+      behaviors:
+      - name: create
+        inputs:
+        - name: cls
+          type: Any
+        - name: name
+          type: str
+        - name: description
+          type: str
+        - name: effort
+          type: StoryPoint
+        - name: base_value
+          type: ValueScore
+        - name: completion_logic
+          type: CompletionLogic
+        - name: dependencies
+          type: set[TaskId]
+        - name: planning_level
+          type: Union[str, PlanningLevel]
+        - name: status
+          type: TaskStatus | None
+        output:
+          type: Task
+      - name: reconstitute
+        inputs:
+        - name: cls
+          type: Any
+        - name: task_id
+          type: str
+        - name: name
+          type: str
+        - name: description
+          type: str
+        - name: status
+          type: Union[TaskStatus, str]
+        - name: effort
+          type: Union[StoryPoint, int]
+        - name: base_value
+          type: Union[ValueScore, float]
+        - name: completion_logic
+          type: Union[CompletionLogic, str]
+        - name: dependencies
+          type: Union[set[str], set[TaskId]]
+        - name: planning_level
+          type: Union[PlanningLevel, str]
+        - name: output
+          type: TaskOutput | None
+        output:
+          type: Any
+      - name: to_dict
+        output:
+          type: dict
+      - name: mark_completed
+        output:
+          type: None
+      - name: is_done
+        output:
+          type: bool
+      - name: set_output
+        inputs:
+        - name: output
+          type: TaskOutput
+        output:
+          type: None
+      - name: claim
+        output:
+          type: None
+      - name: review
+        inputs:
+        - name: approved
+          type: bool
+        - name: feedback
+          type: str
+        output:
+          type: None
+    enums:
+    - name: CompletionLogic
+      description: Rules defining how a task is unlocked based on its dependencies.
+      members:
+      - name: ALL
+        value: all
+      - name: ANY
+        value: any
+    - name: TaskStatus
+      description: The lifecycle state of a task.
+      members:
+      - name: PENDING
+        value: pending
+      - name: BLOCKED
+        value: blocked
+      - name: READY
+        value: ready
+      - name: IN_PROGRESS
+        value: in_progress
+      - name: REVIEW
+        value: review
+      - name: DONE
+        value: done
+      - name: REJECTED
+        value: rejected
+      - name: SKIPPED
+        value: skipped
+      - name: DISCARDED
+        value: discarded
+    - name: PlanningLevel
+      description: Defines the uncertainty and granularity of the task.
+      members:
+      - name: ARCHITECTURAL
+        value: architectural
+      - name: FEATURE
+        value: feature
+      - name: ATOMIC
+        value: atomic
+    - name: RecurrenceType
+      members:
+      - name: ON_SUCCESS
+        value: on_success
+      - name: CRON
+        value: cron
+      - name: ON_FAILURE
+        value: on_failure
+    value_objects:
+    - name: RecurrencePolicy
+      description: Rules for creating a successor task upon completion.
+      attributes:
+      - name: type
+        type: RecurrenceType
+      - name: max_repetitions
+        type: int
+        optional: true
+      - name: current_iteration
+        type: int
+      behaviors:
+      - name: next_iteration
+        output:
+          type: RecurrencePolicy
+    - name: ReviewFeedback
+      description: 任务规划者的验收意见
+      attributes:
+      - name: comment
+        type: str
+      - name: decision
+        type: str
+    - name: StoryPoint
+      description: Encapsulated Fibonacci number representing effort (1, 2, 3, 5,
+        8, 13...).
+      attributes:
+      - name: value
+        type: int
+        optional: true
+      behaviors:
+      - name: create
+        inputs:
+        - name: cls
+          type: Any
+        - name: effort
+          type: int
+        output:
+          type: StoryPoint
+      - name: serialize
+        output:
+          type: int
+      - name: validate_from_primitive
+        inputs:
+        - name: cls
+          type: Any
+        - name: data
+          type: Any
+        output:
+          type: Any
+      - name: validate_fibonacci
+        inputs:
+        - name: cls
+          type: Any
+        - name: v
+          type: int
+        output:
+          type: int
+      - name: __add__
+        inputs:
+        - name: other
+          type: Any
+        output:
+          type: Any
+      - name: __radd__
+        inputs:
+        - name: other
+          type: Any
+        output:
+          type: Any
+      - name: __lt__
+        inputs:
+        - name: other
+          type: Any
+        output:
+          type: Any
+    - name: TaskId
+      description: Unique identifier for a Task.
+      attributes:
+      - name: value
+        type: UUID
+      behaviors:
+      - name: create
+        inputs:
+        - name: cls
+          type: Any
+        output:
+          type: Any
+      - name: reconstitute
+        inputs:
+        - name: cls
+          type: Any
+        - name: value
+          type: Union[UUID, str]
+        output:
+          type: Any
+      - name: __str__
+        output:
+          type: Any
+      - name: serialize
+        output:
+          type: str
+      - name: validate_from_primitive
+        inputs:
+        - name: cls
+          type: Any
+        - name: data
+          type: Any
+        output:
+          type: Any
+    - name: TaskOutput
+      description: 任务执行者的交付物
+      attributes:
+      - name: summary
+        type: str
+      - name: artifacts
+        type: list[str]
+      - name: error
+        type: str | None
+        optional: true
+    - name: ValueScore
+      description: Numeric representation of business value.
+      attributes:
+      - name: value
+        type: float
+        optional: true
+      behaviors:
+      - name: create
+        inputs:
+        - name: cls
+          type: Any
+        - name: value
+          type: float
+        output:
+          type: ValueScore
+      - name: __add__
+        inputs:
+        - name: other
+          type: Any
+        output:
+          type: Any
+      - name: __radd__
+        inputs:
+        - name: other
+          type: Any
+        output:
+          type: Any
+      - name: serialize
+        output:
+          type: float
+      - name: validate_from_primitive
+        inputs:
+        - name: cls
+          type: Any
+        - name: data
+          type: Any
+        output:
+          type: Any
+    services:
+    - name: CycleDetectionService
+      description: Ensures the planning graph remains a DAG.
+      operations:
+      - name: detect_cycle
+        inputs:
+        - name: target_task_id
+          type: TaskId
+        - name: new_dependency_id
+          type: TaskId
+        - name: repository
+          type: TaskRepository
+        output:
+          type: bool
+    - name: DependencyResolutionService
+      operations:
+      - name: evaluate_blocking_status
+        inputs:
+        - name: task
+          type: Task
+        - name: repository
+          type: TaskRepository
+        output:
+          type: bool
+    - name: PriorityAnalysisService
+      description: Calculates dynamic priority (ROI) for all tasks.
+      operations:
+      - name: calculate_priorities
+        inputs:
+        - name: repository
+          type: TaskRepository
+        output:
+          type: list[Task]
+    ports:
+    - name: TaskRepository
+      description: Persistence interface for Tasks.
+      kind: repository
+      aggregate: Task
+      operations:
+      - name: save
+        inputs:
+        - name: task
+          type: Task
+        output:
+          type: None
+      - name: get
+        inputs:
+        - name: task_id
+          type: TaskId
+        output:
+          type: Optional[Task]
+      - name: find_all_active
+        output:
+          type: list[Task]
+      - name: find_all
+        output:
+          type: list[Task]
+      - name: find_dependents
+        inputs:
+        - name: task_id
+          type: TaskId
+        output:
+          type: list[Task]
+      - name: delete
+        inputs:
+        - name: task_id
+          type: TaskId
+        output:
+          type: None
+      - name: find_by_id
+        inputs:
+        - name: task_id
+          type: TaskId
+        output:
+          type: Task | None
+      - name: find_by_ids
+        inputs:
+        - name: task_ids
+          type: set[TaskId]
+        output:
+          type: list[Task]
+      - name: find_paged
+        inputs:
+        - name: status
+          type: TaskStatus
+        - name: planning_level
+          type: PlanningLevel
+        - name: search
+          type: str
+        - name: page
+          type: int
+        - name: page_size
+          type: int
+        output:
+          type: tuple[list[Task], int]
+  application:
+    use_cases:
+    - name: ClaimTask
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      - name: dependency_service
+        type: DependencyResolutionService
+      command:
+        attributes:
+        - name: task_id
+          type: str
+        - name: executor_id
+          type: str
+          optional: true
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: task_id
+          type: str
+        - name: error
+          type: str
+          optional: true
+        - name: error_code
+          type: str
+          optional: true
+    - name: CreateTask
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      command:
+        attributes:
+        - name: name
+          type: str
+        - name: description
+          type: str
+        - name: effort
+          type: int
+        - name: base_value
+          type: float
+        - name: planning_level
+          type: PlanningLevel
+        - name: completion_logic
+          type: CompletionLogic
+          optional: true
+        - name: dependencies
+          type: list[str]
+          optional: true
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: task_id
+          type: str
+        - name: error
+          type: str
+    - name: GetTaskDetails
+      kind: query
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      query:
+        attributes:
+        - name: task_id
+          type: str
+          optional: true
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: task
+          type: Optional[dict[str, Any]]
+          optional: true
+        - name: error
+          type: Optional[str]
+          optional: true
+    - name: ListTasks
+      kind: query
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      query:
+        attributes:
+        - name: page
+          type: int
+          optional: true
+        - name: page_size
+          type: int
+          optional: true
+        - name: status
+          type: Optional[TaskStatus]
+          optional: true
+        - name: planning_level
+          type: Optional[PlanningLevel]
+          optional: true
+        - name: search
+          type: Optional[str]
+          optional: true
+      result:
+        attributes:
+        - name: tasks
+          type: list[dict]
+        - name: total_count
+          type: int
+        - name: total_pages
+          type: int
+        - name: current_page
+          type: int
+        - name: error
+          type: Optional[str]
+          optional: true
+    - name: ModifyTaskDependencies
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      - name: cycle_detector
+        type: CycleDetectionService
+      command:
+        attributes:
+        - name: task_id
+          type: str
+        - name: added_dependencies
+          type: list[str]
+          optional: true
+        - name: removed_dependencies
+          type: list[str]
+          optional: true
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: error
+          type: str
+          optional: true
+    - name: ReviewTask
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      - name: resolution_service
+        type: DependencyResolutionService
+      command:
+        attributes:
+        - name: task_id
+          type: str
+        - name: approved
+          type: bool
+        - name: feedback
+          type: str
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: task_id
+          type: str
+        - name: affected_tasks
+          type: list[str]
+          optional: true
+        - name: error
+          type: str
+          optional: true
+    - name: ReviseTaskDetails
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      command:
+        attributes:
+        - name: task_id
+          type: str
+        - name: name
+          type: str | None
+          optional: true
+        - name: description
+          type: str | None
+          optional: true
+        - name: effort
+          type: int | None
+          optional: true
+        - name: base_value
+          type: float | None
+          optional: true
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: error
+          type: str
+          optional: true
+    - name: SubmitTaskResult
+      kind: command
+      command:
+        attributes:
+        - name: task_id
+          type: str
+        - name: summary
+          type: str
+        - name: artifacts
+          type: list[str]
+          optional: true
+        - name: error
+          type: Optional[str]
+          optional: true
+      result:
+        attributes:
+        - name: repository
+          type: TaskRepository
+    - name: SuggestNextAction
+      kind: query
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      - name: priority_service
+        type: PriorityAnalysisService
+      query:
+        attributes:
+        - name: top_n
+          type: int
+      result:
+        attributes:
+        - name: tasks
+          type: list[Task]
+    - name: UpdateTaskStatus
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      - name: resolution_service
+        type: DependencyResolutionService
+      command:
+        attributes:
+        - name: task_id
+          type: str
+        - name: new_status
+          type: str
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: affected_tasks
+          type: list[str]
+        - name: error
+          type: str
+          optional: true
+  infrastructure:
+    implementations:
+    - name: YamlTaskRepository
+      implements: TaskRepository
+      technology: yaml
+      description: "Persistence adapter that stores tasks in a YAML file.\nFollows\
+        \ the structure:\nproject: ...\ntasks:\n  - id: ...\n    name: ..."
+      attributes:
+      - name: file_path
+        type: str
+        optional: true
+      - name: _cache
+        type: dict[str, Task]
+        optional: true
+      private_methods:
+      - name: __post_init__
+        output:
+          type: Any
+      - name: _read_yaml
+        output:
+          type: dict[str, Any]
+      - name: _write_yaml
+        inputs:
+        - name: data
+          type: dict[str, Any]
+        output:
+          type: None
+      - name: _load_all_tasks
+        output:
+          type: list[Task]
+      - name: _serialize_task
+        inputs:
+        - name: task
+          type: Task
+        output:
+          type: dict[str, Any]
+      - name: _deserialize_task
+        inputs:
+        - name: raw
+          type: dict[str, Any]
+        output:
+          type: Task
