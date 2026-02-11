@@ -24,6 +24,7 @@ class Task(Aggregate):
     """The atomic unit of planning, representing a node in the DAG."""
 
     id: TaskId
+    project_id: str
     name: str
     description: str
     status: TaskStatus
@@ -40,6 +41,7 @@ class Task(Aggregate):
     @classmethod
     def create(
         cls: Any,
+        project_id: str,
         name: str,
         description: str,
         effort: StoryPoint,
@@ -58,6 +60,7 @@ class Task(Aggregate):
                 
         return cls(
             id=TaskId.create(),
+            project_id=project_id,
             name=name,
             description=description,
             status=status,
@@ -73,6 +76,7 @@ class Task(Aggregate):
     def reconstitute(
         cls: Any,
         task_id: str,
+        project_id: str,
         name: str,
         description: str,
         status: Union[TaskStatus, str],
@@ -97,6 +101,7 @@ class Task(Aggregate):
         dependencies = set(TaskId.reconstitute(d) for d in dependencies)
         return cls(
             id=TaskId.reconstitute(task_id),
+            project_id=project_id,
             name=name,
             description=description,
             status=status,

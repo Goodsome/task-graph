@@ -40,9 +40,10 @@ class TaskRepository(ABC):
     @abstractmethod
     def find_paged(
         self,
-        status: TaskStatus,
-        planning_level: PlanningLevel,
-        search: str,
+        status: Optional[TaskStatus],
+        project_id: Optional[str],
+        planning_level: Optional[PlanningLevel],
+        search: Optional[str],
         page: int,
         page_size: int,
     ) -> tuple[list[Task], int]: ...

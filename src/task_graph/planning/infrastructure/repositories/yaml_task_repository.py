@@ -106,6 +106,7 @@ class YamlTaskRepository(TaskRepository):
     def find_paged(
         self,
         status: Optional[TaskStatus] = None,
+        project_id: Optional[str] = None,
         planning_level: Optional[PlanningLevel] = None,
         search: Optional[str] = None,
         page: int = 1,
@@ -119,6 +120,10 @@ class YamlTaskRepository(TaskRepository):
         # 1. Filter by status
         if status:
             filtered_tasks = [t for t in filtered_tasks if t.status == status]
+
+        # 1.5 Filter by project_id
+        if project_id:
+            filtered_tasks = [t for t in filtered_tasks if t.project_id == project_id]
             
         # 2. Filter by planning level
         if planning_level:
@@ -204,6 +209,7 @@ class YamlTaskRepository(TaskRepository):
         """Python Primitive Dict -> Domain Object"""
         t = Task.reconstitute(
             task_id=raw["id"],
+            project_id=raw.get("project_id", "default"),
             name=raw["name"],
             description=raw.get("description", ""),
             status=raw["status"],

@@ -9,6 +9,7 @@ from task_graph.planning.domain.ports.task_repository import TaskRepository
 @dataclass(frozen=True)
 class ListTasksQuery:
 
+    project_id: Optional[str] = None
     page: int = 1
     page_size: int = 10
     status: Optional[TaskStatus] = None
@@ -36,6 +37,7 @@ class ListTasks:
         try:
             paged_tasks, total_count = self.repository.find_paged(
                 status=query.status,
+                project_id=query.project_id,
                 planning_level=query.planning_level,
                 search=query.search,
                 page=query.page,

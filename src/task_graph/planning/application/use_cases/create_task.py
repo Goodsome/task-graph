@@ -18,6 +18,7 @@ class CreateTaskCommand(BaseModel):
     用于 Agent (Planner) 将用户需求转化为具体的执行单元。
     """
 
+    project_id: str
     name: str
     description: str
     effort: int
@@ -79,6 +80,7 @@ class CreateTask:
 
             # 5. 创建实体
             new_task = Task.create(
+                project_id=cmd.project_id,
                 name=cmd.name,
                 description=cmd.description,
                 effort=effort_vo,

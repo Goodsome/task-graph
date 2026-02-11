@@ -84,6 +84,7 @@ def _get_container() -> PlanningContainer:
 
 @mcp.tool()
 def create_task(
+    project_id: str,
     name: str,
     description: str,
     effort: int,
@@ -96,6 +97,7 @@ def create_task(
     创建一个新的规划任务。
 
     Args:
+        project_id: 项目标识符 (e.g. "TaskGraph", "CodingAgent")
         name: 简短的任务名称 (e.g. "Design Auth System")
         description: 详细的任务说明，对于 atomic 任务，应包含具体文件路径。
         effort: 基于斐波那契数列的工作量估算。Allowed values: [1, 2, 3, 5, 8, 13, 21, ...].
@@ -127,6 +129,7 @@ def create_task(
         dependencies = []
 
     cmd = CreateTaskCommand(
+        project_id=project_id,
         name=name,
         description=description,
         effort=effort,
@@ -148,6 +151,7 @@ def create_task(
 def list_tasks(
     page: int = 1,
     page_size: int = 10,
+    project_id: Optional[str] = None,
     status: Optional[str] = None,
     planning_level: Optional[str] = None,
     search: Optional[str] = None,
@@ -158,6 +162,7 @@ def list_tasks(
     Args:
         page: 页码，从1开始
         page_size: 每页数量
+        project_id: 按项目标识符筛选
         status: 按任务状态筛选 (pending, blocked, ready, in_progress, review, done, skipped, discarded)
         planning_level: 按规划层级筛选 (architectural, feature, atomic)
         search: 关键字搜索（匹配任务名称或描述）
@@ -186,6 +191,7 @@ def list_tasks(
     query = ListTasksQuery(
         page=page,
         page_size=page_size,
+        project_id=project_id,
         status=task_status,
         planning_level=level,
         search=search

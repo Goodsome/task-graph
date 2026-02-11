@@ -33,6 +33,10 @@ class TaskStatus(Enum):
 class PlanningLevel(Enum):
     """Defines the uncertainty and granularity of the task."""
 
+    INITIATIVE = "initiative"
+
+    MILESTONE = "milestone"
+
     ARCHITECTURAL = "architectural"
 
     FEATURE = "feature"

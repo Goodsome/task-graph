@@ -11,6 +11,8 @@ contexts:
       attributes:
       - name: id
         type: TaskId
+      - name: project_id
+        type: str
       - name: name
         type: str
       - name: description
@@ -56,6 +58,8 @@ contexts:
           type: CompletionLogic
         - name: dependencies
           type: set[TaskId]
+        - name: project_id
+          type: str
         - name: planning_level
           type: Union[str, PlanningLevel]
         - name: status
@@ -84,6 +88,8 @@ contexts:
           type: Union[set[str], set[TaskId]]
         - name: planning_level
           type: Union[PlanningLevel, str]
+        - name: project_id
+          type: str
         - name: output
           type: TaskOutput | None
         output:
@@ -146,6 +152,10 @@ contexts:
     - name: PlanningLevel
       description: Defines the uncertainty and granularity of the task.
       members:
+      - name: INITIATIVE
+        value: initiative
+      - name: MILESTONE
+        value: milestone
       - name: ARCHITECTURAL
         value: architectural
       - name: FEATURE
@@ -447,6 +457,8 @@ contexts:
         type: TaskRepository
       command:
         attributes:
+        - name: project_id
+          type: str
         - name: name
           type: str
         - name: description
@@ -498,6 +510,9 @@ contexts:
         type: TaskRepository
       query:
         attributes:
+        - name: project_id
+          type: Optional[str]
+          optional: true
         - name: page
           type: int
           optional: true
