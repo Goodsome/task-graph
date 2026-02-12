@@ -9,7 +9,7 @@ from typing import Dict, List, Set, Optional
 class PriorityAnalysisService:
     """Calculates dynamic priority (ROI) for all tasks."""
 
-    def calculate_priorities(self, repository: TaskRepository) -> list[Task]:
+    def calculate_priorities(self, repository: TaskRepository, project_id: Optional[str] = None) -> list[Task]:
         """
         Orchestrates the calculation of Dynamic Priority for all active tasks.
         
@@ -21,7 +21,7 @@ class PriorityAnalysisService:
            - Value flows from Dependents back to Dependencies.
         4. Score: ROI = Accumulated Value / Effective Effort.
         """
-        active_tasks = repository.find_all_active()
+        active_tasks = repository.find_all_active(project_id=project_id)
         task_map: Dict[TaskId, Task] = {t.id: t for t in active_tasks}
 
         # 构建反向依赖图 (In-memory Dependents Map) 用于价值回溯

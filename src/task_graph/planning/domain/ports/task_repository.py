@@ -18,6 +18,7 @@ class TaskRepository(ABC):
     @abstractmethod
     def find_all_active(
         self,
+        project_id: Optional[str] = None,
     ) -> list[Task]: ...
 
     @abstractmethod

@@ -7,11 +7,13 @@ from dataclasses import dataclass
 from task_graph.planning.domain.ports.task_repository import TaskRepository
 
 
+from typing import Optional
 from pydantic import BaseModel
 
 class SuggestNextActionQuery(BaseModel):
 
     top_n: int
+    project_id: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -29,7 +31,7 @@ class SuggestNextAction:
 
     def execute(self, query: SuggestNextActionQuery) -> SuggestNextActionResult:
         # 1. 计算全图优先级
-        sorted_tasks = self.priority_service.calculate_priorities(self.repository)
+        sorted_tasks = self.priority_service.calculate_priorities(self.repository, project_id=query.project_id)
 
         # 2. 过滤：只推荐 READY 或 IN_PROGRESS 的任务
         # 我们通常建议用户处理已经准备好 (READY) 或正在进行 (IN_PROGRESS) 的任务

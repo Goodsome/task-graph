@@ -81,13 +81,18 @@ class YamlTaskRepository(TaskRepository):
     def find_by_id(self, task_id: TaskId) -> Task | None:
         return self.get(task_id)
 
-    def find_all_active(self) -> list[Task]:
+    def find_all_active(self, project_id: Optional[str] = None) -> list[Task]:
         """Returns all tasks except those marked DONE or DISCARDED."""
         all_tasks = self._load_all_tasks()
-        return [
+        active_tasks = [
             t for t in all_tasks
             if t.status not in (TaskStatus.DONE, TaskStatus.DISCARDED)
         ]
+        
+        if project_id:
+            active_tasks = [t for t in active_tasks if t.project_id == project_id]
+            
+        return active_tasks
 
     def find_all(self) -> list[Task]:
         return self._load_all_tasks()
