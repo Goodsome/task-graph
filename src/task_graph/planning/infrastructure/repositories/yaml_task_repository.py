@@ -224,6 +224,7 @@ class YamlTaskRepository(TaskRepository):
             dependencies=set(raw.get("dependencies", [])),
             planning_level=raw["planning_level"],
             output=raw["output"],
+            review_feedback=raw["review_feedback"],
         )
 
         return t

@@ -2,7 +2,6 @@
 name: TaskGraph
 description: ''
 contexts:
-- name: Shared
 - name: Planning
   domain:
     aggregates:
@@ -46,6 +45,8 @@ contexts:
         inputs:
         - name: cls
           type: Any
+        - name: project_id
+          type: str
         - name: name
           type: str
         - name: description
@@ -58,8 +59,6 @@ contexts:
           type: CompletionLogic
         - name: dependencies
           type: set[TaskId]
-        - name: project_id
-          type: str
         - name: planning_level
           type: Union[str, PlanningLevel]
         - name: status
@@ -71,6 +70,8 @@ contexts:
         - name: cls
           type: Any
         - name: task_id
+          type: str
+        - name: project_id
           type: str
         - name: name
           type: str
@@ -88,8 +89,6 @@ contexts:
           type: Union[set[str], set[TaskId]]
         - name: planning_level
           type: Union[PlanningLevel, str]
-        - name: project_id
-          type: str
         - name: output
           type: TaskOutput | None
         output:
@@ -358,6 +357,8 @@ contexts:
         inputs:
         - name: repository
           type: TaskRepository
+        - name: project_id
+          type: Optional[str]
         output:
           type: list[Task]
     ports:
@@ -379,6 +380,9 @@ contexts:
         output:
           type: Optional[Task]
       - name: find_all_active
+        inputs:
+        - name: project_id
+          type: Optional[str]
         output:
           type: list[Task]
       - name: find_all
@@ -411,11 +415,13 @@ contexts:
       - name: find_paged
         inputs:
         - name: status
-          type: TaskStatus
+          type: Optional[TaskStatus]
+        - name: project_id
+          type: Optional[str]
         - name: planning_level
-          type: PlanningLevel
+          type: Optional[PlanningLevel]
         - name: search
-          type: str
+          type: Optional[str]
         - name: page
           type: int
         - name: page_size
@@ -649,6 +655,9 @@ contexts:
         attributes:
         - name: top_n
           type: int
+        - name: project_id
+          type: Optional[str]
+          optional: true
       result:
         attributes:
         - name: tasks
@@ -677,6 +686,28 @@ contexts:
           optional: true
   infrastructure:
     implementations:
+    - name: SqlAlchemyTaskRepository
+      implements: TaskRepository
+      technology: sql
+      description: SQLAlchemy implementation of TaskRepository.
+      attributes:
+      - name: session_factory
+        type: Callable[[], Session]
+      private_methods:
+      - name: _to_domain
+        inputs:
+        - name: model
+          type: Any
+        output:
+          type: Task
+      - name: _to_model
+        inputs:
+        - name: task
+          type: Task
+        - name: session
+          type: Session
+        output:
+          type: Any
     - name: YamlTaskRepository
       implements: TaskRepository
       technology: yaml
@@ -717,3 +748,4 @@ contexts:
           type: dict[str, Any]
         output:
           type: Task
+- name: Shared

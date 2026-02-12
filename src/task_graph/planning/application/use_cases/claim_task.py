@@ -55,7 +55,7 @@ class ClaimTask:
                 )
             
             # 2. Validate state
-            if task.status != TaskStatus.READY:
+            if not task.is_claimable():
                 error_code = "ALREADY_CLAIMED" if task.status == TaskStatus.IN_PROGRESS else "TASK_NOT_READY"
                 return ClaimTaskResult(
                     success=False,

@@ -12,22 +12,22 @@ We will use SQLAlchemy's Declarative Mapping system.
 #### `tasks` Table
 Stores the core attributes of the `Task` aggregate.
 
-| Column Name | SQL Type | Nullable | Description |
-| :--- | :--- | :--- | :--- |
-| `id` | `VARCHAR(36)` | No | Primary Key (UUID as string) |
-| `project_id` | `VARCHAR(64)` | No | Project Identifier (Indexed) |
-| `name` | `VARCHAR(255)` | No | Task Name |
-| `description` | `TEXT` | No | Full Task Description |
-| `status` | `VARCHAR(32)` | No | Enum: `PENDING`, `READY`, etc. (Indexed) |
-| `planning_level` | `VARCHAR(32)` | No | Enum: `INITIATIVE`, `FEATURE`, `ATOMIC` (Indexed) |
-| `completion_logic`| `VARCHAR(32)` | No | Enum: `ALL`, `ANY` |
-| `effort` | `INTEGER` | No | Value of `StoryPoint` |
-| `base_value` | `FLOAT` | No | Value of `ValueScore` |
-| `output` | `JSON` | Yes | Serialized `TaskOutput` value object |
-| `review_feedback` | `JSON` | Yes | Serialized `ReviewFeedback` value object |
-| `created_at` | `DATETIME` | No | Audit timestamp |
-| `updated_at` | `DATETIME` | No | Audit timestamp |
-| `version_id` | `INTEGER` | No | For Optimistic Locking |
+| Column Name        | SQL Type       | Nullable | Description                                         |
+|:-------------------|:---------------|:---------|:----------------------------------------------------|
+| `id`               | `VARCHAR(36)`  | No       | Primary Key (UUID as string)                        |
+| `project_id`       | `VARCHAR(64)`  | No       | Project Identifier (Indexed)                        |
+| `name`             | `VARCHAR(255)` | No       | Task Name                                           |
+| `description`      | `TEXT`         | No       | Full Task Description                               |
+| `status`           | `VARCHAR(32)`  | No       | Enum: `PENDING`, `READY`, etc. (Indexed)            |
+| `planning_level`   | `VARCHAR(32)`  | No       | Enum: `INITIATIVE`, `FEATURE`, etc. (Indexed)       |
+| `completion_logic` | `VARCHAR(32)`  | No       | Enum: `ALL`, `ANY`                                  |
+| `effort`           | `INTEGER`      | No       | Value of `StoryPoint`                               |
+| `base_value`       | `FLOAT`        | No       | Value of `ValueScore`                               |
+| `output`           | `JSON`         | Yes      | Serialized `TaskOutput` value object                |
+| `review_feedback`  | `JSON`         | Yes      | Serialized `ReviewFeedback` value object            |
+| `created_at`       | `DATETIME`     | No       | Audit timestamp                                     |
+| `updated_at`       | `DATETIME`     | No       | Audit timestamp                                     |
+| `version_id`       | `INTEGER`      | No       | For Optimistic Locking                              |
 
 **Indexes**:
 - `ix_tasks_project_id`

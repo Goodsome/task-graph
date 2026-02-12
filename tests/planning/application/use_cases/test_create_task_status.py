@@ -26,6 +26,7 @@ def test_create_task_all_logic_satisfied(use_case, mock_repo):
     mock_repo.find_by_ids.return_value = [dep1, dep2]
     
     cmd = CreateTaskCommand(
+        project_id="test-project",
         name="Task ALL Satisfied",
         description="Desc",
         effort=3,
@@ -55,6 +56,7 @@ def test_create_task_all_logic_partially_satisfied(use_case, mock_repo):
     mock_repo.find_by_ids.return_value = [dep1, dep2]
     
     cmd = CreateTaskCommand(
+        project_id="test-project",
         name="Task ALL Partially Satisfied",
         description="Desc",
         effort=3,
@@ -83,6 +85,7 @@ def test_create_task_any_logic_satisfied(use_case, mock_repo):
     mock_repo.find_by_ids.return_value = [dep1, dep2]
     
     cmd = CreateTaskCommand(
+        project_id="test-project",
         name="Task ANY Satisfied",
         description="Desc",
         effort=3,
@@ -111,6 +114,7 @@ def test_create_task_any_logic_not_satisfied(use_case, mock_repo):
     mock_repo.find_by_ids.return_value = [dep1, dep2]
     
     cmd = CreateTaskCommand(
+        project_id="test-project",
         name="Task ANY Not Satisfied",
         description="Desc",
         effort=3,
@@ -130,6 +134,7 @@ def test_create_task_no_dependencies(use_case, mock_repo):
     mock_repo.find_by_ids.return_value = []
     
     cmd = CreateTaskCommand(
+        project_id="test-project",
         name="Task No Deps",
         description="Desc",
         effort=3,

@@ -308,7 +308,7 @@ def suggest_next_action(top_n: int = 3, project_id: Optional[str] = None) -> dic
     """
     获取优先级最高的可执行任务建议。
 
-    基于 ROI (价值/工作量) 计算优先级，返回状态为 READY 或 IN_PROGRESS 的任务。
+    基于 ROI (价值/工作量) 计算优先级，可被执行的任务。
 
     Args:
         top_n: 返回的任务数量

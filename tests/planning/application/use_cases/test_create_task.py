@@ -15,6 +15,7 @@ def use_case(mock_repo):
 
 def test_create_task_success(use_case, mock_repo):
     cmd = CreateTaskCommand(
+        project_id="test-project",
         name="Test Task",
         description="Description",
         effort=5,
@@ -36,6 +37,7 @@ def test_create_task_success(use_case, mock_repo):
 def test_create_task_with_dependencies_success(use_case, mock_repo):
     dep_id = TaskId.create()
     cmd = CreateTaskCommand(
+        project_id="test-project",
         name="Dependent Task",
         description="Desc",
         effort=3,
@@ -57,6 +59,7 @@ def test_create_task_with_dependencies_success(use_case, mock_repo):
 def test_create_task_missing_dependency(use_case, mock_repo):
     missing_id = "00000000-0000-0000-0000-000000000000"
     cmd = CreateTaskCommand(
+        project_id="test-project",
         name="Broken Task",
         description="Desc",
         effort=1,

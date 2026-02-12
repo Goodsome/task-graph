@@ -26,9 +26,13 @@ def use_case(mock_repo, mock_priority_service):
 def test_suggest_next_action_filtering(use_case, mock_repo, mock_priority_service):
     # Setup tasks with different statii
     task_ready = Mock(status=TaskStatus.READY)
+    task_ready.is_claimable.return_value = True
     task_progress = Mock(status=TaskStatus.IN_PROGRESS)
+    task_progress.is_claimable.return_value = True
     task_blocked = Mock(status=TaskStatus.BLOCKED)
+    task_blocked.is_claimable.return_value = False
     task_done = Mock(status=TaskStatus.DONE)
+    task_done.is_claimable.return_value = False
     
     # Service returns them in some order
     mock_priority_service.calculate_priorities.return_value = [

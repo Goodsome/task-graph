@@ -10,6 +10,7 @@ class TestTaskReview:
     @pytest.fixture
     def reviewable_task(self):
         return Task.create(
+            project_id="test-project",
             name="Reviewable Task",
             description="Testing review logic",
             effort=StoryPoint.create(3),

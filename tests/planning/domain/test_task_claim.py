@@ -10,6 +10,7 @@ class TestTaskClaimBehaviors:
     @pytest.fixture
     def ready_task(self):
         return Task.create(
+            project_id="test-project",
             name="Ready Task",
             description="A task that is ready to be claimed",
             effort=StoryPoint.create(1),

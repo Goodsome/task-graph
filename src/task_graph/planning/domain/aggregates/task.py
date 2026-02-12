@@ -86,6 +86,7 @@ class Task(Aggregate):
         dependencies: Union[set[str], set[TaskId]],
         planning_level: Union[PlanningLevel, str],
         output: Union[TaskOutput, None] = None,
+        review_feedback: Union[ReviewFeedback, None] = None,
     ) -> Any:
 
         if not isinstance(status, TaskStatus):
@@ -111,6 +112,7 @@ class Task(Aggregate):
             dependencies=dependencies,
             planning_level=planning_level,
             output=output,
+            review_feedback=review_feedback,
         )
     
     def to_dict(self) -> dict:
@@ -130,6 +132,9 @@ class Task(Aggregate):
     ) -> bool:
 
         return self.status is TaskStatus.DONE
+
+    def is_claimable(self) -> bool:
+        return self.status in [TaskStatus.READY, TaskStatus.REJECTED]
 
     def set_output(
         self,
