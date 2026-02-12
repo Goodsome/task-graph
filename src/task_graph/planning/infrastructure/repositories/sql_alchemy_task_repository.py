@@ -1,6 +1,6 @@
-from typing import Union, Any, Optional, Callable
+from typing import Union, Any, Optional, Callable, List, Tuple
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import select, func, or_
 from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.value_objects.task_id import TaskId
@@ -23,34 +23,38 @@ class SqlAlchemyTaskRepository(TaskRepository):
 
     def get(self, task_id: TaskId) -> Optional[Task]:
         with self.session_factory() as session:
-            model = session.query(TaskModel).filter(TaskModel.id == str(task_id.value)).first()
+            stmt = select(TaskModel).where(TaskModel.id == str(task_id.value))
+            model = session.execute(stmt).scalar_one_or_none()
             if not model:
                 return None
             return self._to_domain(model)
 
     def find_all_active(self, project_id: Optional[str] = None) -> list[Task]:
         with self.session_factory() as session:
-            query = session.query(TaskModel).filter(TaskModel.status != TaskStatus.DONE.value)
+            stmt = select(TaskModel).where(TaskModel.status != TaskStatus.DONE.value)
             if project_id:
-                query = query.filter(TaskModel.project_id == project_id)
-            models = query.all()
+                stmt = stmt.where(TaskModel.project_id == project_id)
+            models = session.execute(stmt).scalars().all()
             return [self._to_domain(m) for m in models]
 
     def find_all(self) -> list[Task]:
         with self.session_factory() as session:
-            models = session.query(TaskModel).all()
+            stmt = select(TaskModel)
+            models = session.execute(stmt).scalars().all()
             return [self._to_domain(m) for m in models]
 
     def find_dependents(self, task_id: TaskId) -> list[Task]:
         with self.session_factory() as session:
-            model = session.query(TaskModel).filter(TaskModel.id == str(task_id.value)).first()
+            stmt = select(TaskModel).where(TaskModel.id == str(task_id.value))
+            model = session.execute(stmt).scalar_one_or_none()
             if not model:
                 return []
             return [self._to_domain(d) for d in model.dependents]
 
     def delete(self, task_id: TaskId) -> None:
         with self.session_factory() as session:
-            model = session.query(TaskModel).filter(TaskModel.id == str(task_id.value)).first()
+            stmt = select(TaskModel).where(TaskModel.id == str(task_id.value))
+            model = session.execute(stmt).scalar_one_or_none()
             if model:
                 session.delete(model)
                 session.commit()
@@ -61,7 +65,8 @@ class SqlAlchemyTaskRepository(TaskRepository):
     def find_by_ids(self, task_ids: set[TaskId]) -> list[Task]:
         ids = [str(tid.value) for tid in task_ids]
         with self.session_factory() as session:
-            models = session.query(TaskModel).filter(TaskModel.id.in_(ids)).all()
+            stmt = select(TaskModel).where(TaskModel.id.in_(ids))
+            models = session.execute(stmt).scalars().all()
             return [self._to_domain(m) for m in models]
 
     def find_paged(
@@ -74,27 +79,30 @@ class SqlAlchemyTaskRepository(TaskRepository):
         page_size: int,
     ) -> tuple[list[Task], int]:
         with self.session_factory() as session:
-            query = session.query(TaskModel)
+            # Create base select statement
+            stmt = select(TaskModel)
             if status:
-                query = query.filter(TaskModel.status == status.value)
+                stmt = stmt.where(TaskModel.status == status.value)
             if project_id:
-                query = query.filter(TaskModel.project_id == project_id)
+                stmt = stmt.where(TaskModel.project_id == project_id)
             if planning_level:
-                query = query.filter(TaskModel.planning_level == planning_level.value)
+                stmt = stmt.where(TaskModel.planning_level == planning_level.value)
             if search:
-                query = query.filter(
+                stmt = stmt.where(
                     or_(
                         TaskModel.name.ilike(f"%{search}%"),
                         TaskModel.description.ilike(f"%{search}%"),
                     )
                 )
 
-            total = query.count()
-            models = (
-                query.offset((page - 1) * page_size)
-                .limit(page_size)
-                .all()
-            )
+            # Get total count using a scalar subquery or separate count query
+            count_stmt = select(func.count()).select_from(stmt.subquery())
+            total = session.execute(count_stmt).scalar() or 0
+
+            # Get paged results
+            paged_stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+            models = session.execute(paged_stmt).scalars().all()
+            
             return [self._to_domain(m) for m in models], total
 
     def _to_domain(self, model: TaskModel) -> Task:
@@ -113,7 +121,9 @@ class SqlAlchemyTaskRepository(TaskRepository):
         )
 
     def _to_model(self, task: Task, session: Session) -> TaskModel:
-        model = session.query(TaskModel).filter(TaskModel.id == str(task.id.value)).first()
+        stmt = select(TaskModel).where(TaskModel.id == str(task.id.value))
+        model = session.execute(stmt).scalar_one_or_none()
+        
         if not model:
             model = TaskModel(id=str(task.id.value))
 
@@ -133,11 +143,9 @@ class SqlAlchemyTaskRepository(TaskRepository):
         # Handle dependencies
         dep_ids = [str(tid.value) for tid in task.dependencies]
         if dep_ids:
-            dependencies = session.query(TaskModel).filter(TaskModel.id.in_(dep_ids)).all()
-            if len(dependencies) != len(dep_ids):
-                # Optionally handle missing dependencies, but for now we trust the domain or assume they exist
-                pass
-            model.dependencies = dependencies
+            dep_stmt = select(TaskModel).where(TaskModel.id.in_(dep_ids))
+            dependencies = session.execute(dep_stmt).scalars().all()
+            model.dependencies = list(dependencies)
         else:
             model.dependencies = []
 

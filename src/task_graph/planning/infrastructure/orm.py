@@ -1,8 +1,11 @@
 from sqlalchemy import Column, String, Integer, Float, Text, ForeignKey, Table, JSON, DateTime
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from datetime import datetime, timezone
+from typing import List, Optional
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    """Base class for SQLAlchemy models."""
+    pass
 
 # Association table for self-referential many-to-many relationship (DAG)
 task_dependencies = Table(
@@ -16,26 +19,26 @@ class TaskModel(Base):
     """SQLAlchemy model for Task aggregate."""
     __tablename__ = 'tasks'
 
-    id = Column(String(36), primary_key=True)
-    project_id = Column(String(64), index=True, nullable=False)
-    name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=False)
-    status = Column(String(32), index=True, nullable=False)
-    planning_level = Column(String(32), index=True, nullable=False)
-    completion_logic = Column(String(32), nullable=False)
-    effort = Column(Integer, nullable=False)
-    base_value = Column(Float, nullable=False)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    project_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    planning_level: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    completion_logic: Mapped[str] = mapped_column(String(32), nullable=False)
+    effort: Mapped[int] = mapped_column(Integer, nullable=False)
+    base_value: Mapped[float] = mapped_column(Float, nullable=False)
     
     # Value Objects stored as JSON
-    output = Column(JSON, nullable=True)
-    review_feedback = Column(JSON, nullable=True)
+    output: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    review_feedback: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-    version_id = Column(Integer, nullable=False, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    version_id: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     # Self-referential relationship for dependencies
-    dependencies = relationship(
+    dependencies: Mapped[List["TaskModel"]] = relationship(
         'TaskModel',
         secondary=task_dependencies,
         primaryjoin=id == task_dependencies.c.task_id,
