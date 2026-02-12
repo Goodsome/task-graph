@@ -484,6 +484,21 @@ def review_task(
 
 def main():
     """MCP Server entry point for standalone execution."""
+    
+    # Initialize database if configured
+    container = _get_container()
+    if hasattr(container, 'database'):
+        try:
+            # Check if database is actually instantiated (it's a singleton)
+            # Accessing container.database() will create it if not created
+            db = container.database()
+            db.init_db()
+        except Exception as e:
+            # Log error but allow server to start? Or fail fast?
+            # For now, we log and proceed, but in production, we might want to fail.
+            # However, if config is missing, 'database' attribute won't exist.
+            logging.error(f"Failed to initialize database: {e}")
+
     mcp.run()
 
 

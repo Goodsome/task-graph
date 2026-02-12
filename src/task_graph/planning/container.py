@@ -16,6 +16,9 @@ from task_graph.planning.domain.services.cycle_detection_service import CycleDet
 from task_graph.planning.domain.services.dependency_resolution_service import DependencyResolutionService
 from task_graph.planning.domain.services.priority_analysis_service import PriorityAnalysisService
 from task_graph.planning.infrastructure.repositories.yaml_task_repository import YamlTaskRepository
+from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import SqlAlchemyTaskRepository
+from task_graph.planning.infrastructure.database import Database
+from task_graph.planning.config import get_settings
 
 
 class PlanningContainer(containers.DeclarativeContainer):
@@ -28,10 +31,25 @@ class PlanningContainer(containers.DeclarativeContainer):
 
     # --- Infrastructure Layer ---
 
-    # TaskRepository: Singleton scope because it maintains an in-memory cache
-    task_repository = providers.Singleton(
-        YamlTaskRepository,
-    )
+    _settings_obj = get_settings()
+
+    if _settings_obj.DATABASE_URL:
+        # Database connection
+        database = providers.Singleton(
+            Database,
+            connection_string=str(_settings_obj.DATABASE_URL)
+        )
+        
+        # Determine actual implementation based on config
+        task_repository = providers.Singleton(
+            SqlAlchemyTaskRepository,
+            session_factory=database.provided.session_factory
+        )
+    else:
+        # Fallback to YAML implementation
+        task_repository = providers.Singleton(
+            YamlTaskRepository,
+        )
 
     # --- Domain Service Layer ---
 
