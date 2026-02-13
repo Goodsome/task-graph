@@ -150,7 +150,7 @@ def create_task(
 @mcp.tool()
 def list_tasks(
     page: int = 1,
-    page_size: int = 10,
+    page_size: int = 5,
     project_id: Optional[str] = None,
     status: Optional[str] = None,
     planning_level: Optional[str] = None,
