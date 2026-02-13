@@ -3,4 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="uv (TaskGraph)" />
   </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="uv (TaskGraph)" project-jdk-type="Python SDK" />
 </project>

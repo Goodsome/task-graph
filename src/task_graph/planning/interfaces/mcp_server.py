@@ -7,8 +7,12 @@ the Planning context's use cases, making them accessible to LLM applications.
 
 import logging
 
+from task_graph.planning.config import PROJECT_ROOT
+
+LOG_FILE_PATH = PROJECT_ROOT / "logs/mcp_server.log"
+
 logging.basicConfig(
-    filename="C:\\Users\\86188\\code\\TaskGraph\\logs\\mcp_server.log",
+    filename=LOG_FILE_PATH,
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
