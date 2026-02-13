@@ -34,6 +34,7 @@ def test_claim_task_success(use_case, mock_repo, mock_dependency_service):
     mock_task = Mock()
     mock_task.id = task_id
     mock_task.status = TaskStatus.READY
+    mock_task.is_claimable.return_value = True
     
     mock_repo.get.return_value = mock_task
     mock_dependency_service.evaluate_blocking_status.return_value = False
@@ -72,6 +73,7 @@ def test_claim_task_not_ready(use_case, mock_repo):
     mock_task = Mock()
     mock_task.id = task_id
     mock_task.status = TaskStatus.PENDING
+    mock_task.is_claimable.return_value = False
     
     mock_repo.get.return_value = mock_task
     
@@ -92,6 +94,7 @@ def test_claim_task_already_claimed(use_case, mock_repo):
     mock_task = Mock()
     mock_task.id = task_id
     mock_task.status = TaskStatus.IN_PROGRESS
+    mock_task.is_claimable.return_value = False
     
     mock_repo.get.return_value = mock_task
     
@@ -112,6 +115,7 @@ def test_claim_task_blocked_by_dependencies(use_case, mock_repo, mock_dependency
     mock_task = Mock()
     mock_task.id = task_id
     mock_task.status = TaskStatus.READY
+    mock_task.is_claimable.return_value = True
     
     mock_repo.get.return_value = mock_task
     # Even if status is READY, double check says it's blocked
@@ -134,6 +138,7 @@ def test_claim_task_domain_exception(use_case, mock_repo, mock_dependency_servic
     mock_task = Mock()
     mock_task.id = task_id
     mock_task.status = TaskStatus.READY
+    mock_task.is_claimable.return_value = True
     mock_task.claim.side_effect = TaskNotClaimableError("Domain error")
     
     mock_repo.get.return_value = mock_task

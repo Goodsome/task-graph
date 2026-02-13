@@ -21,6 +21,7 @@ def test_list_tasks_filtering_params_passed(use_case, mock_repo):
     mock_repo.find_paged.return_value = (mock_tasks, 0)
     
     query = ListTasksQuery(
+        project_id="test-project",
         status=TaskStatus.READY,
         planning_level=PlanningLevel.ATOMIC,
         search="test keyword",
@@ -34,6 +35,7 @@ def test_list_tasks_filtering_params_passed(use_case, mock_repo):
     # 验证是否调用了 find_paged 且参数正确
     mock_repo.find_paged.assert_called_once_with(
         status=TaskStatus.READY,
+        project_id="test-project",
         planning_level=PlanningLevel.ATOMIC,
         search="test keyword",
         page=1,

@@ -8,7 +8,7 @@ the Planning context's use cases, making them accessible to LLM applications.
 import logging
 
 logging.basicConfig(
-    filename="C:\\Users\\86188\\code\\CodingAgent\\logs\\mcp_server.log",
+    filename="C:\\Users\\86188\\code\\TaskGraph\\logs\\mcp_server.log",
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
@@ -150,7 +150,7 @@ def create_task(
 @mcp.tool()
 def list_tasks(
     page: int = 1,
-    page_size: int = 10,
+    page_size: int = 5,
     project_id: Optional[str] = None,
     status: Optional[str] = None,
     planning_level: Optional[str] = None,
@@ -234,8 +234,8 @@ def get_task_details(task_id: str) -> dict:
 @mcp.tool()
 def modify_task_dependencies(
     task_id: str,
-    added_dependencies: list[str] = [],
-    removed_dependencies: list[str] = [],
+    added_dependencies: Optional[list[str]] = None,
+    removed_dependencies: Optional[list[str]] = None,
 ) -> dict:
     """
     修改任务的依赖关系。
@@ -253,8 +253,8 @@ def modify_task_dependencies(
 
     cmd = ModifyTaskDependenciesCommand(
         task_id=task_id,
-        added_dependencies=added_dependencies,
-        removed_dependencies=removed_dependencies,
+        added_dependencies=added_dependencies if added_dependencies else [],
+        removed_dependencies=removed_dependencies if removed_dependencies else [],
     )
 
     result = use_case.execute(cmd)
@@ -304,14 +304,15 @@ def revise_task_details(
 
 
 @mcp.tool()
-def suggest_next_action(top_n: int = 3) -> dict:
+def suggest_next_action(top_n: int = 3, project_id: Optional[str] = None) -> dict:
     """
     获取优先级最高的可执行任务建议。
 
-    基于 ROI (价值/工作量) 计算优先级，返回状态为 READY 或 IN_PROGRESS 的任务。
+    基于 ROI (价值/工作量) 计算优先级，可被执行的任务。
 
     Args:
         top_n: 返回的任务数量
+        project_id: 按项目标识符筛选 (可选)
 
     Returns:
         包含 tasks 列表的结果，每个任务包含 id, name, description, status 等信息
@@ -319,7 +320,7 @@ def suggest_next_action(top_n: int = 3) -> dict:
     container = _get_container()
     use_case = container.suggest_next_action()
 
-    query = SuggestNextActionQuery(top_n=top_n)
+    query = SuggestNextActionQuery(top_n=top_n, project_id=project_id)
     result = use_case.execute(query)
 
     tasks_data = []
@@ -370,7 +371,7 @@ def update_task_status(task_id: str, new_status: str) -> dict:
 def submit_task_result(
     task_id: str,
     summary: str,
-    artifacts: list[str] = [],
+    artifacts: Optional[list[str]] = None,
     error: Optional[str] = None,
 ) -> dict:
     """
@@ -483,6 +484,21 @@ def review_task(
 
 def main():
     """MCP Server entry point for standalone execution."""
+    
+    # Initialize database if configured
+    container = _get_container()
+    if hasattr(container, 'database'):
+        try:
+            # Check if database is actually instantiated (it's a singleton)
+            # Accessing container.database() will create it if not created
+            db = container.database()
+            db.init_db()
+        except Exception as e:
+            # Log error but allow server to start? Or fail fast?
+            # For now, we log and proceed, but in production, we might want to fail.
+            # However, if config is missing, 'database' attribute won't exist.
+            logging.error(f"Failed to initialize database: {e}")
+
     mcp.run()
 
 
