@@ -134,7 +134,7 @@ class Task(Aggregate):
         return self.status is TaskStatus.DONE
 
     def is_claimable(self) -> bool:
-        return self.status in [TaskStatus.READY, TaskStatus.REJECTED]
+        return self.status in [TaskStatus.READY, TaskStatus.CHANGES_REQUESTED]
 
     def set_output(
         self,
@@ -179,11 +179,11 @@ class Task(Aggregate):
             )
         
         self.review_feedback = ReviewFeedback(
-            decision="approved" if approved else "rejected",
+            decision="approved" if approved else "changes_requested",
             comment=feedback
         )
 
         if approved:
             self.status = TaskStatus.DONE
         else:
-            self.status = TaskStatus.REJECTED
+            self.status = TaskStatus.CHANGES_REQUESTED

@@ -167,7 +167,7 @@ def list_tasks(
         page: 页码，从1开始
         page_size: 每页数量
         project_id: 按项目标识符筛选
-        status: 按任务状态筛选 (pending, blocked, ready, in_progress, review, done, skipped, discarded)
+        status: 按任务状态筛选 (pending, blocked, ready, in_progress, review, done, changes_requested, skipped, discarded)
         planning_level: 按规划层级筛选 (architectural, feature, atomic)
         search: 关键字搜索（匹配任务名称或描述）
 
@@ -350,7 +350,7 @@ def update_task_status(task_id: str, new_status: str) -> dict:
 
     Args:
         task_id: 目标任务ID
-        new_status: 新状态 (pending, blocked, ready, in_progress, done, skipped, discarded)
+        new_status: 新状态 (pending, blocked, ready, in_progress, done, changes_requested, skipped, discarded)
 
     Returns:
         包含 success, affected_tasks (被解锁的任务ID列表), error 的结果
@@ -454,7 +454,7 @@ def review_task(
 
     当任务处于 REVIEW 状态时，规划者使用此工具进行验收。
     如果 approved=True，任务将变为 DONE，并解锁后续任务。
-    如果 approved=False，任务将变为 REJECTED。
+    如果 approved=False，任务将变为 CHANGES_REQUESTED。
 
     Args:
         task_id: 目标任务ID

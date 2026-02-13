@@ -31,15 +31,15 @@ class TestTaskReview:
         assert reviewable_task.review_feedback.decision == "approved"
         assert reviewable_task.review_feedback.comment == "Good job"
 
-    def test_review_rejected(self, reviewable_task):
+    def test_review_changes_requested(self, reviewable_task):
         # Transition to REVIEW first
         reviewable_task.status = TaskStatus.REVIEW
         
         reviewable_task.review(approved=False, feedback="Fix lint errors")
         
-        assert reviewable_task.status == TaskStatus.REJECTED
+        assert reviewable_task.status == TaskStatus.CHANGES_REQUESTED
         assert reviewable_task.review_feedback is not None
-        assert reviewable_task.review_feedback.decision == "rejected"
+        assert reviewable_task.review_feedback.decision == "changes_requested"
         assert reviewable_task.review_feedback.comment == "Fix lint errors"
 
     def test_review_invalid_state(self, reviewable_task):

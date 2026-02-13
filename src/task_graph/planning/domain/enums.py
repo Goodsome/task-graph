@@ -23,7 +23,7 @@ class TaskStatus(Enum):
 
     DONE = "done"
 
-    REJECTED = "rejected"
+    CHANGES_REQUESTED = "changes_requested"
 
     SKIPPED = "skipped"
 

@@ -91,6 +91,8 @@ contexts:
           type: Union[PlanningLevel, str]
         - name: output
           type: TaskOutput | None
+        - name: review_feedback
+          type: ReviewFeedback | None
         output:
           type: Any
       - name: to_dict
@@ -100,6 +102,9 @@ contexts:
         output:
           type: None
       - name: is_done
+        output:
+          type: bool
+      - name: is_claimable
         output:
           type: bool
       - name: set_output
@@ -142,8 +147,8 @@ contexts:
         value: review
       - name: DONE
         value: done
-      - name: REJECTED
-        value: rejected
+      - name: CHANGES_REQUESTED
+        value: changes_requested
       - name: SKIPPED
         value: skipped
       - name: DISCARDED
@@ -170,6 +175,54 @@ contexts:
       - name: ON_FAILURE
         value: on_failure
     value_objects:
+    - name: ValueScore
+      description: Numeric representation of business value.
+      attributes:
+      - name: value
+        type: float
+        optional: true
+      behaviors:
+      - name: create
+        inputs:
+        - name: cls
+          type: Any
+        - name: value
+          type: float
+        output:
+          type: ValueScore
+      - name: __add__
+        inputs:
+        - name: other
+          type: Any
+        output:
+          type: Any
+      - name: __radd__
+        inputs:
+        - name: other
+          type: Any
+        output:
+          type: Any
+      - name: serialize
+        output:
+          type: float
+      - name: validate_from_primitive
+        inputs:
+        - name: cls
+          type: Any
+        - name: data
+          type: Any
+        output:
+          type: Any
+    - name: TaskOutput
+      description: 任务执行者的交付物
+      attributes:
+      - name: summary
+        type: str
+      - name: artifacts
+        type: list[str]
+      - name: error
+        type: str | None
+        optional: true
     - name: RecurrencePolicy
       description: Rules for creating a successor task upon completion.
       attributes:
@@ -184,13 +237,6 @@ contexts:
       - name: next_iteration
         output:
           type: RecurrencePolicy
-    - name: ReviewFeedback
-      description: 任务规划者的验收意见
-      attributes:
-      - name: comment
-        type: str
-      - name: decision
-        type: str
     - name: StoryPoint
       description: Encapsulated Fibonacci number representing effort (1, 2, 3, 5,
         8, 13...).
@@ -244,6 +290,13 @@ contexts:
           type: Any
         output:
           type: Any
+    - name: ReviewFeedback
+      description: 任务规划者的验收意见
+      attributes:
+      - name: comment
+        type: str
+      - name: decision
+        type: str
     - name: TaskId
       description: Unique identifier for a Task.
       attributes:
@@ -278,55 +331,17 @@ contexts:
           type: Any
         output:
           type: Any
-    - name: TaskOutput
-      description: 任务执行者的交付物
-      attributes:
-      - name: summary
-        type: str
-      - name: artifacts
-        type: list[str]
-      - name: error
-        type: str | None
-        optional: true
-    - name: ValueScore
-      description: Numeric representation of business value.
-      attributes:
-      - name: value
-        type: float
-        optional: true
-      behaviors:
-      - name: create
-        inputs:
-        - name: cls
-          type: Any
-        - name: value
-          type: float
-        output:
-          type: ValueScore
-      - name: __add__
-        inputs:
-        - name: other
-          type: Any
-        output:
-          type: Any
-      - name: __radd__
-        inputs:
-        - name: other
-          type: Any
-        output:
-          type: Any
-      - name: serialize
-        output:
-          type: float
-      - name: validate_from_primitive
-        inputs:
-        - name: cls
-          type: Any
-        - name: data
-          type: Any
-        output:
-          type: Any
     services:
+    - name: DependencyResolutionService
+      operations:
+      - name: evaluate_blocking_status
+        inputs:
+        - name: task
+          type: Task
+        - name: repository
+          type: TaskRepository
+        output:
+          type: bool
     - name: CycleDetectionService
       description: Ensures the planning graph remains a DAG.
       operations:
@@ -336,16 +351,6 @@ contexts:
           type: TaskId
         - name: new_dependency_id
           type: TaskId
-        - name: repository
-          type: TaskRepository
-        output:
-          type: bool
-    - name: DependencyResolutionService
-      operations:
-      - name: evaluate_blocking_status
-        inputs:
-        - name: task
-          type: Task
         - name: repository
           type: TaskRepository
         output:
@@ -430,32 +435,24 @@ contexts:
           type: tuple[list[Task], int]
   application:
     use_cases:
-    - name: ClaimTask
+    - name: SubmitTaskResult
       kind: command
-      dependencies:
-      - name: repository
-        type: TaskRepository
-      - name: dependency_service
-        type: DependencyResolutionService
       command:
         attributes:
         - name: task_id
           type: str
-        - name: executor_id
+        - name: summary
           type: str
+        - name: artifacts
+          type: list[str]
+          optional: true
+        - name: error
+          type: Optional[str]
           optional: true
       result:
         attributes:
-        - name: success
-          type: bool
-        - name: task_id
-          type: str
-        - name: error
-          type: str
-          optional: true
-        - name: error_code
-          type: str
-          optional: true
+        - name: repository
+          type: TaskRepository
     - name: CreateTask
       kind: command
       dependencies:
@@ -489,6 +486,46 @@ contexts:
           type: str
         - name: error
           type: str
+    - name: UpdateTaskStatus
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      - name: resolution_service
+        type: DependencyResolutionService
+      command:
+        attributes:
+        - name: task_id
+          type: str
+        - name: new_status
+          type: str
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: affected_tasks
+          type: list[str]
+        - name: error
+          type: str
+          optional: true
+    - name: SuggestNextAction
+      kind: query
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      - name: priority_service
+        type: PriorityAnalysisService
+      query:
+        attributes:
+        - name: top_n
+          type: int
+        - name: project_id
+          type: Optional[str]
+          optional: true
+      result:
+        attributes:
+        - name: tasks
+          type: list[Task]
     - name: GetTaskDetails
       kind: query
       dependencies:
@@ -508,6 +545,111 @@ contexts:
           optional: true
         - name: error
           type: Optional[str]
+          optional: true
+    - name: ReviewTask
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      - name: resolution_service
+        type: DependencyResolutionService
+      command:
+        attributes:
+        - name: task_id
+          type: str
+        - name: approved
+          type: bool
+        - name: feedback
+          type: str
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: task_id
+          type: str
+        - name: affected_tasks
+          type: list[str]
+          optional: true
+        - name: error
+          type: str
+          optional: true
+    - name: ModifyTaskDependencies
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      - name: cycle_detector
+        type: CycleDetectionService
+      command:
+        attributes:
+        - name: task_id
+          type: str
+        - name: added_dependencies
+          type: list[str]
+          optional: true
+        - name: removed_dependencies
+          type: list[str]
+          optional: true
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: error
+          type: str
+          optional: true
+    - name: ReviseTaskDetails
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      command:
+        attributes:
+        - name: task_id
+          type: str
+        - name: name
+          type: str | None
+          optional: true
+        - name: description
+          type: str | None
+          optional: true
+        - name: effort
+          type: int | None
+          optional: true
+        - name: base_value
+          type: float | None
+          optional: true
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: error
+          type: str
+          optional: true
+    - name: ClaimTask
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      - name: dependency_service
+        type: DependencyResolutionService
+      command:
+        attributes:
+        - name: task_id
+          type: str
+        - name: executor_id
+          type: str
+          optional: true
+      result:
+        attributes:
+        - name: success
+          type: bool
+        - name: task_id
+          type: str
+        - name: error
+          type: str
+          optional: true
+        - name: error_code
+          type: str
           optional: true
     - name: ListTasks
       kind: query
@@ -547,167 +689,8 @@ contexts:
         - name: error
           type: Optional[str]
           optional: true
-    - name: ModifyTaskDependencies
-      kind: command
-      dependencies:
-      - name: repository
-        type: TaskRepository
-      - name: cycle_detector
-        type: CycleDetectionService
-      command:
-        attributes:
-        - name: task_id
-          type: str
-        - name: added_dependencies
-          type: list[str]
-          optional: true
-        - name: removed_dependencies
-          type: list[str]
-          optional: true
-      result:
-        attributes:
-        - name: success
-          type: bool
-        - name: error
-          type: str
-          optional: true
-    - name: ReviewTask
-      kind: command
-      dependencies:
-      - name: repository
-        type: TaskRepository
-      - name: resolution_service
-        type: DependencyResolutionService
-      command:
-        attributes:
-        - name: task_id
-          type: str
-        - name: approved
-          type: bool
-        - name: feedback
-          type: str
-      result:
-        attributes:
-        - name: success
-          type: bool
-        - name: task_id
-          type: str
-        - name: affected_tasks
-          type: list[str]
-          optional: true
-        - name: error
-          type: str
-          optional: true
-    - name: ReviseTaskDetails
-      kind: command
-      dependencies:
-      - name: repository
-        type: TaskRepository
-      command:
-        attributes:
-        - name: task_id
-          type: str
-        - name: name
-          type: str | None
-          optional: true
-        - name: description
-          type: str | None
-          optional: true
-        - name: effort
-          type: int | None
-          optional: true
-        - name: base_value
-          type: float | None
-          optional: true
-      result:
-        attributes:
-        - name: success
-          type: bool
-        - name: error
-          type: str
-          optional: true
-    - name: SubmitTaskResult
-      kind: command
-      command:
-        attributes:
-        - name: task_id
-          type: str
-        - name: summary
-          type: str
-        - name: artifacts
-          type: list[str]
-          optional: true
-        - name: error
-          type: Optional[str]
-          optional: true
-      result:
-        attributes:
-        - name: repository
-          type: TaskRepository
-    - name: SuggestNextAction
-      kind: query
-      dependencies:
-      - name: repository
-        type: TaskRepository
-      - name: priority_service
-        type: PriorityAnalysisService
-      query:
-        attributes:
-        - name: top_n
-          type: int
-        - name: project_id
-          type: Optional[str]
-          optional: true
-      result:
-        attributes:
-        - name: tasks
-          type: list[Task]
-    - name: UpdateTaskStatus
-      kind: command
-      dependencies:
-      - name: repository
-        type: TaskRepository
-      - name: resolution_service
-        type: DependencyResolutionService
-      command:
-        attributes:
-        - name: task_id
-          type: str
-        - name: new_status
-          type: str
-      result:
-        attributes:
-        - name: success
-          type: bool
-        - name: affected_tasks
-          type: list[str]
-        - name: error
-          type: str
-          optional: true
   infrastructure:
     implementations:
-    - name: SqlAlchemyTaskRepository
-      implements: TaskRepository
-      technology: sql
-      description: SQLAlchemy implementation of TaskRepository.
-      attributes:
-      - name: session_factory
-        type: Callable[[], Session]
-      private_methods:
-      - name: _to_domain
-        inputs:
-        - name: model
-          type: Any
-        output:
-          type: Task
-      - name: _to_model
-        inputs:
-        - name: task
-          type: Task
-        - name: session
-          type: Session
-        output:
-          type: Any
     - name: YamlTaskRepository
       implements: TaskRepository
       technology: yaml
@@ -748,4 +731,26 @@ contexts:
           type: dict[str, Any]
         output:
           type: Task
+    - name: SqlAlchemyTaskRepository
+      implements: TaskRepository
+      technology: sql
+      description: SQLAlchemy implementation of TaskRepository.
+      attributes:
+      - name: session_factory
+        type: Callable[[], Session]
+      private_methods:
+      - name: _to_domain
+        inputs:
+        - name: model
+          type: TaskModel
+        output:
+          type: Task
+      - name: _to_model
+        inputs:
+        - name: task
+          type: Task
+        - name: session
+          type: Session
+        output:
+          type: TaskModel
 - name: Shared
