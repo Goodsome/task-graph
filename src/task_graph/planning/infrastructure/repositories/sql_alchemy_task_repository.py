@@ -23,7 +23,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
 
     def get(self, task_id: TaskId) -> Optional[Task]:
         with self.session_factory() as session:
-            stmt = select(TaskModel).where(TaskModel.id == str(task_id.value))
+            stmt = select(TaskModel).where(TaskModel.id == task_id.value)
             model = session.execute(stmt).scalar_one_or_none()
             if not model:
                 return None
@@ -45,7 +45,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
 
     def find_dependents(self, task_id: TaskId) -> list[Task]:
         with self.session_factory() as session:
-            stmt = select(TaskModel).where(TaskModel.id == str(task_id.value))
+            stmt = select(TaskModel).where(TaskModel.id == task_id.value)
             model = session.execute(stmt).scalar_one_or_none()
             if not model:
                 return []
@@ -53,7 +53,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
 
     def delete(self, task_id: TaskId) -> None:
         with self.session_factory() as session:
-            stmt = select(TaskModel).where(TaskModel.id == str(task_id.value))
+            stmt = select(TaskModel).where(TaskModel.id == task_id.value)
             model = session.execute(stmt).scalar_one_or_none()
             if model:
                 session.delete(model)
@@ -63,7 +63,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
         return self.get(task_id)
 
     def find_by_ids(self, task_ids: set[TaskId]) -> list[Task]:
-        ids = [str(tid.value) for tid in task_ids]
+        ids = [tid.value for tid in task_ids]
         with self.session_factory() as session:
             stmt = select(TaskModel).where(TaskModel.id.in_(ids))
             models = session.execute(stmt).scalars().all()
@@ -121,11 +121,11 @@ class SqlAlchemyTaskRepository(TaskRepository):
         )
 
     def _to_model(self, task: Task, session: Session) -> TaskModel:
-        stmt = select(TaskModel).where(TaskModel.id == str(task.id.value))
+        stmt = select(TaskModel).where(TaskModel.id == task.id.value)
         model = session.execute(stmt).scalar_one_or_none()
         
         if not model:
-            model = TaskModel(id=str(task.id.value))
+            model = TaskModel(id=task.id.value)
 
         model.project_id = task.project_id
         model.name = task.name
@@ -141,7 +141,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
         )
 
         # Handle dependencies
-        dep_ids = [str(tid.value) for tid in task.dependencies]
+        dep_ids = [tid.value for tid in task.dependencies]
         if dep_ids:
             dep_stmt = select(TaskModel).where(TaskModel.id.in_(dep_ids))
             dependencies = session.execute(dep_stmt).scalars().all()

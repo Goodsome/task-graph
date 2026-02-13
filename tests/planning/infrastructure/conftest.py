@@ -1,7 +1,21 @@
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy.dialects.postgresql import JSONB, UUID, ARRAY
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy import create_engine, JSON
 from sqlalchemy.orm import sessionmaker, Session
 from task_graph.planning.infrastructure.orm import Base
+
+@compiles(JSONB, "sqlite")
+def compile_jsonb(type_, compiler, **kw):
+    return compiler.visit_JSON(type_, **kw)
+
+@compiles(UUID, "sqlite")
+def compile_uuid(type_, compiler, **kw):
+    return "VARCHAR(36)"
+
+@compiles(ARRAY, "sqlite")
+def compile_array(type_, compiler, **kw):
+    return "JSON"
 
 @pytest.fixture(scope="session")
 def engine():
