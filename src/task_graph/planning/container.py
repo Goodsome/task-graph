@@ -75,7 +75,8 @@ class PlanningContainer(containers.DeclarativeContainer):
     modify_task_dependencies = providers.Factory(
         ModifyTaskDependencies,
         repository=task_repository,
-        cycle_detector=cycle_detection_service
+        cycle_detector=cycle_detection_service,
+        dependency_resolver=dependency_resolution_service
     )
 
     revise_task_details = providers.Factory(

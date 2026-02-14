@@ -74,7 +74,7 @@ def test_review_task_rejected(use_case, mock_repo):
     
     def side_effect_review(approved, feedback):
         if not approved:
-            mock_task.status = TaskStatus.REJECTED
+            mock_task.status = TaskStatus.CHANGES_REQUESTED
     mock_task.review.side_effect = side_effect_review
     mock_task.is_done.return_value = False
 
@@ -88,7 +88,7 @@ def test_review_task_rejected(use_case, mock_repo):
 
     # Assert
     assert result.success is True
-    assert mock_task.status == TaskStatus.REJECTED
+    assert mock_task.status == TaskStatus.CHANGES_REQUESTED
     mock_task.review.assert_called_once_with(approved=False, feedback="Formatting is off.")
     mock_repo.save.assert_called_with(mock_task)
 

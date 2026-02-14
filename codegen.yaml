@@ -580,6 +580,8 @@ contexts:
         type: TaskRepository
       - name: cycle_detector
         type: CycleDetectionService
+      - name: dependency_resolver
+        type: DependencyResolutionService
       command:
         attributes:
         - name: task_id
