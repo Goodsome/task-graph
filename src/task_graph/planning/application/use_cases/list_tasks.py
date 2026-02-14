@@ -48,7 +48,7 @@ class ListTasks:
                 math.ceil(total_count / query.page_size) if total_count > 0 else 1
             )
             
-            tasks_data = [t.to_dict() for t in paged_tasks]
+            tasks_data = [t.to_summary_dict() for t in paged_tasks]
             
             return ListTasksResult(
                 tasks=tasks_data,

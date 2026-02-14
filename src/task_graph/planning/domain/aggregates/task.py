@@ -120,6 +120,18 @@ class Task(Aggregate):
             mode="json"
         )
 
+    def to_summary_dict(self) -> dict:
+        """Returns a simplified dictionary representation for listing."""
+        return {
+            "id": str(self.id),
+            "project_id": self.project_id,
+            "name": self.name,
+            "status": self.status.value,
+            "planning_level": self.planning_level.value,
+            "effort": self.effort.value,
+            "base_value": self.base_value.value,
+        }
+
 
     def mark_completed(
         self,

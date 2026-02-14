@@ -118,6 +118,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
             dependencies={d.id for d in model.dependencies},
             planning_level=model.planning_level,
             output=model.output,
+            review_feedback=model.review_feedback,
         )
 
     def _to_model(self, task: Task, session: Session) -> TaskModel:

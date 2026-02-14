@@ -327,16 +327,7 @@ def suggest_next_action(top_n: int = 3, project_id: Optional[str] = None) -> dic
     query = SuggestNextActionQuery(top_n=top_n, project_id=project_id)
     result = use_case.execute(query)
 
-    tasks_data = []
-    for task in result.tasks:
-        tasks_data.append({
-            "id": str(task.id),
-            "name": task.name,
-            "description": task.description,
-            "status": task.status.value,
-            "effort": task.effort.value,
-            "base_value": task.base_value.value,
-        })
+    tasks_data = [t.to_summary_dict() for t in result.tasks]
 
     return {"tasks": tasks_data}
 
