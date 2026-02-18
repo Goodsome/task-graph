@@ -7,15 +7,18 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - postgres_home:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d taskgraph"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
 volumes:
-  postgres_data:  # 数据持久化卷
+  postgres_data:
+  postgres_home:

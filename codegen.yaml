@@ -11,11 +11,11 @@ contexts:
       - name: id
         type: TaskId
       - name: project_id
-        type: str
+        type: string
       - name: name
-        type: str
+        type: string
       - name: description
-        type: str
+        type: string
       - name: status
         type: TaskStatus
       - name: completion_logic
@@ -25,32 +25,31 @@ contexts:
       - name: base_value
         type: ValueScore
       - name: dependencies
-        type: set[TaskId]
+        type: TaskId
+        container: set
       - name: dependents
-        type: set[TaskId]
-        optional: true
+        type: TaskId
+        container: set
       - name: planning_level
         type: PlanningLevel
       - name: recurrence
-        type: RecurrencePolicy | None
+        type: RecurrencePolicy
         optional: true
       - name: output
-        type: TaskOutput | None
+        type: TaskOutput
         optional: true
       - name: review_feedback
-        type: ReviewFeedback | None
+        type: ReviewFeedback
         optional: true
       behaviors:
       - name: create
         inputs:
-        - name: cls
-          type: Any
         - name: project_id
-          type: str
+          type: string
         - name: name
-          type: str
+          type: string
         - name: description
-          type: str
+          type: string
         - name: effort
           type: StoryPoint
         - name: base_value
@@ -58,44 +57,56 @@ contexts:
         - name: completion_logic
           type: CompletionLogic
         - name: dependencies
-          type: set[TaskId]
+          type: TaskId
+          container: set
         - name: planning_level
-          type: Union[str, PlanningLevel]
+          type: Any
+          custom_type_string: Union[str, PlanningLevel]
         - name: status
-          type: TaskStatus | None
+          type: TaskStatus
+          optional: true
         output:
           type: Task
       - name: reconstitute
         inputs:
-        - name: cls
-          type: Any
         - name: task_id
-          type: str
+          type: string
         - name: project_id
-          type: str
+          type: string
         - name: name
-          type: str
+          type: string
         - name: description
-          type: str
+          type: string
         - name: status
-          type: Union[TaskStatus, str]
+          type: Any
+          custom_type_string: Union[TaskStatus, str]
         - name: effort
-          type: Union[StoryPoint, int]
+          type: Any
+          custom_type_string: Union[StoryPoint, int]
         - name: base_value
-          type: Union[ValueScore, float]
+          type: Any
+          custom_type_string: Union[ValueScore, float]
         - name: completion_logic
-          type: Union[CompletionLogic, str]
+          type: Any
+          custom_type_string: Union[CompletionLogic, str]
         - name: dependencies
-          type: Union[set[str], set[TaskId]]
+          type: Any
+          custom_type_string: Union[set[str], set[TaskId]]
         - name: planning_level
-          type: Union[PlanningLevel, str]
+          type: Any
+          custom_type_string: Union[PlanningLevel, str]
         - name: output
-          type: TaskOutput | None
+          type: TaskOutput
+          optional: true
         - name: review_feedback
-          type: ReviewFeedback | None
+          type: ReviewFeedback
+          optional: true
         output:
           type: Any
       - name: to_dict
+        output:
+          type: dict
+      - name: to_summary_dict
         output:
           type: dict
       - name: mark_completed
@@ -119,9 +130,9 @@ contexts:
       - name: review
         inputs:
         - name: approved
-          type: bool
+          type: boolean
         - name: feedback
-          type: str
+          type: string
         output:
           type: None
     enums:
@@ -180,12 +191,9 @@ contexts:
       attributes:
       - name: value
         type: float
-        optional: true
       behaviors:
       - name: create
         inputs:
-        - name: cls
-          type: Any
         - name: value
           type: float
         output:
@@ -193,13 +201,13 @@ contexts:
       - name: __add__
         inputs:
         - name: other
-          type: Any
+          type: any
         output:
           type: Any
       - name: __radd__
         inputs:
         - name: other
-          type: Any
+          type: any
         output:
           type: Any
       - name: serialize
@@ -207,21 +215,20 @@ contexts:
           type: float
       - name: validate_from_primitive
         inputs:
-        - name: cls
-          type: Any
         - name: data
-          type: Any
+          type: any
         output:
           type: Any
     - name: TaskOutput
       description: 任务执行者的交付物
       attributes:
       - name: summary
-        type: str
+        type: string
       - name: artifacts
-        type: list[str]
+        type: string
+        container: list
       - name: error
-        type: str | None
+        type: string
         optional: true
     - name: RecurrencePolicy
       description: Rules for creating a successor task upon completion.
@@ -229,10 +236,9 @@ contexts:
       - name: type
         type: RecurrenceType
       - name: max_repetitions
-        type: int
-        optional: true
+        type: integer
       - name: current_iteration
-        type: int
+        type: integer
       behaviors:
       - name: next_iteration
         output:
@@ -242,15 +248,12 @@ contexts:
         8, 13...).
       attributes:
       - name: value
-        type: int
-        optional: true
+        type: integer
       behaviors:
       - name: create
         inputs:
-        - name: cls
-          type: Any
         - name: effort
-          type: int
+          type: integer
         output:
           type: StoryPoint
       - name: serialize
@@ -258,63 +261,55 @@ contexts:
           type: int
       - name: validate_from_primitive
         inputs:
-        - name: cls
-          type: Any
         - name: data
-          type: Any
+          type: any
         output:
           type: Any
       - name: validate_fibonacci
         inputs:
-        - name: cls
-          type: Any
         - name: v
-          type: int
+          type: integer
         output:
           type: int
       - name: __add__
         inputs:
         - name: other
-          type: Any
+          type: any
         output:
           type: Any
       - name: __radd__
         inputs:
         - name: other
-          type: Any
+          type: any
         output:
           type: Any
       - name: __lt__
         inputs:
         - name: other
-          type: Any
+          type: any
         output:
           type: Any
     - name: ReviewFeedback
       description: 任务规划者的验收意见
       attributes:
       - name: comment
-        type: str
+        type: string
       - name: decision
-        type: str
+        type: string
     - name: TaskId
       description: Unique identifier for a Task.
       attributes:
       - name: value
-        type: UUID
+        type: uuid
       behaviors:
       - name: create
-        inputs:
-        - name: cls
-          type: Any
         output:
           type: Any
       - name: reconstitute
         inputs:
-        - name: cls
-          type: Any
         - name: value
-          type: Union[UUID, str]
+          type: Any
+          custom_type_string: Union[UUID, str]
         output:
           type: Any
       - name: __str__
@@ -325,10 +320,8 @@ contexts:
           type: str
       - name: validate_from_primitive
         inputs:
-        - name: cls
-          type: Any
         - name: data
-          type: Any
+          type: any
         output:
           type: Any
     services:
@@ -363,7 +356,8 @@ contexts:
         - name: repository
           type: TaskRepository
         - name: project_id
-          type: Optional[str]
+          type: string
+          optional: true
         output:
           type: list[Task]
     ports:
@@ -387,7 +381,8 @@ contexts:
       - name: find_all_active
         inputs:
         - name: project_id
-          type: Optional[str]
+          type: string
+          optional: true
         output:
           type: list[Task]
       - name: find_all
@@ -414,23 +409,28 @@ contexts:
       - name: find_by_ids
         inputs:
         - name: task_ids
-          type: set[TaskId]
+          type: TaskId
+          container: set
         output:
           type: list[Task]
       - name: find_paged
         inputs:
         - name: status
-          type: Optional[TaskStatus]
+          type: TaskStatus
+          optional: true
         - name: project_id
-          type: Optional[str]
+          type: string
+          optional: true
         - name: planning_level
-          type: Optional[PlanningLevel]
+          type: PlanningLevel
+          optional: true
         - name: search
-          type: Optional[str]
+          type: string
+          optional: true
         - name: page
-          type: int
+          type: integer
         - name: page_size
-          type: int
+          type: integer
         output:
           type: tuple[list[Task], int]
   application:
@@ -440,14 +440,14 @@ contexts:
       command:
         attributes:
         - name: task_id
-          type: str
+          type: string
         - name: summary
-          type: str
+          type: string
         - name: artifacts
-          type: list[str]
-          optional: true
+          type: string
+          container: list
         - name: error
-          type: Optional[str]
+          type: string
           optional: true
       result:
         attributes:
@@ -461,31 +461,30 @@ contexts:
       command:
         attributes:
         - name: project_id
-          type: str
+          type: string
         - name: name
-          type: str
+          type: string
         - name: description
-          type: str
+          type: string
         - name: effort
-          type: int
+          type: integer
         - name: base_value
           type: float
         - name: planning_level
           type: PlanningLevel
         - name: completion_logic
           type: CompletionLogic
-          optional: true
         - name: dependencies
-          type: list[str]
-          optional: true
+          type: string
+          container: list
       result:
         attributes:
         - name: success
-          type: bool
+          type: boolean
         - name: task_id
-          type: str
+          type: string
         - name: error
-          type: str
+          type: string
     - name: UpdateTaskStatus
       kind: command
       dependencies:
@@ -496,18 +495,18 @@ contexts:
       command:
         attributes:
         - name: task_id
-          type: str
+          type: string
         - name: new_status
-          type: str
+          type: string
       result:
         attributes:
         - name: success
-          type: bool
+          type: boolean
         - name: affected_tasks
-          type: list[str]
+          type: string
+          container: list
         - name: error
-          type: str
-          optional: true
+          type: string
     - name: SuggestNextAction
       kind: query
       dependencies:
@@ -518,14 +517,15 @@ contexts:
       query:
         attributes:
         - name: top_n
-          type: int
+          type: integer
         - name: project_id
-          type: Optional[str]
+          type: string
           optional: true
       result:
         attributes:
         - name: tasks
-          type: list[Task]
+          type: Task
+          container: list
     - name: GetTaskDetails
       kind: query
       dependencies:
@@ -534,17 +534,17 @@ contexts:
       query:
         attributes:
         - name: task_id
-          type: str
-          optional: true
+          type: string
       result:
         attributes:
         - name: success
-          type: bool
+          type: boolean
         - name: task
-          type: Optional[dict[str, Any]]
+          type: any
+          container: map
           optional: true
         - name: error
-          type: Optional[str]
+          type: string
           optional: true
     - name: ReviewTask
       kind: command
@@ -556,23 +556,22 @@ contexts:
       command:
         attributes:
         - name: task_id
-          type: str
+          type: string
         - name: approved
-          type: bool
+          type: boolean
         - name: feedback
-          type: str
+          type: string
       result:
         attributes:
         - name: success
-          type: bool
+          type: boolean
         - name: task_id
-          type: str
+          type: string
         - name: affected_tasks
-          type: list[str]
-          optional: true
+          type: string
+          container: list
         - name: error
-          type: str
-          optional: true
+          type: string
     - name: ModifyTaskDependencies
       kind: command
       dependencies:
@@ -585,20 +584,19 @@ contexts:
       command:
         attributes:
         - name: task_id
-          type: str
+          type: string
         - name: added_dependencies
-          type: list[str]
-          optional: true
+          type: string
+          container: list
         - name: removed_dependencies
-          type: list[str]
-          optional: true
+          type: string
+          container: list
       result:
         attributes:
         - name: success
-          type: bool
+          type: boolean
         - name: error
-          type: str
-          optional: true
+          type: string
     - name: ReviseTaskDetails
       kind: command
       dependencies:
@@ -607,26 +605,25 @@ contexts:
       command:
         attributes:
         - name: task_id
-          type: str
+          type: string
         - name: name
-          type: str | None
+          type: string
           optional: true
         - name: description
-          type: str | None
+          type: string
           optional: true
         - name: effort
-          type: int | None
+          type: integer
           optional: true
         - name: base_value
-          type: float | None
+          type: float
           optional: true
       result:
         attributes:
         - name: success
-          type: bool
+          type: boolean
         - name: error
-          type: str
-          optional: true
+          type: string
     - name: ClaimTask
       kind: command
       dependencies:
@@ -637,22 +634,19 @@ contexts:
       command:
         attributes:
         - name: task_id
-          type: str
+          type: string
         - name: executor_id
-          type: str
-          optional: true
+          type: string
       result:
         attributes:
         - name: success
-          type: bool
+          type: boolean
         - name: task_id
-          type: str
+          type: string
         - name: error
-          type: str
-          optional: true
+          type: string
         - name: error_code
-          type: str
-          optional: true
+          type: string
     - name: ListTasks
       kind: query
       dependencies:
@@ -661,35 +655,34 @@ contexts:
       query:
         attributes:
         - name: project_id
-          type: Optional[str]
+          type: string
           optional: true
         - name: page
-          type: int
-          optional: true
+          type: integer
         - name: page_size
-          type: int
-          optional: true
+          type: integer
         - name: status
-          type: Optional[TaskStatus]
+          type: TaskStatus
           optional: true
         - name: planning_level
-          type: Optional[PlanningLevel]
+          type: PlanningLevel
           optional: true
         - name: search
-          type: Optional[str]
+          type: string
           optional: true
       result:
         attributes:
         - name: tasks
-          type: list[dict]
+          type: dict
+          container: list
         - name: total_count
-          type: int
+          type: integer
         - name: total_pages
-          type: int
+          type: integer
         - name: current_page
-          type: int
+          type: integer
         - name: error
-          type: Optional[str]
+          type: string
           optional: true
   infrastructure:
     implementations:
@@ -700,22 +693,19 @@ contexts:
         \ the structure:\nproject: ...\ntasks:\n  - id: ...\n    name: ..."
       attributes:
       - name: file_path
-        type: str
-        optional: true
+        type: string
       - name: _cache
-        type: dict[str, Task]
-        optional: true
+        type: Task
+        container: map
       private_methods:
-      - name: __post_init__
-        output:
-          type: Any
       - name: _read_yaml
         output:
           type: dict[str, Any]
       - name: _write_yaml
         inputs:
         - name: data
-          type: dict[str, Any]
+          type: any
+          container: map
         output:
           type: None
       - name: _load_all_tasks
@@ -730,7 +720,8 @@ contexts:
       - name: _deserialize_task
         inputs:
         - name: raw
-          type: dict[str, Any]
+          type: any
+          container: map
         output:
           type: Task
     - name: SqlAlchemyTaskRepository
@@ -739,7 +730,8 @@ contexts:
       description: SQLAlchemy implementation of TaskRepository.
       attributes:
       - name: session_factory
-        type: Callable[[], Session]
+        type: Session
+        container: callable
       private_methods:
       - name: _to_domain
         inputs:
