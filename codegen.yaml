@@ -30,6 +30,7 @@ contexts:
       - name: dependents
         type: TaskId
         container: set
+        optional: true
       - name: planning_level
         type: PlanningLevel
       - name: recurrence
@@ -65,6 +66,7 @@ contexts:
         - name: status
           type: TaskStatus
           optional: true
+          default: None
         output:
           type: Task
       - name: reconstitute
@@ -98,9 +100,11 @@ contexts:
         - name: output
           type: TaskOutput
           optional: true
+          default: None
         - name: review_feedback
           type: ReviewFeedback
           optional: true
+          default: None
         output:
           type: Any
       - name: to_dict
@@ -191,6 +195,7 @@ contexts:
       attributes:
       - name: value
         type: float
+        default: Field(..., gt=0)
       behaviors:
       - name: create
         inputs:
@@ -237,6 +242,7 @@ contexts:
         type: RecurrenceType
       - name: max_repetitions
         type: integer
+        optional: true
       - name: current_iteration
         type: integer
       behaviors:
@@ -249,6 +255,7 @@ contexts:
       attributes:
       - name: value
         type: integer
+        default: Field(..., gt=0, description='Effort points must be positive')
       behaviors:
       - name: create
         inputs:
@@ -358,6 +365,7 @@ contexts:
         - name: project_id
           type: string
           optional: true
+          default: None
         output:
           type: list[Task]
     ports:
@@ -383,6 +391,7 @@ contexts:
         - name: project_id
           type: string
           optional: true
+          default: None
         output:
           type: list[Task]
       - name: find_all
@@ -446,9 +455,11 @@ contexts:
         - name: artifacts
           type: string
           container: list
+          optional: true
         - name: error
           type: string
           optional: true
+          default: None
       result:
         attributes:
         - name: repository
@@ -474,9 +485,11 @@ contexts:
           type: PlanningLevel
         - name: completion_logic
           type: CompletionLogic
+          default: CompletionLogic.ALL
         - name: dependencies
           type: string
           container: list
+          optional: true
       result:
         attributes:
         - name: success
@@ -507,6 +520,7 @@ contexts:
           container: list
         - name: error
           type: string
+          default: ''''''
     - name: SuggestNextAction
       kind: query
       dependencies:
@@ -521,6 +535,7 @@ contexts:
         - name: project_id
           type: string
           optional: true
+          default: None
       result:
         attributes:
         - name: tasks
@@ -535,6 +550,8 @@ contexts:
         attributes:
         - name: task_id
           type: string
+          default: Field(..., description='The ID of the task to retrieve details
+            for')
       result:
         attributes:
         - name: success
@@ -543,9 +560,11 @@ contexts:
           type: any
           container: map
           optional: true
+          default: None
         - name: error
           type: string
           optional: true
+          default: None
     - name: ReviewTask
       kind: command
       dependencies:
@@ -570,8 +589,10 @@ contexts:
         - name: affected_tasks
           type: string
           container: list
+          optional: true
         - name: error
           type: string
+          default: ''''''
     - name: ModifyTaskDependencies
       kind: command
       dependencies:
@@ -588,15 +609,18 @@ contexts:
         - name: added_dependencies
           type: string
           container: list
+          optional: true
         - name: removed_dependencies
           type: string
           container: list
+          optional: true
       result:
         attributes:
         - name: success
           type: boolean
         - name: error
           type: string
+          optional: true
     - name: ReviseTaskDetails
       kind: command
       dependencies:
@@ -609,21 +633,26 @@ contexts:
         - name: name
           type: string
           optional: true
+          default: None
         - name: description
           type: string
           optional: true
+          default: None
         - name: effort
           type: integer
           optional: true
+          default: None
         - name: base_value
           type: float
           optional: true
+          default: None
       result:
         attributes:
         - name: success
           type: boolean
         - name: error
           type: string
+          default: ''''''
     - name: ClaimTask
       kind: command
       dependencies:
@@ -637,6 +666,7 @@ contexts:
           type: string
         - name: executor_id
           type: string
+          optional: true
       result:
         attributes:
         - name: success
@@ -645,8 +675,10 @@ contexts:
           type: string
         - name: error
           type: string
+          optional: true
         - name: error_code
           type: string
+          optional: true
     - name: ListTasks
       kind: query
       dependencies:
@@ -657,19 +689,25 @@ contexts:
         - name: project_id
           type: string
           optional: true
+          default: None
         - name: page
           type: integer
+          default: '1'
         - name: page_size
           type: integer
+          default: '10'
         - name: status
           type: TaskStatus
           optional: true
+          default: None
         - name: planning_level
           type: PlanningLevel
           optional: true
+          default: None
         - name: search
           type: string
           optional: true
+          default: ''''''
       result:
         attributes:
         - name: tasks
@@ -684,6 +722,7 @@ contexts:
         - name: error
           type: string
           optional: true
+          default: None
   infrastructure:
     implementations:
     - name: YamlTaskRepository
@@ -694,9 +733,11 @@ contexts:
       attributes:
       - name: file_path
         type: string
+        default: '''C:\\Users\\86188\\code\\plan.yaml'''
       - name: _cache
         type: Task
         container: map
+        optional: true
       private_methods:
       - name: _read_yaml
         output:
