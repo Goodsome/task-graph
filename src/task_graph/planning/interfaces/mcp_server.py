@@ -64,6 +64,10 @@ from task_graph.planning.application.use_cases.review_task import (
     ReviewTaskCommand,
     ReviewTaskResult,
 )
+from task_graph.planning.application.use_cases.delete_task import (
+    DeleteTaskCommand,
+    DeleteTaskResult,
+)
 from task_graph.planning.domain.enums import CompletionLogic, PlanningLevel, TaskStatus
 
 # Initialize MCP Server
@@ -468,6 +472,31 @@ def review_task(
     return {
         "success": result.success,
         "affected_tasks": result.affected_tasks,
+        "error": result.error,
+    }
+
+
+@mcp.tool()
+def delete_task(task_id: str) -> dict:
+    """
+    删除指定的任务。
+
+    Args:
+        task_id: 要删除的任务的 ID
+        
+    Returns:
+        包含 success 和 error (如果失败) 的结果
+    """
+    container = _get_container()
+    use_case = container.delete_task()
+
+    cmd = DeleteTaskCommand(
+        task_id=task_id,
+    )
+
+    result = use_case.execute(cmd)
+    return {
+        "success": result.success,
         "error": result.error,
     }
 

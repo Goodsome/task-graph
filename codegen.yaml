@@ -723,6 +723,23 @@ contexts:
           type: string
           optional: true
           default: None
+    - name: DeleteTask
+      kind: command
+      dependencies:
+      - name: repository
+        type: TaskRepository
+      command:
+        attributes:
+        - name: task_id
+          type: string
+      result:
+        attributes:
+        - name: success
+          type: boolean
+        - name: error
+          type: string
+          optional: true
+          default: ''''''
   infrastructure:
     implementations:
     - name: YamlTaskRepository
