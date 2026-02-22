@@ -3,6 +3,7 @@ from dependency_injector import containers, providers
 from task_graph.planning.application.use_cases.claim_task import ClaimTask
 # 3. 导入 Use Cases
 from task_graph.planning.application.use_cases.create_task import CreateTask
+from task_graph.planning.application.use_cases.delete_task import DeleteTask
 from task_graph.planning.application.use_cases.get_task_details import GetTaskDetails
 from task_graph.planning.application.use_cases.list_tasks import ListTasks
 from task_graph.planning.application.use_cases.modify_task_dependencies import ModifyTaskDependencies
@@ -103,6 +104,11 @@ class PlanningContainer(containers.DeclarativeContainer):
     
     get_task_details = providers.Factory(
         GetTaskDetails,
+        repository=task_repository
+    )
+
+    delete_task = providers.Factory(
+        DeleteTask,
         repository=task_repository
     )
 
