@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
-from task_graph.planning.domain.ports.task_repository import TaskRepository
+from task_graph.planning.application.unit_of_work import UnitOfWork
 from task_graph.planning.domain.value_objects.task_id import TaskId
 
 class GetTaskDetailsQuery(BaseModel):
@@ -16,23 +16,24 @@ class GetTaskDetailsResult(BaseModel):
 @dataclass
 class GetTaskDetails:
     """Use case to get details of a specific task."""
-    repository: TaskRepository
+    uow: UnitOfWork
 
     def execute(self, query: GetTaskDetailsQuery) -> GetTaskDetailsResult:
         try:
-            task_id = TaskId.reconstitute(query.task_id)
-            task = self.repository.find_by_id(task_id)
-            
-            if task:
-                return GetTaskDetailsResult(
-                    success=True,
-                    task=task.to_dict()
-                )
-            else:
-                return GetTaskDetailsResult(
-                    success=False,
-                    error=f"Task with ID {query.task_id} not found."
-                )
+            with self.uow:
+                task_id = TaskId.reconstitute(query.task_id)
+                task = self.uow.tasks.find_by_id(task_id)
+                
+                if task:
+                    return GetTaskDetailsResult(
+                        success=True,
+                        task=task.to_dict()
+                    )
+                else:
+                    return GetTaskDetailsResult(
+                        success=False,
+                        error=f"Task with ID {query.task_id} not found."
+                    )
         except Exception as e:
             return GetTaskDetailsResult(
                 success=False,

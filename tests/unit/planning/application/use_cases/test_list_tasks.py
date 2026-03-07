@@ -8,8 +8,8 @@ def mock_repo():
     return Mock(spec=TaskRepository)
 
 @pytest.fixture
-def use_case(mock_repo):
-    return ListTasks(repository=mock_repo)
+def use_case(mock_uow):
+    return ListTasks(uow=mock_uow)
 
 def test_list_tasks_pagination(use_case, mock_repo):
     # Setup 25 mock tasks

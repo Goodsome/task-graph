@@ -13,61 +13,54 @@ from dataclasses import dataclass
 class SqlAlchemyTaskRepository(TaskRepository):
     """SQLAlchemy implementation of TaskRepository."""
 
-    session_factory: Callable[[], Session]
+    session: Session
 
     def save(self, task: Task) -> None:
-        with self.session_factory() as session:
-            model = self._to_model(task, session)
-            session.add(model)
-            session.commit()
+        model = self._to_model(task, self.session)
+        self.session.add(model)
+        self.session.flush()
 
     def get(self, task_id: TaskId) -> Optional[Task]:
-        with self.session_factory() as session:
-            stmt = select(TaskModel).where(TaskModel.id == task_id.value)
-            model = session.execute(stmt).scalar_one_or_none()
-            if not model:
-                return None
-            return self._to_domain(model)
+        stmt = select(TaskModel).where(TaskModel.id == task_id.value)
+        model = self.session.execute(stmt).scalar_one_or_none()
+        if not model:
+            return None
+        return self._to_domain(model)
 
     def find_all_active(self, project_id: Optional[str] = None) -> list[Task]:
-        with self.session_factory() as session:
-            stmt = select(TaskModel).where(TaskModel.status != TaskStatus.DONE.value)
-            if project_id:
-                stmt = stmt.where(TaskModel.project_id == project_id)
-            models = session.execute(stmt).scalars().all()
-            return [self._to_domain(m) for m in models]
+        stmt = select(TaskModel).where(TaskModel.status != TaskStatus.DONE.value)
+        if project_id:
+            stmt = stmt.where(TaskModel.project_id == project_id)
+        models = self.session.execute(stmt).scalars().all()
+        return [self._to_domain(m) for m in models]
 
     def find_all(self) -> list[Task]:
-        with self.session_factory() as session:
-            stmt = select(TaskModel)
-            models = session.execute(stmt).scalars().all()
-            return [self._to_domain(m) for m in models]
+        stmt = select(TaskModel)
+        models = self.session.execute(stmt).scalars().all()
+        return [self._to_domain(m) for m in models]
 
     def find_dependents(self, task_id: TaskId) -> list[Task]:
-        with self.session_factory() as session:
-            stmt = select(TaskModel).where(TaskModel.id == task_id.value)
-            model = session.execute(stmt).scalar_one_or_none()
-            if not model:
-                return []
-            return [self._to_domain(d) for d in model.dependents]
+        stmt = select(TaskModel).where(TaskModel.id == task_id.value)
+        model = self.session.execute(stmt).scalar_one_or_none()
+        if not model:
+            return []
+        return [self._to_domain(d) for d in model.dependents]
 
     def delete(self, task_id: TaskId) -> None:
-        with self.session_factory() as session:
-            stmt = select(TaskModel).where(TaskModel.id == task_id.value)
-            model = session.execute(stmt).scalar_one_or_none()
-            if model:
-                session.delete(model)
-                session.commit()
+        stmt = select(TaskModel).where(TaskModel.id == task_id.value)
+        model = self.session.execute(stmt).scalar_one_or_none()
+        if model:
+            self.session.delete(model)
+            self.session.flush()
 
     def find_by_id(self, task_id: TaskId) -> Task | None:
         return self.get(task_id)
 
     def find_by_ids(self, task_ids: set[TaskId]) -> list[Task]:
         ids = [tid.value for tid in task_ids]
-        with self.session_factory() as session:
-            stmt = select(TaskModel).where(TaskModel.id.in_(ids))
-            models = session.execute(stmt).scalars().all()
-            return [self._to_domain(m) for m in models]
+        stmt = select(TaskModel).where(TaskModel.id.in_(ids))
+        models = self.session.execute(stmt).scalars().all()
+        return [self._to_domain(m) for m in models]
 
     def find_paged(
         self,
@@ -78,32 +71,31 @@ class SqlAlchemyTaskRepository(TaskRepository):
         page: int,
         page_size: int,
     ) -> tuple[list[Task], int]:
-        with self.session_factory() as session:
-            # Create base select statement
-            stmt = select(TaskModel)
-            if status:
-                stmt = stmt.where(TaskModel.status == status.value)
-            if project_id:
-                stmt = stmt.where(TaskModel.project_id == project_id)
-            if planning_level:
-                stmt = stmt.where(TaskModel.planning_level == planning_level.value)
-            if search:
-                stmt = stmt.where(
-                    or_(
-                        TaskModel.name.ilike(f"%{search}%"),
-                        TaskModel.description.ilike(f"%{search}%"),
-                    )
+        # Create base select statement
+        stmt = select(TaskModel)
+        if status:
+            stmt = stmt.where(TaskModel.status == status.value)
+        if project_id:
+            stmt = stmt.where(TaskModel.project_id == project_id)
+        if planning_level:
+            stmt = stmt.where(TaskModel.planning_level == planning_level.value)
+        if search:
+            stmt = stmt.where(
+                or_(
+                    TaskModel.name.ilike(f"%{search}%"),
+                    TaskModel.description.ilike(f"%{search}%"),
                 )
+            )
 
-            # Get total count using a scalar subquery or separate count query
-            count_stmt = select(func.count()).select_from(stmt.subquery())
-            total = session.execute(count_stmt).scalar() or 0
+        # Get total count using a scalar subquery or separate count query
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = self.session.execute(count_stmt).scalar() or 0
 
-            # Get paged results
-            paged_stmt = stmt.offset((page - 1) * page_size).limit(page_size)
-            models = session.execute(paged_stmt).scalars().all()
-            
-            return [self._to_domain(m) for m in models], total
+        # Get paged results
+        paged_stmt = stmt.offset((page - 1) * page_size).limit(page_size)
+        models = self.session.execute(paged_stmt).scalars().all()
+        
+        return [self._to_domain(m) for m in models], total
 
     def _to_domain(self, model: TaskModel) -> Task:
         return Task.reconstitute(

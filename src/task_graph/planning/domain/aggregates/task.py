@@ -18,6 +18,12 @@ from task_graph.planning.domain.value_objects.recurrence_policy import (
 )
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
+from task_graph.planning.domain.events import (
+    TaskReadyEvent,
+    TaskCompletedEvent,
+    TaskReviewRequestedEvent,
+    TaskBlockedEvent,
+)
 
 
 class Task(Aggregate):
@@ -133,11 +139,25 @@ class Task(Aggregate):
         }
 
 
+    def _update_status(self, new_status: TaskStatus, reason: str = "") -> None:
+        if self.status == new_status:
+            return
+        
+        self.status = new_status
+        if new_status == TaskStatus.READY:
+            self.add_domain_event(TaskReadyEvent(task_id=str(self.id), project_id=self.project_id))
+        elif new_status == TaskStatus.DONE:
+            self.add_domain_event(TaskCompletedEvent(task_id=str(self.id), project_id=self.project_id))
+        elif new_status == TaskStatus.REVIEW:
+            self.add_domain_event(TaskReviewRequestedEvent(task_id=str(self.id), project_id=self.project_id))
+        elif new_status == TaskStatus.BLOCKED:
+            self.add_domain_event(TaskBlockedEvent(task_id=str(self.id), project_id=self.project_id, reason=reason))
+
     def mark_completed(
         self,
     ) -> None:
 
-        self.status = TaskStatus.DONE
+        self._update_status(TaskStatus.DONE)
 
     def is_done(
         self,
@@ -157,9 +177,9 @@ class Task(Aggregate):
             raise RuntimeError(f"task {self.id} current status is {self.status}, not in_progress")
         self.output = output
         if output.error:
-            self.status = TaskStatus.BLOCKED
+            self._update_status(TaskStatus.BLOCKED, reason=output.error)
         else:
-            self.status = TaskStatus.REVIEW
+            self._update_status(TaskStatus.REVIEW)
 
     def claim(self) -> None:
         """
@@ -173,7 +193,7 @@ class Task(Aggregate):
                 f"Task {self.id} cannot be claimed: current status is {self.status}, expected READY"
             )
 
-        self.status = TaskStatus.IN_PROGRESS
+        self._update_status(TaskStatus.IN_PROGRESS)
 
     def review(self, approved: bool, feedback: str) -> None:
         """
@@ -196,6 +216,6 @@ class Task(Aggregate):
         )
 
         if approved:
-            self.status = TaskStatus.DONE
+            self._update_status(TaskStatus.DONE)
         else:
-            self.status = TaskStatus.CHANGES_REQUESTED
+            self._update_status(TaskStatus.CHANGES_REQUESTED)

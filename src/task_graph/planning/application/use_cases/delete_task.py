@@ -1,7 +1,7 @@
 import logging
 from typing import Union
 from dataclasses import dataclass, field
-from task_graph.planning.domain.ports.task_repository import TaskRepository
+from task_graph.planning.application.unit_of_work import UnitOfWork
 from task_graph.planning.domain.value_objects import TaskId
 
 logger = logging.getLogger(__name__)
@@ -19,13 +19,15 @@ class DeleteTaskResult:
 
 @dataclass
 class DeleteTask:
-    repository: TaskRepository
+    uow: UnitOfWork
 
     def execute(self, cmd: DeleteTaskCommand) -> DeleteTaskResult:
         try:
-            task_id = TaskId.reconstitute(cmd.task_id)
-            self.repository.delete(task_id)
-            return DeleteTaskResult(success=True)
+            with self.uow:
+                task_id = TaskId.reconstitute(cmd.task_id)
+                self.uow.tasks.delete(task_id)
+                self.uow.commit() # Wait, delete might not have events, but needs commit.
+                return DeleteTaskResult(success=True)
         except Exception as e:
             logger.error(f"Failed to delete task {cmd.task_id}: {e}")
             import traceback

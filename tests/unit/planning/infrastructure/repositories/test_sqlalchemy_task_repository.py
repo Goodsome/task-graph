@@ -10,7 +10,9 @@ from task_graph.planning.infrastructure.orm import TaskModel
 
 @pytest.fixture
 def repository(session_factory):
-    return SqlAlchemyTaskRepository(session_factory=session_factory)
+    # Retrieve a single session for the repository tests
+    session = session_factory()
+    return SqlAlchemyTaskRepository(session=session)
 
 def test_save_and_get_task(repository):
     # Given

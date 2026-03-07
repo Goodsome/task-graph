@@ -20,9 +20,9 @@ def mock_dependency_service():
     return Mock(spec=DependencyResolutionService)
 
 @pytest.fixture
-def use_case(mock_repo, mock_dependency_service):
+def use_case(mock_uow, mock_dependency_service):
     return ClaimTask(
-        repository=mock_repo,
+        uow=mock_uow,
         dependency_service=mock_dependency_service
     )
 
@@ -32,6 +32,7 @@ def test_claim_task_success(use_case, mock_repo, mock_dependency_service):
     task_id_str = str(task_id.value)
     
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_task.id = task_id
     mock_task.status = TaskStatus.READY
     mock_task.is_claimable.return_value = True
@@ -71,6 +72,7 @@ def test_claim_task_not_ready(use_case, mock_repo):
     task_id_str = str(task_id.value)
     
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_task.id = task_id
     mock_task.status = TaskStatus.PENDING
     mock_task.is_claimable.return_value = False
@@ -92,6 +94,7 @@ def test_claim_task_already_claimed(use_case, mock_repo):
     task_id_str = str(task_id.value)
     
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_task.id = task_id
     mock_task.status = TaskStatus.IN_PROGRESS
     mock_task.is_claimable.return_value = False
@@ -113,6 +116,7 @@ def test_claim_task_blocked_by_dependencies(use_case, mock_repo, mock_dependency
     task_id_str = str(task_id.value)
     
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_task.id = task_id
     mock_task.status = TaskStatus.READY
     mock_task.is_claimable.return_value = True
@@ -136,6 +140,7 @@ def test_claim_task_domain_exception(use_case, mock_repo, mock_dependency_servic
     task_id_str = str(task_id.value)
     
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_task.id = task_id
     mock_task.status = TaskStatus.READY
     mock_task.is_claimable.return_value = True

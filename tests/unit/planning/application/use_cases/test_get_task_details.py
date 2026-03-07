@@ -10,8 +10,8 @@ def mock_repo():
     return Mock(spec=TaskRepository)
 
 @pytest.fixture
-def use_case(mock_repo):
-    return GetTaskDetails(repository=mock_repo)
+def use_case(mock_uow):
+    return GetTaskDetails(uow=mock_uow)
 
 def test_get_existing_task(use_case, mock_repo):
     task_id_str = str(uuid4())

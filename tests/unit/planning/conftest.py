@@ -80,6 +80,48 @@ class InMemoryTaskRepository(TaskRepository):
 def mock_repo():
     return InMemoryTaskRepository()
 
+from task_graph.planning.application.unit_of_work import UnitOfWork
+from task_graph.shared.ports.event_bus import EventBus
+from task_graph.shared.events import DomainEvent
+
+class MockEventBus(EventBus):
+    def __init__(self):
+        self.published_events = []
+    def publish(self, event: DomainEvent) -> None:
+        self.published_events.append(event)
+
+class InMemoryUnitOfWork(UnitOfWork):
+    def __init__(self, repo):
+        self._tasks = repo
+        self._event_bus = MockEventBus()
+        self.committed = False
+        self.rolled_back = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self.rollback()
+
+    @property
+    def tasks(self):
+        return self._tasks
+
+    @property
+    def event_bus(self):
+        return self._event_bus
+
+    def commit(self):
+        self.committed = True
+
+    def rollback(self):
+        self.rolled_back = True
+
+@pytest.fixture
+def mock_uow(mock_repo):
+    return InMemoryUnitOfWork(mock_repo)
+
 @pytest.fixture
 def create_task(mock_repo):
     """快速创建 Task 的 Helper"""

@@ -1,4 +1,4 @@
-from task_graph.planning.domain.ports.task_repository import TaskRepository
+from task_graph.planning.application.unit_of_work import UnitOfWork
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from dataclasses import dataclass, field
@@ -26,35 +26,41 @@ class SubmitTaskResultResult:
 class SubmitTaskResult:
     """Submit task execution result with artifacts and optional error. Updates task.output."""
 
-    repository: TaskRepository
+    uow: UnitOfWork
 
     def execute(self, cmd: SubmitTaskResultCommand) -> SubmitTaskResultResult:
         try:
-            # 1. 查找任务
-            task_id = TaskId.reconstitute(cmd.task_id)
-            task = self.repository.get(task_id)
-            
-            if not task:
-                return SubmitTaskResultResult(
-                    success=False,
-                    error=f"Task {cmd.task_id} not found"
+            with self.uow:
+                # 1. 查找任务
+                task_id = TaskId.reconstitute(cmd.task_id)
+                task = self.uow.tasks.get(task_id)
+                
+                if not task:
+                    return SubmitTaskResultResult(
+                        success=False,
+                        error=f"Task {cmd.task_id} not found"
+                    )
+                
+                # 2. 创建 TaskOutput
+                task_output = TaskOutput(
+                    summary=cmd.summary,
+                    artifacts=cmd.artifacts if cmd.artifacts else [],
+                    error=cmd.error
                 )
-            
-            # 2. 创建 TaskOutput
-            task_output = TaskOutput(
-                summary=cmd.summary,
-                artifacts=cmd.artifacts if cmd.artifacts else [],
-                error=cmd.error
-            )
-            
-            # 3. 设置任务输出
-            task.set_output(task_output)
-            
-            # 4. 保存任务
-            self.repository.save(task)
-            
-            return SubmitTaskResultResult(success=True)
-            
+                
+                # 3. 设置任务输出
+                task.set_output(task_output)
+                
+                # 4. 保存任务
+                self.uow.tasks.save(task)
+                
+                for event in task.collect_events():
+                    self.uow.event_bus.publish(event)
+                
+                self.uow.commit()
+                
+                return SubmitTaskResultResult(success=True)
+                
         except Exception as e:
             return SubmitTaskResultResult(
                 success=False,

@@ -23,9 +23,9 @@ def mock_dependency_resolver():
     return Mock(spec=DependencyResolutionService)
 
 @pytest.fixture
-def use_case(mock_repo, mock_cycle_service, mock_dependency_resolver):
+def use_case(mock_uow, mock_cycle_service, mock_dependency_resolver):
     return ModifyTaskDependencies(
-        repository=mock_repo,
+        uow=mock_uow,
         cycle_detector=mock_cycle_service,
         dependency_resolver=mock_dependency_resolver
     )
@@ -36,6 +36,7 @@ def test_add_dependency_success(use_case, mock_repo, mock_cycle_service):
     
     # Mock existing task
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_task.dependencies = set()
     mock_repo.get.side_effect = lambda id: mock_task if str(id.value) == task_id_str else (Mock() if str(id.value) == dep_id_str else None)
     
@@ -58,6 +59,7 @@ def test_add_dependency_cycle_detected(use_case, mock_repo, mock_cycle_service):
     dep_id_str = str(TaskId.create().value)
     
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_repo.get.side_effect = lambda id: mock_task if str(id.value) == task_id_str else Mock()
     
     # Simulate cycle
@@ -80,6 +82,7 @@ def test_remove_dependency(use_case, mock_repo):
     dep_id_str = str(dep_id.value)
     
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_task.dependencies = {dep_id}
     mock_repo.get.return_value = mock_task
     
@@ -101,9 +104,14 @@ def test_add_dependency_updates_status_to_pending(use_case, mock_repo, mock_cycl
     
     # Mock existing task is READY
     mock_task = MagicMock()
+    mock_task.collect_events.return_value = []
     mock_task.id = TaskId.reconstitute(task_id_str)
     mock_task.dependencies = set()
     mock_task.status = TaskStatus.READY
+    
+    def side_effect_status(status):
+        mock_task.status = status
+    mock_task._update_status.side_effect = side_effect_status
     
     # Dep task
     mock_dep = MagicMock()
@@ -134,9 +142,14 @@ def test_remove_dependency_updates_status_to_ready(use_case, mock_repo, mock_dep
     
     # Mock task is currently PENDING
     mock_task = MagicMock()
+    mock_task.collect_events.return_value = []
     mock_task.id = TaskId.reconstitute(task_id_str)
     mock_task.dependencies = {dep_id}
     mock_task.status = TaskStatus.PENDING
+    
+    def side_effect_status(status):
+        mock_task.status = status
+    mock_task._update_status.side_effect = side_effect_status
     mock_repo.get.return_value = mock_task
     
     # Resolver says UNBLOCKED after removing dependency

@@ -17,9 +17,9 @@ def mock_priority_service():
     return Mock(spec=PriorityAnalysisService)
 
 @pytest.fixture
-def use_case(mock_repo, mock_priority_service):
+def use_case(mock_uow, mock_priority_service):
     return SuggestNextAction(
-        repository=mock_repo,
+        uow=mock_uow,
         priority_service=mock_priority_service
     )
 

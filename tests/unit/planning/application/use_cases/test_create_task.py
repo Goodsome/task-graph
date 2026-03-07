@@ -10,8 +10,8 @@ def mock_repo():
     return Mock(spec=TaskRepository)
 
 @pytest.fixture
-def use_case(mock_repo):
-    return CreateTask(repository=mock_repo)
+def use_case(mock_uow):
+    return CreateTask(uow=mock_uow)
 
 def test_create_task_success(use_case, mock_repo):
     cmd = CreateTaskCommand(

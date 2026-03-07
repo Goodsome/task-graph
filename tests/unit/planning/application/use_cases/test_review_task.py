@@ -19,9 +19,9 @@ def mock_resolution_service():
     return Mock(spec=DependencyResolutionService)
 
 @pytest.fixture
-def use_case(mock_repo, mock_resolution_service):
+def use_case(mock_uow, mock_resolution_service):
     return ReviewTask(
-        repository=mock_repo,
+        uow=mock_uow,
         resolution_service=mock_resolution_service
     )
 
@@ -31,6 +31,7 @@ def test_review_task_approved(use_case, mock_repo, mock_resolution_service):
     task_id_str = str(task_id.value)
     
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_task.id = task_id
     mock_task.status = TaskStatus.REVIEW
     
@@ -67,6 +68,7 @@ def test_review_task_rejected(use_case, mock_repo):
     task_id_str = str(task_id.value)
     
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_task.id = task_id
     mock_task.status = TaskStatus.REVIEW
     
@@ -98,6 +100,7 @@ def test_review_task_invalid_state(use_case, mock_repo):
     task_id_str = str(task_id.value)
     
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_task.status = TaskStatus.IN_PROGRESS
     mock_repo.get.return_value = mock_task
 

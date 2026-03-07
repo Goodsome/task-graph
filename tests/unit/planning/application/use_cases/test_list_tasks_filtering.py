@@ -9,8 +9,8 @@ def mock_repo():
     return Mock(spec=TaskRepository)
 
 @pytest.fixture
-def use_case(mock_repo):
-    return ListTasks(repository=mock_repo)
+def use_case(mock_uow):
+    return ListTasks(uow=mock_uow)
 
 def test_list_tasks_filtering_params_passed(use_case, mock_repo):
     """验证 Use Case 正确地将筛选参数传递给 Repository 的 find_paged 方法。"""

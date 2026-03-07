@@ -1,4 +1,4 @@
-from task_graph.planning.domain.ports.task_repository import TaskRepository
+from task_graph.planning.application.unit_of_work import UnitOfWork
 from typing import Union
 from dataclasses import dataclass, field
 
@@ -27,31 +27,37 @@ class ReviseTaskDetailsResult:
 class ReviseTaskDetails:
     """Revise a task's details like name, description, effort, or base value."""
 
-    repository: TaskRepository
+    uow: UnitOfWork
 
     def execute(self, cmd: ReviseTaskDetailsCommand) -> ReviseTaskDetailsResult:
         try:
-            task_id = TaskId.reconstitute(cmd.task_id)
-            task = self.repository.get(task_id)
-            if not task:
-                return ReviseTaskDetailsResult(False, f"Task {cmd.task_id} not found")
+            with self.uow:
+                task_id = TaskId.reconstitute(cmd.task_id)
+                task = self.uow.tasks.get(task_id)
+                if not task:
+                    return ReviseTaskDetailsResult(False, f"Task {cmd.task_id} not found")
 
-            # 增量更新
-            if cmd.name is not None:
-                task.name = cmd.name
+                # 增量更新
+                if cmd.name is not None:
+                    task.name = cmd.name
 
-            if cmd.description is not None:
-                task.description = cmd.description
+                if cmd.description is not None:
+                    task.description = cmd.description
 
-            if cmd.effort is not None:
-                # 触发 Pydantic 校验
-                task.effort = StoryPoint.create(cmd.effort)
+                if cmd.effort is not None:
+                    # 触发 Pydantic 校验
+                    task.effort = StoryPoint.create(cmd.effort)
 
-            if cmd.base_value is not None:
-                task.base_value = ValueScore.create(cmd.base_value)
+                if cmd.base_value is not None:
+                    task.base_value = ValueScore.create(cmd.base_value)
 
-            self.repository.save(task)
-            return ReviseTaskDetailsResult(True)
+                self.uow.tasks.save(task)
+                
+                for event in task.collect_events():
+                    self.uow.event_bus.publish(event)
+                
+                self.uow.commit()
+                return ReviseTaskDetailsResult(True)
 
         except Exception as e:
             return ReviseTaskDetailsResult(False, str(e))

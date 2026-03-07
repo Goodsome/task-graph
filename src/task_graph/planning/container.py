@@ -18,6 +18,7 @@ from task_graph.planning.domain.services.dependency_resolution_service import De
 from task_graph.planning.domain.services.priority_analysis_service import PriorityAnalysisService
 from task_graph.planning.infrastructure.repositories.yaml_task_repository import YamlTaskRepository
 from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import SqlAlchemyTaskRepository
+from task_graph.planning.application.unit_of_work import SqlAlchemyUnitOfWork, YamlUnitOfWork
 from task_graph.planning.infrastructure.database import Database
 from task_graph.planning.config import get_settings
 
@@ -41,15 +42,18 @@ class PlanningContainer(containers.DeclarativeContainer):
             connection_string=str(_settings_obj.DATABASE_URL)
         )
         
-        # Determine actual implementation based on config
-        task_repository = providers.Singleton(
-            SqlAlchemyTaskRepository,
+        unit_of_work = providers.Factory(
+            SqlAlchemyUnitOfWork,
             session_factory=database.provided.session_factory
         )
     else:
         # Fallback to YAML implementation
-        task_repository = providers.Singleton(
+        yaml_repository = providers.Singleton(
             YamlTaskRepository,
+        )
+        unit_of_work = providers.Factory(
+            YamlUnitOfWork,
+            repository=yaml_repository
         )
 
     # --- Domain Service Layer ---
@@ -70,62 +74,62 @@ class PlanningContainer(containers.DeclarativeContainer):
 
     create_task: providers.Factory[CreateTask] = providers.Factory(
         CreateTask,
-        repository=task_repository
+        uow=unit_of_work
     )
 
     modify_task_dependencies = providers.Factory(
         ModifyTaskDependencies,
-        repository=task_repository,
+        uow=unit_of_work,
         cycle_detector=cycle_detection_service,
         dependency_resolver=dependency_resolution_service
     )
 
     revise_task_details = providers.Factory(
         ReviseTaskDetails,
-        repository=task_repository
+        uow=unit_of_work
     )
 
     update_task_status = providers.Factory(
         UpdateTaskStatus,
-        repository=task_repository,
+        uow=unit_of_work,
         resolution_service=dependency_resolution_service
     )
 
     suggest_next_action = providers.Factory(
         SuggestNextAction,
-        repository=task_repository,
+        uow=unit_of_work,
         priority_service=priority_analysis_service
     )
 
     list_tasks = providers.Factory(
         ListTasks,
-        repository=task_repository
+        uow=unit_of_work
     )
     
     get_task_details = providers.Factory(
         GetTaskDetails,
-        repository=task_repository
+        uow=unit_of_work
     )
 
     delete_task = providers.Factory(
         DeleteTask,
-        repository=task_repository
+        uow=unit_of_work
     )
 
     submit_task_result = providers.Factory(
         SubmitTaskResult,
-        repository=task_repository
+        uow=unit_of_work
     )
 
     claim_task = providers.Factory(
         ClaimTask,
-        repository=task_repository,
+        uow=unit_of_work,
         dependency_service=dependency_resolution_service
     )
 
     review_task = providers.Factory(
         ReviewTask,
-        repository=task_repository,
+        uow=unit_of_work,
         resolution_service=dependency_resolution_service
     )
 

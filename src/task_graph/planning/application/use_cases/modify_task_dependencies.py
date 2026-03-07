@@ -1,4 +1,4 @@
-from task_graph.planning.domain.ports.task_repository import TaskRepository
+from task_graph.planning.application.unit_of_work import UnitOfWork
 from dataclasses import dataclass, field
 from task_graph.planning.domain.services import CycleDetectionService
 from task_graph.planning.domain.value_objects import TaskId
@@ -30,7 +30,7 @@ class ModifyTaskDependenciesResult:
 @dataclass
 class ModifyTaskDependencies:
 
-    repository: TaskRepository
+    uow: UnitOfWork
     cycle_detector: CycleDetectionService
     dependency_resolver: DependencyResolutionService
 
@@ -39,38 +39,43 @@ class ModifyTaskDependencies:
     ) -> ModifyTaskDependenciesResult:
 
         try:
-            target_id = TaskId.reconstitute(cmd.task_id)
-            task = self.repository.get(target_id)
-            if not task:
-                return ModifyTaskDependenciesResult(
-                    False, f"Task {cmd.task_id} not found"
-                )
-            for rem_id_str in cmd.removed_dependencies:
-                rem_id = TaskId.reconstitute(rem_id_str)
-                if rem_id in task.dependencies:
-                    task.dependencies.remove(rem_id)
-            for add_id_str in cmd.added_dependencies:
-                add_id = TaskId.reconstitute(add_id_str)
-                if not self.repository.get(add_id):
+            with self.uow:
+                target_id = TaskId.reconstitute(cmd.task_id)
+                task = self.uow.tasks.get(target_id)
+                if not task:
                     return ModifyTaskDependenciesResult(
-                        False, f"Dependency {add_id_str} not found"
+                        False, f"Task {cmd.task_id} not found"
                     )
-                if self.cycle_detector.detect_cycle(target_id, add_id, self.repository):
-                    return ModifyTaskDependenciesResult(
-                        False, f"Cycle detected when adding dependency {add_id_str}"
-                    )
-                task.dependencies.add(add_id)
-            
-            # Recalculate status based on new dependencies
-            is_blocked = self.dependency_resolver.evaluate_blocking_status(task, self.repository)
-            if is_blocked:
-                if task.status == TaskStatus.READY:
-                    task.status = TaskStatus.PENDING
-            else:
-                if task.status in [TaskStatus.PENDING, TaskStatus.BLOCKED]:
-                    task.status = TaskStatus.READY
+                for rem_id_str in cmd.removed_dependencies:
+                    rem_id = TaskId.reconstitute(rem_id_str)
+                    if rem_id in task.dependencies:
+                        task.dependencies.remove(rem_id)
+                for add_id_str in cmd.added_dependencies:
+                    add_id = TaskId.reconstitute(add_id_str)
+                    if not self.uow.tasks.get(add_id):
+                        return ModifyTaskDependenciesResult(
+                            False, f"Dependency {add_id_str} not found"
+                        )
+                    if self.cycle_detector.detect_cycle(target_id, add_id, self.uow.tasks):
+                        return ModifyTaskDependenciesResult(
+                            False, f"Cycle detected when adding dependency {add_id_str}"
+                        )
+                    task.dependencies.add(add_id)
+                
+                # Recalculate status based on new dependencies
+                is_blocked = self.dependency_resolver.evaluate_blocking_status(task, self.uow.tasks)
+                if is_blocked:
+                    if task.status == TaskStatus.READY:
+                        task._update_status(TaskStatus.PENDING)
+                else:
+                    if task.status in [TaskStatus.PENDING, TaskStatus.BLOCKED]:
+                        task._update_status(TaskStatus.READY)
 
-            self.repository.save(task)
-            return ModifyTaskDependenciesResult(True)
+                self.uow.tasks.save(task)
+                for event in task.collect_events():
+                    self.uow.event_bus.publish(event)
+                
+                self.uow.commit()
+                return ModifyTaskDependenciesResult(True)
         except Exception as e:
             return ModifyTaskDependenciesResult(False, str(e))

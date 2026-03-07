@@ -10,8 +10,8 @@ def mock_repo():
     return Mock(spec=TaskRepository)
 
 @pytest.fixture
-def use_case(mock_repo):
-    return DeleteTask(repository=mock_repo)
+def use_case(mock_uow):
+    return DeleteTask(uow=mock_uow)
 
 def test_delete_task_success(use_case, mock_repo):
     task_id_str = str(TaskId.create().value)

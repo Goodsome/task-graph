@@ -12,12 +12,13 @@ def mock_repo():
     return Mock(spec=TaskRepository)
 
 @pytest.fixture
-def use_case(mock_repo):
-    return ReviseTaskDetails(repository=mock_repo)
+def use_case(mock_uow):
+    return ReviseTaskDetails(uow=mock_uow)
 
 def test_revise_task_details_success(use_case, mock_repo):
     task_id_str = str(TaskId.create().value)
     mock_task = Mock()
+    mock_task.collect_events.return_value = []
     mock_task.name = "Old Name"
     mock_task.effort.value = 1
     mock_repo.get.return_value = mock_task
