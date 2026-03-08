@@ -23,6 +23,8 @@ from task_graph.planning.domain.events import (
     TaskCompletedEvent,
     TaskReviewRequestedEvent,
     TaskBlockedEvent,
+    TaskInProgressEvent,
+    TaskChangesRequestedEvent,
 )
 
 
@@ -138,67 +140,102 @@ class Task(Aggregate):
             "base_value": self.base_value.value,
         }
 
+    # ── 公开行为方法 ──────────────────────────────────────────────
 
-    def _update_status(self, new_status: TaskStatus, reason: str = "") -> None:
-        if self.status == new_status:
-            return
-        
-        self.status = new_status
-        if new_status == TaskStatus.READY:
-            self.add_domain_event(TaskReadyEvent(task_id=str(self.id), project_id=self.project_id))
-        elif new_status == TaskStatus.DONE:
-            self.add_domain_event(TaskCompletedEvent(task_id=str(self.id), project_id=self.project_id))
-        elif new_status == TaskStatus.REVIEW:
-            self.add_domain_event(TaskReviewRequestedEvent(task_id=str(self.id), project_id=self.project_id))
-        elif new_status == TaskStatus.BLOCKED:
-            self.add_domain_event(TaskBlockedEvent(task_id=str(self.id), project_id=self.project_id, reason=reason))
-
-    def mark_completed(
-        self,
-    ) -> None:
-
-        self._update_status(TaskStatus.DONE)
-
-    def is_done(
-        self,
-    ) -> bool:
-
-        return self.status is TaskStatus.DONE
-
-    def is_claimable(self) -> bool:
-        return self.status in [TaskStatus.READY, TaskStatus.CHANGES_REQUESTED]
-
-    def set_output(
-        self,
-        output: TaskOutput,
-    ) -> None:
-        """Set the task output with execution result."""
-        if not self.status is TaskStatus.IN_PROGRESS:
-            raise RuntimeError(f"task {self.id} current status is {self.status}, not in_progress")
-        self.output = output
-        if output.error:
-            self._update_status(TaskStatus.BLOCKED, reason=output.error)
-        else:
-            self._update_status(TaskStatus.REVIEW)
-
-    def claim(self) -> None:
-        """
-        Claim this task for execution.
+    def mark_ready(self) -> None:
+        """将任务标记为 READY（依赖已满足，可被领取）。
 
         Raises:
-            TaskNotClaimableError: If task is not in READY state.
+            IllegalStateTransitionError: 当前状态不是 PENDING 或 BLOCKED
+        """
+        if self.status not in (TaskStatus.PENDING, TaskStatus.BLOCKED):
+            raise IllegalStateTransitionError(
+                f"Task {self.id} cannot be marked ready: "
+                f"current status is {self.status}, expected PENDING or BLOCKED"
+            )
+        self.status = TaskStatus.READY
+        self.add_domain_event(
+            TaskReadyEvent(task_id=str(self.id), project_id=self.project_id)
+        )
+
+    def mark_pending(self) -> None:
+        """将任务标记为 PENDING（新增了未满足的依赖）。
+
+        Raises:
+            IllegalStateTransitionError: 当前状态不是 READY
         """
         if self.status != TaskStatus.READY:
+            raise IllegalStateTransitionError(
+                f"Task {self.id} cannot be marked pending: "
+                f"current status is {self.status}, expected READY"
+            )
+        self.status = TaskStatus.PENDING
+
+    def claim(self) -> None:
+        """领取任务开始执行。
+
+        Raises:
+            TaskNotClaimableError: 当前状态不是 READY 或 CHANGES_REQUESTED
+        """
+        if not self.is_claimable():
             raise TaskNotClaimableError(
-                f"Task {self.id} cannot be claimed: current status is {self.status}, expected READY"
+                f"Task {self.id} cannot be claimed: "
+                f"current status is {self.status}, expected READY or CHANGES_REQUESTED"
+            )
+        self.status = TaskStatus.IN_PROGRESS
+        self.add_domain_event(
+            TaskInProgressEvent(task_id=str(self.id), project_id=self.project_id)
+        )
+
+    def set_output(self, output: TaskOutput) -> None:
+        """设置任务执行结果。
+
+        Raises:
+            IllegalStateTransitionError: 当前状态不是 IN_PROGRESS
+        """
+        if self.status is not TaskStatus.IN_PROGRESS:
+            raise IllegalStateTransitionError(
+                f"Task {self.id} cannot set output: "
+                f"current status is {self.status}, expected IN_PROGRESS"
+            )
+        self.output = output
+        if output.error:
+            self.status = TaskStatus.BLOCKED
+            self.add_domain_event(
+                TaskBlockedEvent(
+                    task_id=str(self.id),
+                    project_id=self.project_id,
+                    reason=output.error,
+                )
+            )
+        else:
+            self.status = TaskStatus.REVIEW
+            self.add_domain_event(
+                TaskReviewRequestedEvent(
+                    task_id=str(self.id), project_id=self.project_id
+                )
             )
 
-        self._update_status(TaskStatus.IN_PROGRESS)
+    def mark_completed(self) -> None:
+        """直接标记任务完成（用于手动/自动完成场景）。
+
+        Raises:
+            IllegalStateTransitionError: 当前状态不允许直接完成
+        """
+        allowed = (TaskStatus.REVIEW, TaskStatus.IN_PROGRESS, TaskStatus.READY)
+        if self.status not in allowed:
+            raise IllegalStateTransitionError(
+                f"Task {self.id} cannot be marked completed: "
+                f"current status is {self.status}"
+            )
+        self.status = TaskStatus.DONE
+        self.add_domain_event(
+            TaskCompletedEvent(task_id=str(self.id), project_id=self.project_id)
+        )
 
     def review(self, approved: bool, feedback: str) -> None:
-        """
-        验证任务并记录反馈。
-        
+        """验证任务并记录反馈。
+
         Args:
             approved: 是否通过
             feedback: 详细评价意见
@@ -207,15 +244,36 @@ class Task(Aggregate):
         """
         if self.status != TaskStatus.REVIEW:
             raise IllegalStateTransitionError(
-                f"Task {self.id} cannot be reviewed: current status is {self.status}, expected REVIEW"
+                f"Task {self.id} cannot be reviewed: "
+                f"current status is {self.status}, expected REVIEW"
             )
         
         self.review_feedback = ReviewFeedback(
             decision="approved" if approved else "changes_requested",
-            comment=feedback
+            comment=feedback,
         )
 
         if approved:
-            self._update_status(TaskStatus.DONE)
+            self.status = TaskStatus.DONE
+            self.add_domain_event(
+                TaskCompletedEvent(
+                    task_id=str(self.id), project_id=self.project_id
+                )
+            )
         else:
-            self._update_status(TaskStatus.CHANGES_REQUESTED)
+            self.status = TaskStatus.CHANGES_REQUESTED
+            self.add_domain_event(
+                TaskChangesRequestedEvent(
+                    task_id=str(self.id),
+                    project_id=self.project_id,
+                    feedback=feedback,
+                )
+            )
+
+    # ── 查询方法 ──────────────────────────────────────────────────
+
+    def is_done(self) -> bool:
+        return self.status is TaskStatus.DONE
+
+    def is_claimable(self) -> bool:
+        return self.status in (TaskStatus.READY, TaskStatus.CHANGES_REQUESTED)

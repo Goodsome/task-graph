@@ -52,11 +52,11 @@ class ReviewTask:
                 if task.is_done():
                     dependents = self.uow.tasks.find_dependents(task.id)
                     for dependent in dependents:
-                        if dependent.status in [TaskStatus.BLOCKED, TaskStatus.PENDING]:
+                        if dependent.status in (TaskStatus.BLOCKED, TaskStatus.PENDING):
                             is_blocked = self.resolution_service.evaluate_blocking_status(dependent, self.uow.tasks)
                             
                             if not is_blocked:
-                                dependent._update_status(TaskStatus.READY)
+                                dependent.mark_ready()
                                 self.uow.tasks.save(dependent)
                                 affected_tasks.append(str(dependent.id.value))
                                 modified_dependents.append(dependent)

@@ -21,3 +21,14 @@ class TaskBlockedEvent(DomainEvent):
     task_id: str = Field(description="Task ID")
     project_id: str = Field(description="Project ID")
     reason: str = Field(description="Reason for being blocked")
+
+class TaskInProgressEvent(DomainEvent):
+    """Event emitted when a task is claimed and starts execution."""
+    task_id: str = Field(description="Task ID")
+    project_id: str = Field(description="Project ID")
+
+class TaskChangesRequestedEvent(DomainEvent):
+    """Event emitted when a task review is rejected and changes are requested."""
+    task_id: str = Field(description="Task ID")
+    project_id: str = Field(description="Project ID")
+    feedback: str = Field(description="Review feedback describing required changes")

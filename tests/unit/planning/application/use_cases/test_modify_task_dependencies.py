@@ -109,9 +109,9 @@ def test_add_dependency_updates_status_to_pending(use_case, mock_repo, mock_cycl
     mock_task.dependencies = set()
     mock_task.status = TaskStatus.READY
     
-    def side_effect_status(status):
-        mock_task.status = status
-    mock_task._update_status.side_effect = side_effect_status
+    def side_effect_mark_pending():
+        mock_task.status = TaskStatus.PENDING
+    mock_task.mark_pending.side_effect = side_effect_mark_pending
     
     # Dep task
     mock_dep = MagicMock()
@@ -147,9 +147,9 @@ def test_remove_dependency_updates_status_to_ready(use_case, mock_repo, mock_dep
     mock_task.dependencies = {dep_id}
     mock_task.status = TaskStatus.PENDING
     
-    def side_effect_status(status):
-        mock_task.status = status
-    mock_task._update_status.side_effect = side_effect_status
+    def side_effect_mark_ready():
+        mock_task.status = TaskStatus.READY
+    mock_task.mark_ready.side_effect = side_effect_mark_ready
     mock_repo.get.return_value = mock_task
     
     # Resolver says UNBLOCKED after removing dependency

@@ -94,6 +94,37 @@ def test_review_task_rejected(use_case, mock_repo):
     mock_task.review.assert_called_once_with(approved=False, feedback="Formatting is off.")
     mock_repo.save.assert_called_with(mock_task)
 
+def test_review_task_approved_unlocks_dependents(use_case, mock_repo, mock_resolution_service):
+    """When a task is approved and done, blocked dependents should be unlocked via mark_ready."""
+    task_id = TaskId.create()
+    task_id_str = str(task_id.value)
+
+    mock_task = Mock()
+    mock_task.collect_events.return_value = []
+    mock_task.id = task_id
+
+    def side_effect_review(approved, feedback):
+        mock_task.status = TaskStatus.DONE
+    mock_task.review.side_effect = side_effect_review
+    mock_task.is_done.side_effect = lambda: mock_task.status == TaskStatus.DONE
+
+    mock_repo.get.return_value = mock_task
+
+    # Dependent that is blocked
+    dep_task = Mock()
+    dep_task.collect_events.return_value = []
+    dep_task.id = TaskId.create()
+    dep_task.status = TaskStatus.BLOCKED
+    mock_repo.find_dependents.return_value = [dep_task]
+    mock_resolution_service.evaluate_blocking_status.return_value = False
+
+    cmd = ReviewTaskCommand(task_id=task_id_str, approved=True, feedback="LGTM")
+    result = use_case.execute(cmd)
+
+    assert result.success is True
+    dep_task.mark_ready.assert_called_once()
+    assert str(dep_task.id.value) in result.affected_tasks
+
 def test_review_task_invalid_state(use_case, mock_repo):
     # Setup
     task_id = TaskId.create()

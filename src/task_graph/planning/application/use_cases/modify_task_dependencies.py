@@ -66,10 +66,10 @@ class ModifyTaskDependencies:
                 is_blocked = self.dependency_resolver.evaluate_blocking_status(task, self.uow.tasks)
                 if is_blocked:
                     if task.status == TaskStatus.READY:
-                        task._update_status(TaskStatus.PENDING)
+                        task.mark_pending()
                 else:
-                    if task.status in [TaskStatus.PENDING, TaskStatus.BLOCKED]:
-                        task._update_status(TaskStatus.READY)
+                    if task.status in (TaskStatus.PENDING, TaskStatus.BLOCKED):
+                        task.mark_ready()
 
                 self.uow.tasks.save(task)
                 for event in task.collect_events():

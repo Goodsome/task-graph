@@ -14,8 +14,15 @@ logger = logging.getLogger(__name__)
 
 class UnitOfWork(ABC):
 
-    tasks: TaskRepository
-    event_bus: EventBus
+    @property
+    @abstractmethod
+    def tasks(self) -> TaskRepository:
+        pass
+
+    @property
+    @abstractmethod
+    def event_bus(self) -> EventBus:
+        pass
 
     @abstractmethod
     def __enter__(self) -> "UnitOfWork":
