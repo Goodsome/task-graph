@@ -151,7 +151,11 @@ class Task(Aggregate):
             )
         self.status = TaskStatus.READY
         self.add_domain_event(
-            TaskReadyEvent(task_id=str(self.id), project_id=self.project_id)
+            TaskReadyEvent(
+                task_id=str(self.id),
+                project_id=self.project_id,
+                planning_level=self.planning_level,
+            )
         )
 
     def mark_pending(self) -> None:
@@ -180,7 +184,11 @@ class Task(Aggregate):
             )
         self.status = TaskStatus.IN_PROGRESS
         self.add_domain_event(
-            TaskInProgressEvent(task_id=str(self.id), project_id=self.project_id)
+            TaskInProgressEvent(
+                task_id=str(self.id),
+                project_id=self.project_id,
+                planning_level=self.planning_level,
+            )
         )
 
     def set_output(self, output: TaskOutput) -> None:
@@ -201,6 +209,7 @@ class Task(Aggregate):
                 TaskBlockedEvent(
                     task_id=str(self.id),
                     project_id=self.project_id,
+                    planning_level=self.planning_level,
                     reason=output.error,
                 )
             )
@@ -208,7 +217,9 @@ class Task(Aggregate):
             self.status = TaskStatus.REVIEW
             self.add_domain_event(
                 TaskReviewRequestedEvent(
-                    task_id=str(self.id), project_id=self.project_id
+                    task_id=str(self.id),
+                    project_id=self.project_id,
+                    planning_level=self.planning_level,
                 )
             )
 
@@ -226,7 +237,11 @@ class Task(Aggregate):
             )
         self.status = TaskStatus.DONE
         self.add_domain_event(
-            TaskCompletedEvent(task_id=str(self.id), project_id=self.project_id)
+            TaskCompletedEvent(
+                task_id=str(self.id),
+                project_id=self.project_id,
+                planning_level=self.planning_level,
+            )
         )
 
     def review(self, approved: bool, feedback: str) -> None:
@@ -253,7 +268,9 @@ class Task(Aggregate):
             self.status = TaskStatus.DONE
             self.add_domain_event(
                 TaskCompletedEvent(
-                    task_id=str(self.id), project_id=self.project_id
+                    task_id=str(self.id),
+                    project_id=self.project_id,
+                    planning_level=self.planning_level,
                 )
             )
         else:
@@ -262,6 +279,7 @@ class Task(Aggregate):
                 TaskChangesRequestedEvent(
                     task_id=str(self.id),
                     project_id=self.project_id,
+                    planning_level=self.planning_level,
                     feedback=feedback,
                 )
             )

@@ -44,6 +44,7 @@ class TestTaskReview:
         assert len(events) == 1
         assert isinstance(events[0], TaskCompletedEvent)
         assert events[0].task_id == str(reviewable_task.id)
+        assert events[0].planning_level == reviewable_task.planning_level
 
     def test_review_changes_requested(self, reviewable_task):
         reviewable_task.status = TaskStatus.REVIEW
@@ -66,6 +67,7 @@ class TestTaskReview:
         assert isinstance(events[0], TaskChangesRequestedEvent)
         assert events[0].task_id == str(reviewable_task.id)
         assert events[0].feedback == "Fix formatting"
+        assert events[0].planning_level == reviewable_task.planning_level
 
     def test_review_invalid_state(self, reviewable_task):
         reviewable_task.status = TaskStatus.IN_PROGRESS

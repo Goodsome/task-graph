@@ -40,6 +40,7 @@ class TestMarkReady:
         assert len(events) == 1
         assert isinstance(events[0], TaskReadyEvent)
         assert events[0].task_id == str(task.id)
+        assert events[0].planning_level == task.planning_level
 
     @pytest.mark.parametrize(
         "initial_status",
@@ -65,6 +66,7 @@ class TestMarkCompleted:
         events = task.collect_events()
         assert len(events) == 1
         assert isinstance(events[0], TaskCompletedEvent)
+        assert events[0].planning_level == task.planning_level
 
     @pytest.mark.parametrize(
         "initial_status",
@@ -89,6 +91,7 @@ class TestSetOutput:
         events = task.collect_events()
         assert len(events) == 1
         assert isinstance(events[0], TaskReviewRequestedEvent)
+        assert events[0].planning_level == task.planning_level
 
     def test_set_output_with_error_transitions_to_blocked(self, task):
         task.status = TaskStatus.IN_PROGRESS
@@ -102,6 +105,7 @@ class TestSetOutput:
         assert len(events) == 1
         assert isinstance(events[0], TaskBlockedEvent)
         assert events[0].reason == "Runtime crash"
+        assert events[0].planning_level == task.planning_level
 
     def test_set_output_from_invalid_status_raises(self, task):
         task.status = TaskStatus.READY

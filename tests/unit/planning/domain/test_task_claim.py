@@ -48,6 +48,7 @@ class TestTaskClaimBehaviors:
         assert isinstance(events[0], TaskInProgressEvent)
         assert events[0].task_id == str(ready_task.id)
         assert events[0].project_id == ready_task.project_id
+        assert events[0].planning_level == ready_task.planning_level
 
     def test_claim_pending_task_fails(self, ready_task):
         """Scenario: Claiming a PENDING task raises error"""
