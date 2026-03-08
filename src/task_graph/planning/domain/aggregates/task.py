@@ -57,21 +57,17 @@ class Task(Aggregate):
         completion_logic: CompletionLogic,
         dependencies: set[TaskId],
         planning_level: str | PlanningLevel,
-        status: TaskStatus | None = None,
     ) -> "Task":
         """Factory method to create a new Task"""
         if isinstance(planning_level, str):
             planning_level = PlanningLevel(planning_level)
-        
-        if status is None:
-            status = TaskStatus.PENDING
                 
         return cls(
             id=TaskId.create(),
             project_id=project_id,
             name=name,
             description=description,
-            status=status,
+            status=TaskStatus.PENDING,
             completion_logic=completion_logic,
             effort=effort,
             base_value=base_value,

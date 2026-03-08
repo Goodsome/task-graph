@@ -70,9 +70,10 @@ def test_find_paged(repository):
             base_value=ValueScore.create(1.0),
             completion_logic=CompletionLogic.ALL,
             dependencies=set(),
-            planning_level=PlanningLevel.ATOMIC,
-            status=TaskStatus.READY if i % 2 == 0 else TaskStatus.PENDING
+            planning_level=PlanningLevel.ATOMIC
         )
+        if i % 2 == 0:
+            task.mark_ready()
         repository.save(task)
     
     # When

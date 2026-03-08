@@ -67,19 +67,19 @@ class CreateTask:
                         missing_str = ", ".join([str(mid.value) for mid in missing_ids])
                         return CreateTaskResult(False, "", f"Dependencies not found: {missing_str}")
 
-                # 4. 计算初始状态
-                initial_status = None
+                # 4. 计算是否需要标记为 READY
+                should_be_ready = False
                 if dep_ids:
                     if logic_enum == CompletionLogic.ALL:
                         if all(t.status == TaskStatus.DONE for t in existing_deps):
-                            initial_status = TaskStatus.READY
+                            should_be_ready = True
                     elif logic_enum == CompletionLogic.ANY:
                         if any(t.status == TaskStatus.DONE for t in existing_deps):
-                            initial_status = TaskStatus.READY
+                            should_be_ready = True
                 else:
-                    initial_status = TaskStatus.READY
+                    should_be_ready = True
 
-                # 5. 创建实体
+                # 5. 创建实体 (默认状态 PENDING)
                 new_task = Task.create(
                     project_id=cmd.project_id,
                     name=cmd.name,
@@ -89,8 +89,11 @@ class CreateTask:
                     completion_logic=logic_enum,
                     dependencies=dep_ids,
                     planning_level=cmd.planning_level,
-                    status=initial_status,
                 )
+
+                # 如果条件满足，则标记为 READY（此方法会添加 TaskReadyEvent 到聚合根）
+                if should_be_ready:
+                    new_task.mark_ready()
 
                 # 6. 持久化
                 self.uow.tasks.save(new_task)
