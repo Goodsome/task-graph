@@ -49,9 +49,12 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
         self._event_bus: Optional[PgNotifyEventBus] = None
 
     def __enter__(self) -> "UnitOfWork":
+        from task_graph.planning.config import get_settings
+        settings = get_settings()
+
         self.session = self._session_factory()
         self._tasks = SqlAlchemyTaskRepository(session=self.session)
-        self._event_bus = PgNotifyEventBus(self.session)
+        self._event_bus = PgNotifyEventBus(self.session, channel=settings.EVENT_BUS_CHANNEL)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

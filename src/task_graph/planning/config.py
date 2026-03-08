@@ -25,6 +25,12 @@ class Settings(BaseSettings):
         description="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)"
     )
 
+    # Event Bus Configuration
+    EVENT_BUS_CHANNEL: str = Field(
+        default="domain_events",
+        description="PostgreSQL NOTIFY channel for domain events"
+    )
+
     # General Configuration
     PROJECT_ROOT: str = Field(
         default=".",
