@@ -2,24 +2,24 @@ import os
 import tempfile
 import pytest
 
-from unittest import mock
+from dependency_injector import providers
+from task_graph.planning.interfaces.mcp_server import _get_container
 
-# Need to patch the env var for DB before any module level initialization
-# For E2E tests, it's safer to use a temporary Yaml repository file
-# to avoid messing up the user's database or actual files.
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+from tests.unit.planning.conftest import InMemoryTaskRepository, InMemoryUnitOfWork
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_env():
-    # Setup temporary file for Yaml repository
-    with tempfile.NamedTemporaryFile(suffix=".yaml", delete=False) as tmp:
-        yaml_path = tmp.name
-        
-    with mock.patch("task_graph.planning.infrastructure.repositories.yaml_task_repository.YamlTaskRepository.file_path", yaml_path):
-        yield yaml_path
-        
-    # Cleanup
-    if os.path.exists(yaml_path):
-        os.remove(yaml_path)
+    # For E2E tests, it's safer to use a temporary in-memory repository
+    # to avoid messing up the user's database.
+    repo = InMemoryTaskRepository()
+    container = _get_container()
+    
+    with container.unit_of_work.override(providers.Factory(InMemoryUnitOfWork, repo)):
+        yield container
 
 def test_delete_task_e2e():
     """

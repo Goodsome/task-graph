@@ -8,137 +8,139 @@ contexts:
     - name: Task
       description: The atomic unit of planning, representing a node in the DAG.
       attributes:
-      - name: id
-        type: TaskId
-      - name: project_id
-        type: string
-      - name: name
-        type: string
-      - name: description
-        type: string
-      - name: status
-        type: TaskStatus
-      - name: completion_logic
-        type: CompletionLogic
-      - name: effort
-        type: StoryPoint
-      - name: base_value
-        type: ValueScore
-      - name: dependencies
-        type: TaskId
+      - type: TaskId
+        name: id
+      - type: string
+        name: project_id
+      - type: string
+        name: name
+      - type: string
+        name: description
+      - type: TaskStatus
+        name: status
+      - type: CompletionLogic
+        name: completion_logic
+      - type: StoryPoint
+        name: effort
+      - type: ValueScore
+        name: base_value
+      - type: TaskId
         container: set
-      - name: dependents
-        type: TaskId
+        name: dependencies
+      - type: TaskId
         container: set
         optional: true
-      - name: planning_level
-        type: PlanningLevel
-      - name: recurrence
-        type: RecurrencePolicy
+        name: dependents
+      - type: PlanningLevel
+        name: planning_level
+      - type: RecurrencePolicy
         optional: true
-      - name: output
-        type: TaskOutput
+        name: recurrence
+      - type: TaskOutput
         optional: true
-      - name: review_feedback
-        type: ReviewFeedback
+        name: output
+      - type: ReviewFeedback
         optional: true
+        name: review_feedback
       behaviors:
       - name: create
         inputs:
-        - name: project_id
-          type: string
-        - name: name
-          type: string
-        - name: description
-          type: string
-        - name: effort
-          type: StoryPoint
-        - name: base_value
-          type: ValueScore
-        - name: completion_logic
-          type: CompletionLogic
-        - name: dependencies
-          type: TaskId
+        - type: string
+          name: project_id
+        - type: string
+          name: name
+        - type: string
+          name: description
+        - type: StoryPoint
+          name: effort
+        - type: ValueScore
+          name: base_value
+        - type: CompletionLogic
+          name: completion_logic
+        - type: TaskId
           container: set
-        - name: planning_level
-          type: Any
+          name: dependencies
+        - type: Any
           custom_type_string: Union[str, PlanningLevel]
-        - name: status
-          type: TaskStatus
-          optional: true
-          default: None
+          name: planning_level
         output:
           type: Task
       - name: reconstitute
         inputs:
-        - name: task_id
-          type: string
-        - name: project_id
-          type: string
-        - name: name
-          type: string
-        - name: description
-          type: string
-        - name: status
-          type: Any
+        - type: string
+          name: task_id
+        - type: string
+          name: project_id
+        - type: string
+          name: name
+        - type: string
+          name: description
+        - type: Any
           custom_type_string: Union[TaskStatus, str]
-        - name: effort
-          type: Any
+          name: status
+        - type: Any
           custom_type_string: Union[StoryPoint, int]
-        - name: base_value
-          type: Any
+          name: effort
+        - type: Any
           custom_type_string: Union[ValueScore, float]
-        - name: completion_logic
-          type: Any
+          name: base_value
+        - type: Any
           custom_type_string: Union[CompletionLogic, str]
-        - name: dependencies
-          type: Any
+          name: completion_logic
+        - type: Any
           custom_type_string: Union[set[str], set[TaskId]]
-        - name: planning_level
-          type: Any
+          name: dependencies
+        - type: Any
           custom_type_string: Union[PlanningLevel, str]
-        - name: output
-          type: TaskOutput
+          name: planning_level
+        - type: TaskOutput
           optional: true
+          name: output
           default: None
-        - name: review_feedback
-          type: ReviewFeedback
+        - type: ReviewFeedback
           optional: true
+          name: review_feedback
           default: None
         output:
-          type: Any
+          type: any
       - name: to_dict
         output:
           type: dict
       - name: to_summary_dict
         output:
           type: dict
-      - name: mark_completed
+      - name: mark_ready
         output:
           type: None
-      - name: is_done
-        output:
-          type: bool
-      - name: is_claimable
-        output:
-          type: bool
-      - name: set_output
-        inputs:
-        - name: output
-          type: TaskOutput
+      - name: mark_pending
         output:
           type: None
       - name: claim
         output:
           type: None
-      - name: review
+      - name: set_output
         inputs:
-        - name: approved
-          type: boolean
-        - name: feedback
-          type: string
+        - type: TaskOutput
+          name: output
         output:
           type: None
+      - name: mark_completed
+        output:
+          type: None
+      - name: review
+        inputs:
+        - type: boolean
+          name: approved
+        - type: string
+          name: feedback
+        output:
+          type: None
+      - name: is_done
+        output:
+          type: boolean
+      - name: is_claimable
+        output:
+          type: boolean
     enums:
     - name: CompletionLogic
       description: Rules defining how a task is unlocked based on its dependencies.
@@ -193,58 +195,58 @@ contexts:
     - name: ValueScore
       description: Numeric representation of business value.
       attributes:
-      - name: value
-        type: float
+      - type: float
+        name: value
         default: Field(..., gt=0)
       behaviors:
       - name: create
         inputs:
-        - name: value
-          type: float
+        - type: float
+          name: value
         output:
           type: ValueScore
       - name: __add__
         inputs:
-        - name: other
-          type: any
+        - type: any
+          name: other
         output:
-          type: Any
+          type: any
       - name: __radd__
         inputs:
-        - name: other
-          type: any
+        - type: any
+          name: other
         output:
-          type: Any
+          type: any
       - name: serialize
         output:
           type: float
       - name: validate_from_primitive
         inputs:
-        - name: data
-          type: any
+        - type: any
+          name: data
         output:
-          type: Any
+          type: any
     - name: TaskOutput
       description: 任务执行者的交付物
       attributes:
-      - name: summary
-        type: string
-      - name: artifacts
-        type: string
+      - type: string
+        name: summary
+      - type: string
         container: list
-      - name: error
-        type: string
+        name: artifacts
+      - type: string
         optional: true
+        name: error
     - name: RecurrencePolicy
       description: Rules for creating a successor task upon completion.
       attributes:
-      - name: type
-        type: RecurrenceType
-      - name: max_repetitions
-        type: integer
+      - type: RecurrenceType
+        name: type
+      - type: integer
         optional: true
-      - name: current_iteration
-        type: integer
+        name: max_repetitions
+      - type: integer
+        name: current_iteration
       behaviors:
       - name: next_iteration
         output:
@@ -253,121 +255,122 @@ contexts:
       description: Encapsulated Fibonacci number representing effort (1, 2, 3, 5,
         8, 13...).
       attributes:
-      - name: value
-        type: integer
+      - type: integer
+        name: value
         default: Field(..., gt=0, description='Effort points must be positive')
       behaviors:
       - name: create
         inputs:
-        - name: effort
-          type: integer
+        - type: integer
+          name: effort
         output:
           type: StoryPoint
       - name: serialize
         output:
-          type: int
+          type: integer
       - name: validate_from_primitive
         inputs:
-        - name: data
-          type: any
+        - type: any
+          name: data
         output:
-          type: Any
+          type: any
       - name: validate_fibonacci
         inputs:
-        - name: v
-          type: integer
+        - type: integer
+          name: v
         output:
-          type: int
+          type: integer
       - name: __add__
         inputs:
-        - name: other
-          type: any
+        - type: any
+          name: other
         output:
-          type: Any
+          type: any
       - name: __radd__
         inputs:
-        - name: other
-          type: any
+        - type: any
+          name: other
         output:
-          type: Any
+          type: any
       - name: __lt__
         inputs:
-        - name: other
-          type: any
+        - type: any
+          name: other
         output:
-          type: Any
+          type: any
     - name: ReviewFeedback
       description: 任务规划者的验收意见
       attributes:
-      - name: comment
-        type: string
-      - name: decision
-        type: string
+      - type: string
+        name: comment
+      - type: string
+        name: decision
     - name: TaskId
       description: Unique identifier for a Task.
       attributes:
-      - name: value
-        type: uuid
+      - type: uuid
+        name: value
       behaviors:
       - name: create
         output:
-          type: Any
+          type: any
       - name: reconstitute
         inputs:
-        - name: value
-          type: Any
+        - type: Any
           custom_type_string: Union[UUID, str]
+          name: value
         output:
-          type: Any
+          type: any
       - name: __str__
         output:
-          type: Any
+          type: any
       - name: serialize
         output:
-          type: str
+          type: string
       - name: validate_from_primitive
         inputs:
-        - name: data
-          type: any
+        - type: any
+          name: data
         output:
-          type: Any
+          type: any
     services:
     - name: DependencyResolutionService
       operations:
       - name: evaluate_blocking_status
         inputs:
-        - name: task
-          type: Task
-        - name: repository
-          type: TaskRepository
+        - type: Task
+          name: task
+        - type: TaskRepository
+          name: repository
         output:
-          type: bool
+          type: boolean
     - name: CycleDetectionService
       description: Ensures the planning graph remains a DAG.
       operations:
       - name: detect_cycle
         inputs:
-        - name: target_task_id
-          type: TaskId
-        - name: new_dependency_id
-          type: TaskId
-        - name: repository
-          type: TaskRepository
+        - type: TaskId
+          name: target_task_id
+        - type: TaskId
+          name: new_dependency_id
+        - type: TaskRepository
+          name: repository
         output:
-          type: bool
+          type: boolean
     - name: PriorityAnalysisService
       description: Calculates dynamic priority (ROI) for all tasks.
       operations:
       - name: calculate_priorities
         inputs:
-        - name: repository
-          type: TaskRepository
-        - name: project_id
-          type: string
+        - type: TaskRepository
+          name: repository
+        - type: string
           optional: true
+          name: project_id
           default: None
         output:
-          type: list[Task]
+          type: Task
+          container: list
     ports:
     - name: TaskRepository
       description: Persistence interface for Tasks.
@@ -376,433 +379,399 @@ contexts:
       operations:
       - name: save
         inputs:
-        - name: task
-          type: Task
+        - type: Task
+          name: task
         output:
           type: None
       - name: get
         inputs:
-        - name: task_id
-          type: TaskId
+        - type: TaskId
+          name: task_id
         output:
-          type: Optional[Task]
+          type: Task
+          optional: true
       - name: find_all_active
         inputs:
-        - name: project_id
-          type: string
+        - type: string
           optional: true
+          name: project_id
           default: None
         output:
-          type: list[Task]
+          type: Task
+          container: list
       - name: find_all
         output:
-          type: list[Task]
+          type: Task
+          container: list
       - name: find_dependents
         inputs:
-        - name: task_id
-          type: TaskId
+        - type: TaskId
+          name: task_id
         output:
-          type: list[Task]
+          type: Task
+          container: list
       - name: delete
         inputs:
-        - name: task_id
-          type: TaskId
+        - type: TaskId
+          name: task_id
         output:
           type: None
       - name: find_by_id
         inputs:
-        - name: task_id
-          type: TaskId
+        - type: TaskId
+          name: task_id
         output:
-          type: Task | None
+          type: Task
+          optional: true
       - name: find_by_ids
         inputs:
-        - name: task_ids
-          type: TaskId
+        - type: TaskId
           container: set
+          name: task_ids
         output:
-          type: list[Task]
+          type: Task
+          container: list
       - name: find_paged
         inputs:
-        - name: status
-          type: TaskStatus
+        - type: TaskStatus
           optional: true
-        - name: project_id
-          type: string
+          name: status
+        - type: string
           optional: true
-        - name: planning_level
-          type: PlanningLevel
+          name: project_id
+        - type: PlanningLevel
           optional: true
-        - name: search
-          type: string
+          name: planning_level
+        - type: string
           optional: true
-        - name: page
-          type: integer
-        - name: page_size
-          type: integer
+          name: search
+        - type: integer
+          name: page
+        - type: integer
+          name: page_size
         output:
-          type: tuple[list[Task], int]
+          type: Any
+          custom_type_string: tuple[list[Task], int]
   application:
     use_cases:
     - name: SubmitTaskResult
       kind: command
       command:
         attributes:
-        - name: task_id
-          type: string
-        - name: summary
-          type: string
-        - name: artifacts
-          type: string
+        - type: string
+          name: task_id
+        - type: string
+          name: summary
+        - type: string
           container: list
           optional: true
-        - name: error
-          type: string
+          name: artifacts
+        - type: string
           optional: true
+          name: error
           default: None
       result:
         attributes:
-        - name: repository
-          type: TaskRepository
+        - type: UnitOfWork
+          name: uow
     - name: CreateTask
       kind: command
       dependencies:
-      - name: repository
-        type: TaskRepository
+      - type: UnitOfWork
+        name: uow
       command:
         attributes:
-        - name: project_id
-          type: string
-        - name: name
-          type: string
-        - name: description
-          type: string
-        - name: effort
-          type: integer
-        - name: base_value
-          type: float
-        - name: planning_level
-          type: PlanningLevel
-        - name: completion_logic
-          type: CompletionLogic
+        - type: string
+          name: project_id
+        - type: string
+          name: name
+        - type: string
+          name: description
+        - type: integer
+          name: effort
+        - type: float
+          name: base_value
+        - type: PlanningLevel
+          name: planning_level
+        - type: CompletionLogic
+          name: completion_logic
           default: CompletionLogic.ALL
-        - name: dependencies
-          type: string
+        - type: string
           container: list
           optional: true
+          name: dependencies
       result:
         attributes:
-        - name: success
-          type: boolean
-        - name: task_id
-          type: string
-        - name: error
-          type: string
+        - type: boolean
+          name: success
+        - type: string
+          name: task_id
+        - type: string
+          name: error
     - name: UpdateTaskStatus
       kind: command
       dependencies:
-      - name: repository
-        type: TaskRepository
-      - name: resolution_service
-        type: DependencyResolutionService
+      - type: UnitOfWork
+        name: uow
+      - type: DependencyResolutionService
+        name: resolution_service
       command:
         attributes:
-        - name: task_id
-          type: string
-        - name: new_status
-          type: string
+        - type: string
+          name: task_id
+        - type: string
+          name: new_status
       result:
         attributes:
-        - name: success
-          type: boolean
-        - name: affected_tasks
-          type: string
+        - type: boolean
+          name: success
+        - type: string
           container: list
-        - name: error
-          type: string
+          name: affected_tasks
+        - type: string
+          name: error
           default: ''''''
     - name: SuggestNextAction
       kind: query
       dependencies:
-      - name: repository
-        type: TaskRepository
-      - name: priority_service
-        type: PriorityAnalysisService
+      - type: UnitOfWork
+        name: uow
+      - type: PriorityAnalysisService
+        name: priority_service
       query:
         attributes:
-        - name: top_n
-          type: integer
-        - name: project_id
-          type: string
+        - type: integer
+          name: top_n
+        - type: string
           optional: true
+          name: project_id
           default: None
       result:
         attributes:
-        - name: tasks
-          type: Task
+        - type: Task
           container: list
+          name: tasks
     - name: GetTaskDetails
       kind: query
       dependencies:
-      - name: repository
-        type: TaskRepository
+      - type: UnitOfWork
+        name: uow
       query:
         attributes:
-        - name: task_id
-          type: string
+        - type: string
+          name: task_id
           default: Field(..., description='The ID of the task to retrieve details
             for')
       result:
         attributes:
-        - name: success
-          type: boolean
-        - name: task
-          type: any
+        - type: boolean
+          name: success
+        - type: any
           container: map
           optional: true
+          name: task
           default: None
-        - name: error
-          type: string
+        - type: string
           optional: true
+          name: error
           default: None
     - name: ReviewTask
       kind: command
       dependencies:
-      - name: repository
-        type: TaskRepository
-      - name: resolution_service
-        type: DependencyResolutionService
+      - type: UnitOfWork
+        name: uow
+      - type: DependencyResolutionService
+        name: resolution_service
       command:
         attributes:
-        - name: task_id
-          type: string
-        - name: approved
-          type: boolean
-        - name: feedback
-          type: string
+        - type: string
+          name: task_id
+        - type: boolean
+          name: approved
+        - type: string
+          name: feedback
       result:
         attributes:
-        - name: success
-          type: boolean
-        - name: task_id
-          type: string
-        - name: affected_tasks
-          type: string
+        - type: boolean
+          name: success
+        - type: string
+          name: task_id
+        - type: string
           container: list
           optional: true
-        - name: error
-          type: string
+          name: affected_tasks
+        - type: string
+          name: error
+          default: ''''''
+    - name: DeleteTask
+      kind: command
+      dependencies:
+      - type: UnitOfWork
+        name: uow
+      command:
+        attributes:
+        - type: string
+          name: task_id
+      result:
+        attributes:
+        - type: boolean
+          name: success
+        - type: string
+          optional: true
+          name: error
           default: ''''''
     - name: ModifyTaskDependencies
       kind: command
       dependencies:
-      - name: repository
-        type: TaskRepository
-      - name: cycle_detector
-        type: CycleDetectionService
-      - name: dependency_resolver
-        type: DependencyResolutionService
+      - type: UnitOfWork
+        name: uow
+      - type: CycleDetectionService
+        name: cycle_detector
+      - type: DependencyResolutionService
+        name: dependency_resolver
       command:
         attributes:
-        - name: task_id
-          type: string
-        - name: added_dependencies
-          type: string
+        - type: string
+          name: task_id
+        - type: string
           container: list
           optional: true
-        - name: removed_dependencies
-          type: string
+          name: added_dependencies
+        - type: string
           container: list
           optional: true
+          name: removed_dependencies
       result:
         attributes:
-        - name: success
-          type: boolean
-        - name: error
-          type: string
+        - type: boolean
+          name: success
+        - type: string
           optional: true
+          name: error
     - name: ReviseTaskDetails
       kind: command
       dependencies:
-      - name: repository
-        type: TaskRepository
+      - type: UnitOfWork
+        name: uow
       command:
         attributes:
-        - name: task_id
-          type: string
-        - name: name
-          type: string
+        - type: string
+          name: task_id
+        - type: string
           optional: true
+          name: name
           default: None
-        - name: description
-          type: string
+        - type: string
           optional: true
+          name: description
           default: None
-        - name: effort
-          type: integer
+        - type: integer
           optional: true
+          name: effort
           default: None
-        - name: base_value
-          type: float
+        - type: float
           optional: true
+          name: base_value
           default: None
       result:
         attributes:
-        - name: success
-          type: boolean
-        - name: error
-          type: string
+        - type: boolean
+          name: success
+        - type: string
+          name: error
           default: ''''''
     - name: ClaimTask
       kind: command
       dependencies:
-      - name: repository
-        type: TaskRepository
-      - name: dependency_service
-        type: DependencyResolutionService
+      - type: UnitOfWork
+        name: uow
+      - type: DependencyResolutionService
+        name: dependency_service
       command:
         attributes:
-        - name: task_id
-          type: string
-        - name: executor_id
-          type: string
+        - type: string
+          name: task_id
+        - type: string
           optional: true
+          name: executor_id
       result:
         attributes:
-        - name: success
-          type: boolean
-        - name: task_id
-          type: string
-        - name: error
-          type: string
+        - type: boolean
+          name: success
+        - type: string
+          name: task_id
+        - type: string
           optional: true
-        - name: error_code
-          type: string
+          name: error
+        - type: string
           optional: true
+          name: error_code
     - name: ListTasks
       kind: query
       dependencies:
-      - name: repository
-        type: TaskRepository
+      - type: UnitOfWork
+        name: uow
       query:
         attributes:
-        - name: project_id
-          type: string
+        - type: string
           optional: true
+          name: project_id
           default: None
-        - name: page
-          type: integer
+        - type: integer
+          name: page
           default: '1'
-        - name: page_size
-          type: integer
+        - type: integer
+          name: page_size
           default: '10'
-        - name: status
-          type: TaskStatus
+        - type: TaskStatus
           optional: true
+          name: status
           default: None
-        - name: planning_level
-          type: PlanningLevel
+        - type: PlanningLevel
           optional: true
+          name: planning_level
           default: None
-        - name: search
-          type: string
+        - type: string
           optional: true
+          name: search
           default: ''''''
       result:
         attributes:
-        - name: tasks
-          type: dict
+        - type: dict
           container: list
-        - name: total_count
-          type: integer
-        - name: total_pages
-          type: integer
-        - name: current_page
-          type: integer
-        - name: error
-          type: string
+          name: tasks
+        - type: integer
+          name: total_count
+        - type: integer
+          name: total_pages
+        - type: integer
+          name: current_page
+        - type: string
           optional: true
+          name: error
           default: None
-    - name: DeleteTask
-      kind: command
-      dependencies:
-      - name: repository
-        type: TaskRepository
-      command:
-        attributes:
-        - name: task_id
-          type: string
-      result:
-        attributes:
-        - name: success
-          type: boolean
-        - name: error
-          type: string
-          optional: true
-          default: ''''''
   infrastructure:
     implementations:
-    - name: YamlTaskRepository
-      implements: TaskRepository
-      technology: yaml
-      description: "Persistence adapter that stores tasks in a YAML file.\nFollows\
-        \ the structure:\nproject: ...\ntasks:\n  - id: ...\n    name: ..."
-      attributes:
-      - name: file_path
-        type: string
-        default: '''C:\\Users\\86188\\code\\plan.yaml'''
-      - name: _cache
-        type: Task
-        container: map
-        optional: true
-      private_methods:
-      - name: _read_yaml
-        output:
-          type: dict[str, Any]
-      - name: _write_yaml
-        inputs:
-        - name: data
-          type: any
-          container: map
-        output:
-          type: None
-      - name: _load_all_tasks
-        output:
-          type: list[Task]
-      - name: _serialize_task
-        inputs:
-        - name: task
-          type: Task
-        output:
-          type: dict[str, Any]
-      - name: _deserialize_task
-        inputs:
-        - name: raw
-          type: any
-          container: map
-        output:
-          type: Task
     - name: SqlAlchemyTaskRepository
       implements: TaskRepository
       technology: sql
       description: SQLAlchemy implementation of TaskRepository.
       attributes:
-      - name: session_factory
-        type: Session
-        container: callable
+      - type: Session
+        name: session
       private_methods:
       - name: _to_domain
         inputs:
-        - name: model
-          type: TaskModel
+        - type: TaskModel
+          name: model
         output:
           type: Task
       - name: _to_model
         inputs:
-        - name: task
-          type: Task
-        - name: session
-          type: Session
+        - type: Task
+          name: task
+        - type: Session
+          name: session
         output:
           type: TaskModel
 - name: Shared

@@ -112,8 +112,8 @@
         }
       },
       "required":[
-        "name",
-        "type"
+        "type",
+        "name"
       ],
       "title":"AttributeSpec",
       "type":"object"
@@ -546,6 +546,26 @@
       "additionalProperties":false,
       "description":"Specification of the output of a method.",
       "properties":{
+        "container":{
+          "$ref":"#/$defs/ContainerType",
+          "default":"none"
+        },
+        "custom_type_string":{
+          "anyOf":[
+            {
+              "type":"string"
+            },
+            {
+              "type":"null"
+            }
+          ],
+          "default":null,
+          "title":"Custom Type String"
+        },
+        "optional":{
+          "title":"Optional",
+          "type":"boolean"
+        },
         "type":{
           "title":"Type",
           "type":"string"

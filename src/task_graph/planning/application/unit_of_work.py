@@ -8,7 +8,6 @@ from task_graph.shared.ports.event_bus import EventBus
 from sqlalchemy.orm import Session, sessionmaker
 from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import SqlAlchemyTaskRepository
 from task_graph.shared.infrastructure.event_bus import PgNotifyEventBus
-from task_graph.planning.infrastructure.repositories.yaml_task_repository import YamlTaskRepository
 
 logger = logging.getLogger(__name__)
 
@@ -83,33 +82,3 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
     def rollback(self):
         if self.session:
             self.session.rollback()
-
-
-class YamlUnitOfWork(UnitOfWork):
-    def __init__(self, repository: YamlTaskRepository):
-        self._tasks_repo = repository
-        
-        class DummyEventBus(EventBus):
-            def publish(self, event):
-                pass
-        self._dummy_bus = DummyEventBus()
-
-    def __enter__(self) -> "UnitOfWork":
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
-
-    @property
-    def tasks(self):
-        return self._tasks_repo
-
-    @property
-    def event_bus(self):
-        return self._dummy_bus
-
-    def commit(self):
-        pass
-
-    def rollback(self):
-        pass

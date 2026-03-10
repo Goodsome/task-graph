@@ -41,7 +41,8 @@ class InMemoryTaskRepository(TaskRepository):
         ]
     
     def delete(self, task_id: TaskId) -> None:
-        del self._store[task_id]
+        if task_id.value in self._store:
+            del self._store[task_id.value]
     
     def find_by_id(self, task_id: TaskId) -> Task | None:
         return self._store.get(task_id.value)

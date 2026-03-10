@@ -16,9 +16,8 @@ from task_graph.planning.application.use_cases.update_task_status import UpdateT
 from task_graph.planning.domain.services.cycle_detection_service import CycleDetectionService
 from task_graph.planning.domain.services.dependency_resolution_service import DependencyResolutionService
 from task_graph.planning.domain.services.priority_analysis_service import PriorityAnalysisService
-from task_graph.planning.infrastructure.repositories.yaml_task_repository import YamlTaskRepository
 from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import SqlAlchemyTaskRepository
-from task_graph.planning.application.unit_of_work import SqlAlchemyUnitOfWork, YamlUnitOfWork
+from task_graph.planning.application.unit_of_work import SqlAlchemyUnitOfWork
 from task_graph.planning.infrastructure.database import Database
 from task_graph.planning.config import get_settings
 
@@ -35,27 +34,16 @@ class PlanningContainer(containers.DeclarativeContainer):
 
     _settings_obj = get_settings()
 
-    if _settings_obj.DATABASE_URL:
-        # Database connection
-        database = providers.Singleton(
-            Database,
-            connection_string=str(_settings_obj.DATABASE_URL)
-        )
-        
-        unit_of_work = providers.Factory(
-            SqlAlchemyUnitOfWork,
-            session_factory=database.provided.session_factory
-        )
-    else:
-        # Fallback to YAML implementation
-        yaml_repository = providers.Singleton(
-            YamlTaskRepository,
-        )
-        unit_of_work = providers.Factory(
-            YamlUnitOfWork,
-            repository=yaml_repository
-        )
-
+    # Database connection
+    database = providers.Singleton(
+        Database,
+        connection_string=str(_settings_obj.DATABASE_URL)
+    )
+    
+    unit_of_work = providers.Factory(
+        SqlAlchemyUnitOfWork,
+        session_factory=database.provided.session_factory
+    )
     # --- Domain Service Layer ---
 
     cycle_detection_service = providers.Factory(
