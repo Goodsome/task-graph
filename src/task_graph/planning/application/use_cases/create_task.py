@@ -94,13 +94,17 @@ class CreateTask:
                 # 如果条件满足，则标记为 READY（此方法会添加 TaskReadyEvent 到聚合根）
                 if should_be_ready:
                     new_task.mark_ready()
+                    logger.info(f"Task {new_task.id} marked as READY (dependencies satisfied or no dependencies)")
 
                 # 6. 持久化
                 self.uow.tasks.save(new_task)
-                
-                for event in new_task.collect_events():
+                logger.info(f"Task {new_task.id} created with status {new_task.status.value}")
+
+                events = new_task.collect_events()
+                logger.debug(f"Collected {len(events)} events from aggregate")
+                for event in events:
                     self.uow.event_bus.publish(event)
-                
+
                 self.uow.commit()
 
                 return CreateTaskResult(True, str(new_task.id), error="")

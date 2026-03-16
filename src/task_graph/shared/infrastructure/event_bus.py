@@ -23,7 +23,8 @@ class PgNotifyEventBus(EventBus):
             # but here channel is a static string or injected setting, so we assemble it securely.
             stmt = text(f"SELECT pg_notify('{self._channel}', :payload)")
             self._session.execute(stmt, {"payload": payload})
-            logger.debug(f"Published event {event.event_type} to channel {self._channel}")
+            logger.info(f"Published event {event.event_type} to channel {self._channel}")
+            logger.debug(f"Event payload: {payload}")
         except Exception as e:
             logger.error(f"Failed to publish event {event.event_type}: {e}")
             raise
