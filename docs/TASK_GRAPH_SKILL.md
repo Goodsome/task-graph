@@ -35,7 +35,6 @@ All tools are available via `mcp__task-graph__*` prefix.
 | Tool | Description |
 |------|-------------|
 | `claim_task` | Atomically claim a READY task |
-| `update_task_status` | Update task status manually |
 | `submit_task_result` | Submit execution results |
 | `review_task` | Approve or reject task in REVIEW state |
 | `modify_task_dependencies` | Add/remove task dependencies (cycle-safe) |

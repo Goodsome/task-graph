@@ -48,10 +48,6 @@ from task_graph.planning.application.use_cases.suggest_next_action import (
     SuggestNextActionQuery,
     SuggestNextActionResult,
 )
-from task_graph.planning.application.use_cases.update_task_status import (
-    UpdateTaskStatusCommand,
-    UpdateTaskStatusResult,
-)
 from task_graph.planning.application.use_cases.submit_task_result import (
     SubmitTaskResultCommand,
     SubmitTaskResultResult,
@@ -334,36 +330,6 @@ def suggest_next_action(top_n: int = 3, project_id: Optional[str] = None) -> dic
     tasks_data = [t.to_summary_dict() for t in result.tasks]
 
     return {"tasks": tasks_data}
-
-
-@mcp.tool()
-def update_task_status(task_id: str, new_status: str) -> dict:
-    """
-    更新任务状态。
-
-    当任务完成时，会自动检查并解锁依赖该任务的下游任务。
-
-    Args:
-        task_id: 目标任务ID
-        new_status: 新状态 (pending, blocked, ready, in_progress, done, changes_requested, skipped, discarded)
-
-    Returns:
-        包含 success, affected_tasks (被解锁的任务ID列表), error 的结果
-    """
-    container = _get_container()
-    use_case = container.update_task_status()
-
-    cmd = UpdateTaskStatusCommand(
-        task_id=task_id,
-        new_status=new_status,
-    )
-
-    result = use_case.execute(cmd)
-    return {
-        "success": result.success,
-        "affected_tasks": result.affected_tasks,
-        "error": result.error,
-    }
 
 
 @mcp.tool()

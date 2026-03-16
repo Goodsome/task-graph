@@ -84,7 +84,7 @@ class CreateTaskResult(BaseModel):
 - Implementation: `infrastructure/repositories/sql_alchemy_task_repository.py`
 - Accessed via Unit of Work pattern for transaction management
 
-## MCP Tools (11 total)
+## MCP Tools (10 total)
 
 The MCP server exposes these tools for task management:
 
@@ -95,7 +95,6 @@ The MCP server exposes these tools for task management:
 | `get_task_details` | Get full task context |
 | `suggest_next_action` | Get highest priority actionable tasks (ROI-based) |
 | `claim_task` | Claim a READY task (atomic status change) |
-| `update_task_status` | Update task status, auto-unblock dependents |
 | `submit_task_result` | Submit execution results |
 | `review_task` | Approve/reject task in REVIEW state |
 | `modify_task_dependencies` | Add/remove task dependencies (with cycle detection) |
