@@ -22,7 +22,7 @@ from task_graph.planning.infrastructure.database import Database
 from task_graph.planning.config import get_settings
 
 
-class PlanningContainer(containers.DeclarativeContainer):
+class Container(containers.DeclarativeContainer):
     """
     Dependency Injection Container for the Planning Context.
     """

@@ -9,11 +9,14 @@ dependencies = [
     "psycopg[binary]>=3.3.3",
     "pydantic>=2.12.5",
     "pyyaml>=6.0.3",
+    "rich>=14.3.3",
     "sqlalchemy[asyncio]>=2.0.46",
+    "typer>=0.24.1",
 ]
 
 [project.scripts]
 task-graph-mcp = "task_graph.planning.interfaces.mcp_server:main"
+task-graph = "task_graph.entrypoints.cli_main:app"
 
 [build-system]
 requires = ["hatchling"]

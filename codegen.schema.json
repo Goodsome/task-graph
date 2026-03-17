@@ -187,6 +187,17 @@
         "infrastructure":{
           "$ref":"#/$defs/InfrastructureSpec"
         },
+        "interfaces":{
+          "anyOf":[
+            {
+              "$ref":"#/$defs/InterfaceSpec"
+            },
+            {
+              "type":"null"
+            }
+          ],
+          "default":null
+        },
         "name":{
           "title":"Name",
           "type":"string"
@@ -196,6 +207,45 @@
         "name"
       ],
       "title":"BoundedContext",
+      "type":"object"
+    },
+    "CliCommandSpec":{
+      "additionalProperties":false,
+      "description":"CLI \u547d\u4ee4\u89c4\u8303",
+      "properties":{
+        "description":{
+          "title":"Description",
+          "type":"string"
+        },
+        "name":{
+          "title":"Name",
+          "type":"string"
+        },
+        "use_case":{
+          "title":"Use Case",
+          "type":"string"
+        }
+      },
+      "required":[
+        "name",
+        "use_case"
+      ],
+      "title":"CliCommandSpec",
+      "type":"object"
+    },
+    "CliInterfaceSpec":{
+      "additionalProperties":false,
+      "description":"CLI \u63a5\u53e3\u5c42\u89c4\u8303",
+      "properties":{
+        "commands":{
+          "items":{
+            "$ref":"#/$defs/CliCommandSpec"
+          },
+          "title":"Commands",
+          "type":"array"
+        }
+      },
+      "title":"CliInterfaceSpec",
       "type":"object"
     },
     "ConfigFieldSpec":{
@@ -485,6 +535,50 @@
       "title":"EnumSpec",
       "type":"object"
     },
+    "HttpEndpointSpec":{
+      "additionalProperties":false,
+      "description":"HTTP Endpoint \u89c4\u8303",
+      "properties":{
+        "description":{
+          "title":"Description",
+          "type":"string"
+        },
+        "method":{
+          "title":"Method",
+          "type":"string"
+        },
+        "path":{
+          "title":"Path",
+          "type":"string"
+        },
+        "use_case":{
+          "title":"Use Case",
+          "type":"string"
+        }
+      },
+      "required":[
+        "path",
+        "method",
+        "use_case"
+      ],
+      "title":"HttpEndpointSpec",
+      "type":"object"
+    },
+    "HttpInterfaceSpec":{
+      "additionalProperties":false,
+      "description":"HTTP \u63a5\u53e3\u5c42\u89c4\u8303",
+      "properties":{
+        "endpoints":{
+          "items":{
+            "$ref":"#/$defs/HttpEndpointSpec"
+          },
+          "title":"Endpoints",
+          "type":"array"
+        }
+      },
+      "title":"HttpInterfaceSpec",
+      "type":"object"
+    },
     "ImplementationSpec":{
       "additionalProperties":false,
       "description":"Specification of an implementation to be generated.",
@@ -540,6 +634,86 @@
         }
       },
       "title":"InfrastructureSpec",
+      "type":"object"
+    },
+    "InterfaceSpec":{
+      "additionalProperties":false,
+      "description":"\u63a5\u53e3\u5c42\u603b\u89c4\u8303",
+      "properties":{
+        "cli":{
+          "anyOf":[
+            {
+              "$ref":"#/$defs/CliInterfaceSpec"
+            },
+            {
+              "type":"null"
+            }
+          ],
+          "default":null
+        },
+        "http":{
+          "anyOf":[
+            {
+              "$ref":"#/$defs/HttpInterfaceSpec"
+            },
+            {
+              "type":"null"
+            }
+          ],
+          "default":null
+        },
+        "mcp":{
+          "anyOf":[
+            {
+              "$ref":"#/$defs/McpInterfaceSpec"
+            },
+            {
+              "type":"null"
+            }
+          ],
+          "default":null
+        }
+      },
+      "title":"InterfaceSpec",
+      "type":"object"
+    },
+    "McpInterfaceSpec":{
+      "additionalProperties":false,
+      "description":"MCP \u63a5\u53e3\u5c42\u89c4\u8303",
+      "properties":{
+        "tools":{
+          "items":{
+            "$ref":"#/$defs/McpToolSpec"
+          },
+          "title":"Tools",
+          "type":"array"
+        }
+      },
+      "title":"McpInterfaceSpec",
+      "type":"object"
+    },
+    "McpToolSpec":{
+      "additionalProperties":false,
+      "description":"MCP Tool \u89c4\u8303",
+      "properties":{
+        "description":{
+          "title":"Description",
+          "type":"string"
+        },
+        "name":{
+          "title":"Name",
+          "type":"string"
+        },
+        "use_case":{
+          "title":"Use Case",
+          "type":"string"
+        }
+      },
+      "required":[
+        "name",
+        "use_case"
+      ],
+      "title":"McpToolSpec",
       "type":"object"
     },
     "MethodOutput":{

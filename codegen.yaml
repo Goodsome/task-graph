@@ -774,4 +774,37 @@ contexts:
           name: session
         output:
           type: TaskModel
+  interfaces:
+    cli:
+      commands:
+      - name: create-task
+        description: 创建一个新的规划任务
+        use_case: CreateTask
+      - name: list-tasks
+        description: 分页查询任务列表
+        use_case: ListTasks
+      - name: get-task
+        description: 获取任务的详细上下文
+        use_case: GetTaskDetails
+      - name: suggest-next
+        description: 获取优先级最高的可执行任务建议
+        use_case: SuggestNextAction
+      - name: claim-task
+        description: 领取一个处于 READY 状态的任务
+        use_case: ClaimTask
+      - name: submit-result
+        description: 提交任务执行结果
+        use_case: SubmitTaskResult
+      - name: review-task
+        description: 审查任务并提供反馈
+        use_case: ReviewTask
+      - name: modify-deps
+        description: 修改任务的依赖关系
+        use_case: ModifyTaskDependencies
+      - name: revise-task
+        description: 修改任务的详细信息
+        use_case: ReviseTaskDetails
+      - name: delete-task
+        description: 删除指定的任务
+        use_case: DeleteTask
 - name: Shared
