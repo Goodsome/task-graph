@@ -846,6 +846,8 @@ contexts:
       behaviors:
       - name: create
         inputs:
+        - type: Any
+          name: cls
         - type: string
           name: title
         - type: string
@@ -1222,16 +1224,14 @@ contexts:
       operations:
       - name: publish
         inputs:
-        - type: Any
-          custom_type_string: DomainEvent
+        - type: DomainEvent
           name: event
         output:
           type: None
       - name: publish_all
         inputs:
-        - type: Any
+        - type: DomainEvent
           container: list
-          custom_type_string: list[DomainEvent]
           name: events
         output:
           type: None
