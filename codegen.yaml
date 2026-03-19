@@ -1240,6 +1240,11 @@ contexts:
     - name: CreateIssue
       kind: command
       description: Create a new issue with initial status NEW
+      dependencies:
+      - type: IssueRepository
+        name: issue_repository
+      - type: IssueEventPublisher
+        name: event_publisher
       command:
         name: CreateIssueCommand
         attributes:
@@ -1267,6 +1272,13 @@ contexts:
     - name: UpdateIssueStatus
       kind: command
       description: Update issue status with state machine validation
+      dependencies:
+      - type: IssueRepository
+        name: issue_repository
+      - type: IssueEventPublisher
+        name: event_publisher
+      - type: IssueStatusTransitionService
+        name: status_transition_service
       command:
         name: UpdateIssueStatusCommand
         attributes:
@@ -1286,6 +1298,11 @@ contexts:
     - name: UpdateIssueMetadata
       kind: command
       description: Update issue metadata like type, severity, and labels
+      dependencies:
+      - type: IssueRepository
+        name: issue_repository
+      - type: IssueEventPublisher
+        name: event_publisher
       command:
         name: UpdateIssueMetadataCommand
         attributes:
@@ -1315,6 +1332,11 @@ contexts:
     - name: AddComment
       kind: command
       description: Add a comment to an issue
+      dependencies:
+      - type: IssueRepository
+        name: issue_repository
+      - type: IssueEventPublisher
+        name: event_publisher
       command:
         name: AddCommentCommand
         attributes:
@@ -1336,6 +1358,11 @@ contexts:
     - name: LinkIssueToTask
       kind: command
       description: Link an issue to a task from Planning context
+      dependencies:
+      - type: IssueRepository
+        name: issue_repository
+      - type: IssueEventPublisher
+        name: event_publisher
       command:
         name: LinkIssueToTaskCommand
         attributes:
@@ -1353,6 +1380,11 @@ contexts:
     - name: UnlinkIssueFromTask
       kind: command
       description: Unlink an issue from a task
+      dependencies:
+      - type: IssueRepository
+        name: issue_repository
+      - type: IssueEventPublisher
+        name: event_publisher
       command:
         name: UnlinkIssueFromTaskCommand
         attributes:
@@ -1370,6 +1402,11 @@ contexts:
     - name: CloseIssue
       kind: command
       description: Close an issue that is in RESOLVED status
+      dependencies:
+      - type: IssueRepository
+        name: issue_repository
+      - type: IssueEventPublisher
+        name: event_publisher
       command:
         name: CloseIssueCommand
         attributes:
@@ -1388,6 +1425,9 @@ contexts:
     - name: GetIssueDetails
       kind: query
       description: Get full issue details including comments and labels
+      dependencies:
+      - type: IssueRepository
+        name: issue_repository
       query:
         name: GetIssueDetailsQuery
         attributes:
@@ -1406,6 +1446,9 @@ contexts:
     - name: ListIssues
       kind: query
       description: Paginated list of issues with filtering
+      dependencies:
+      - type: IssueRepository
+        name: issue_repository
       query:
         name: ListIssuesQuery
         attributes:
@@ -1469,30 +1512,30 @@ contexts:
   interfaces:
     cli:
       commands:
-      - description: Create a new issue
-        name: issue create
+      - name: issue create
         use_case: CreateIssue
-      - description: List issues with filtering
-        name: issue list
+        description: Create a new issue
+      - name: issue list
         use_case: ListIssues
-      - description: Show issue details
-        name: issue show
+        description: List issues with filtering
+      - name: issue show
         use_case: GetIssueDetails
-      - description: Update issue status
-        name: issue status
+        description: Show issue details
+      - name: issue status
         use_case: UpdateIssueStatus
-      - description: Update issue metadata
-        name: issue metadata
+        description: Update issue status
+      - name: issue metadata
         use_case: UpdateIssueMetadata
-      - description: Add comment to issue
-        name: issue comment
+        description: Update issue metadata
+      - name: issue comment
         use_case: AddComment
-      - description: Close an issue
-        name: issue close
+        description: Add comment to issue
+      - name: issue close
         use_case: CloseIssue
-      - description: Link issue to task
-        name: issue link
+        description: Close an issue
+      - name: issue link
         use_case: LinkIssueToTask
-      - description: Unlink issue from task
-        name: issue unlink
+        description: Link issue to task
+      - name: issue unlink
         use_case: UnlinkIssueFromTask
+        description: Unlink issue from task
