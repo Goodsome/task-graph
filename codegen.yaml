@@ -778,33 +778,721 @@ contexts:
     cli:
       commands:
       - name: create-task
-        description: 创建一个新的规划任务
         use_case: CreateTask
+        description: 创建一个新的规划任务
       - name: list-tasks
-        description: 分页查询任务列表
         use_case: ListTasks
+        description: 分页查询任务列表
       - name: get-task
-        description: 获取任务的详细上下文
         use_case: GetTaskDetails
+        description: 获取任务的详细上下文
       - name: suggest-next
-        description: 获取优先级最高的可执行任务建议
         use_case: SuggestNextAction
+        description: 获取优先级最高的可执行任务建议
       - name: claim-task
-        description: 领取一个处于 READY 状态的任务
         use_case: ClaimTask
+        description: 领取一个处于 READY 状态的任务
       - name: submit-result
-        description: 提交任务执行结果
         use_case: SubmitTaskResult
+        description: 提交任务执行结果
       - name: review-task
-        description: 审查任务并提供反馈
         use_case: ReviewTask
+        description: 审查任务并提供反馈
       - name: modify-deps
-        description: 修改任务的依赖关系
         use_case: ModifyTaskDependencies
+        description: 修改任务的依赖关系
       - name: revise-task
-        description: 修改任务的详细信息
         use_case: ReviseTaskDetails
+        description: 修改任务的详细信息
       - name: delete-task
-        description: 删除指定的任务
         use_case: DeleteTask
+        description: 删除指定的任务
 - name: Shared
+- name: IssueTracking
+  description: Issue Tracking bounded context for managing external user feedback
+    including bug reports, feature requests, and questions
+  domain:
+    aggregates:
+    - name: Issue
+      description: Issue aggregate root managing the complete issue lifecycle
+      attributes:
+      - type: IssueId
+        name: id
+      - type: IssueTitle
+        name: title
+      - type: IssueDescription
+        name: description
+      - type: IssueType
+        name: type
+      - type: Severity
+        name: severity
+      - type: IssueStatus
+        name: status
+      - type: Submitter
+        name: submitter
+      - type: Label
+        container: list
+        name: labels
+      - type: Comment
+        container: list
+        name: comments
+      - type: TaskLink
+        container: list
+        name: task_links
+      - type: datetime
+        name: created_at
+      - type: datetime
+        name: updated_at
+      behaviors:
+      - name: create
+        inputs:
+        - type: string
+          name: title
+        - type: string
+          name: description
+        - type: IssueType
+          name: type
+        - type: Severity
+          name: severity
+        - type: Submitter
+          name: submitter
+        output:
+          type: Issue
+      - name: change_status
+        inputs:
+        - type: IssueStatus
+          name: new_status
+        - type: string
+          name: changed_by
+        output:
+          type: None
+      - name: close
+        inputs:
+        - type: string
+          optional: true
+          name: resolution
+        output:
+          type: None
+      - name: add_comment
+        inputs:
+        - type: string
+          name: content
+        - type: string
+          name: author
+        output:
+          type: Comment
+      - name: add_label
+        inputs:
+        - type: Label
+          name: label
+        output:
+          type: None
+      - name: remove_label
+        inputs:
+        - type: string
+          name: label_name
+        output:
+          type: None
+      - name: link_to_task
+        inputs:
+        - type: string
+          name: task_id
+        output:
+          type: TaskLink
+      - name: unlink_from_task
+        inputs:
+        - type: string
+          name: task_id
+        output:
+          type: None
+      - name: update_metadata
+        inputs:
+        - type: IssueType
+          optional: true
+          name: type
+        - type: Severity
+          optional: true
+          name: severity
+        output:
+          type: None
+      - name: reconstitute
+        output:
+          type: Issue
+      - name: to_dict
+        output:
+          type: dict
+    enums:
+    - name: IssueType
+      description: Classification of issue types
+      members:
+      - name: BUG
+        value: bug
+        description: Software defect or bug
+      - name: FEATURE
+        value: feature
+        description: New feature request
+      - name: QUESTION
+        value: question
+        description: Question or inquiry
+      - name: IMPROVEMENT
+        value: improvement
+        description: Improvement suggestion
+    - name: Severity
+      description: Severity level of an issue
+      members:
+      - name: CRITICAL
+        value: critical
+        description: Critical severity - system down or data loss
+      - name: MAJOR
+        value: major
+        description: Major severity - significant functionality impaired
+      - name: MINOR
+        value: minor
+        description: Minor severity - limited impact
+      - name: LOW
+        value: low
+        description: Low severity - cosmetic or enhancement
+    - name: IssueStatus
+      description: Lifecycle state of an issue
+      members:
+      - name: NEW
+        value: new
+        description: Newly submitted, awaiting triage
+      - name: TRIAGED
+        value: triaged
+        description: Triaged and classified, awaiting processing
+      - name: IN_PROGRESS
+        value: in_progress
+        description: Currently being processed
+      - name: RESOLVED
+        value: resolved
+        description: Resolved, awaiting confirmation
+      - name: CLOSED
+        value: closed
+        description: Closed, final state
+    value_objects:
+    - name: IssueId
+      description: Unique identifier for an Issue
+      attributes:
+      - type: uuid
+        name: value
+      behaviors:
+      - name: create
+        output:
+          type: IssueId
+      - name: reconstitute
+        inputs:
+        - type: Any
+          custom_type_string: Union[UUID, str]
+          name: value
+        output:
+          type: IssueId
+      - name: __str__
+        output:
+          type: string
+      - name: serialize
+        output:
+          type: string
+    - name: CommentId
+      description: Unique identifier for a Comment
+      attributes:
+      - type: uuid
+        name: value
+      behaviors:
+      - name: create
+        output:
+          type: CommentId
+      - name: reconstitute
+        inputs:
+        - type: Any
+          custom_type_string: Union[UUID, str]
+          name: value
+        output:
+          type: CommentId
+      - name: __str__
+        output:
+          type: string
+      - name: serialize
+        output:
+          type: string
+    - name: Submitter
+      description: Information about the issue submitter
+      attributes:
+      - type: string
+        name: name
+      - type: string
+        name: email
+      - type: string
+        optional: true
+        name: external_id
+      behaviors:
+      - name: create
+        inputs:
+        - type: string
+          name: name
+        - type: string
+          name: email
+        - type: string
+          optional: true
+          name: external_id
+        output:
+          type: Submitter
+      - name: validate_email
+        inputs:
+        - type: string
+          name: email
+        output:
+          type: string
+    - name: IssueTitle
+      description: Title of an issue, max 200 characters
+      attributes:
+      - type: string
+        name: value
+        default: Field(..., max_length=200, description='Issue title must not exceed
+          200 characters')
+      behaviors:
+      - name: create
+        inputs:
+        - type: string
+          name: value
+        output:
+          type: IssueTitle
+      - name: serialize
+        output:
+          type: string
+    - name: IssueDescription
+      description: Description of an issue, max 10000 characters
+      attributes:
+      - type: string
+        name: value
+        default: Field(..., max_length=10000, description='Issue description must
+          not exceed 10000 characters')
+      behaviors:
+      - name: create
+        inputs:
+        - type: string
+          name: value
+        output:
+          type: IssueDescription
+      - name: serialize
+        output:
+          type: string
+    - name: Label
+      description: Label for categorizing issues
+      attributes:
+      - type: string
+        name: name
+        default: Field(..., max_length=50, description='Label name must not exceed
+          50 characters')
+      - type: string
+        optional: true
+        name: color
+      behaviors:
+      - name: create
+        inputs:
+        - type: string
+          name: name
+        - type: string
+          optional: true
+          name: color
+        output:
+          type: Label
+    - name: TaskLink
+      description: Link between an Issue and a Task from Planning context
+      attributes:
+      - type: string
+        name: task_id
+      - type: datetime
+        name: linked_at
+      behaviors:
+      - name: create
+        inputs:
+        - type: string
+          name: task_id
+        output:
+          type: TaskLink
+    entities:
+    - name: Comment
+      description: Comment attached to an Issue, immutable after creation
+      attributes:
+      - type: CommentId
+        name: id
+      - type: string
+        name: content
+      - type: string
+        name: author
+      - type: datetime
+        name: created_at
+      behaviors:
+      - name: create
+        inputs:
+        - type: string
+          name: content
+        - type: string
+          name: author
+        output:
+          type: Comment
+    services:
+    - name: IssueStatusTransitionService
+      description: Validates issue status transitions according to state machine rules
+      operations:
+      - name: can_transition
+        inputs:
+        - type: IssueStatus
+          name: current_status
+        - type: IssueStatus
+          name: target_status
+        output:
+          type: boolean
+      - name: validate_transition
+        inputs:
+        - type: IssueStatus
+          name: current_status
+        - type: IssueStatus
+          name: target_status
+        output:
+          type: None
+    ports:
+    - name: IssueRepository
+      description: Persistence interface for Issue aggregate
+      kind: repository
+      aggregate: Issue
+      operations:
+      - name: save
+        inputs:
+        - type: Issue
+          name: issue
+        output:
+          type: None
+      - name: find_by_id
+        inputs:
+        - type: IssueId
+          name: issue_id
+        output:
+          type: Issue
+          optional: true
+      - name: find_all
+        inputs:
+        - type: IssueStatus
+          optional: true
+          name: status
+        - type: IssueType
+          optional: true
+          name: issue_type
+        - type: Severity
+          optional: true
+          name: severity
+        - type: string
+          container: list
+          optional: true
+          name: labels
+        - type: integer
+          name: limit
+        - type: integer
+          name: offset
+        output:
+          type: Issue
+          container: list
+      - name: delete
+        inputs:
+        - type: IssueId
+          name: issue_id
+        output:
+          type: boolean
+      - name: find_by_task_id
+        inputs:
+        - type: string
+          name: task_id
+        output:
+          type: Issue
+          container: list
+      - name: count
+        inputs:
+        - type: IssueStatus
+          optional: true
+          name: status
+        - type: IssueType
+          optional: true
+          name: issue_type
+        output:
+          type: integer
+    - name: IssueEventPublisher
+      description: Publisher for Issue domain events
+      kind: adapter
+      operations:
+      - name: publish
+        inputs:
+        - type: Any
+          custom_type_string: DomainEvent
+          name: event
+        output:
+          type: None
+      - name: publish_all
+        inputs:
+        - type: Any
+          container: list
+          custom_type_string: list[DomainEvent]
+          name: events
+        output:
+          type: None
+  application:
+    use_cases:
+    - name: CreateIssue
+      kind: command
+      description: Create a new issue with initial status NEW
+      command:
+        name: CreateIssueCommand
+        attributes:
+        - type: string
+          name: title
+        - type: string
+          name: description
+        - type: IssueType
+          name: type
+        - type: Severity
+          name: severity
+        - type: string
+          name: submitter_name
+        - type: string
+          name: submitter_email
+      result:
+        attributes:
+        - type: boolean
+          name: success
+        - type: string
+          name: issue_id
+        - type: string
+          name: error
+          default: ''
+    - name: UpdateIssueStatus
+      kind: command
+      description: Update issue status with state machine validation
+      command:
+        name: UpdateIssueStatusCommand
+        attributes:
+        - type: string
+          name: issue_id
+        - type: IssueStatus
+          name: new_status
+        - type: string
+          name: changed_by
+      result:
+        attributes:
+        - type: boolean
+          name: success
+        - type: string
+          name: error
+          default: ''
+    - name: UpdateIssueMetadata
+      kind: command
+      description: Update issue metadata like type, severity, and labels
+      command:
+        name: UpdateIssueMetadataCommand
+        attributes:
+        - type: string
+          name: issue_id
+        - type: IssueType
+          optional: true
+          name: type
+        - type: Severity
+          optional: true
+          name: severity
+        - type: string
+          container: list
+          optional: true
+          name: add_labels
+        - type: string
+          container: list
+          optional: true
+          name: remove_labels
+      result:
+        attributes:
+        - type: boolean
+          name: success
+        - type: string
+          name: error
+          default: ''
+    - name: AddComment
+      kind: command
+      description: Add a comment to an issue
+      command:
+        name: AddCommentCommand
+        attributes:
+        - type: string
+          name: issue_id
+        - type: string
+          name: content
+        - type: string
+          name: author
+      result:
+        attributes:
+        - type: boolean
+          name: success
+        - type: string
+          name: comment_id
+        - type: string
+          name: error
+          default: ''
+    - name: LinkIssueToTask
+      kind: command
+      description: Link an issue to a task from Planning context
+      command:
+        name: LinkIssueToTaskCommand
+        attributes:
+        - type: string
+          name: issue_id
+        - type: string
+          name: task_id
+      result:
+        attributes:
+        - type: boolean
+          name: success
+        - type: string
+          name: error
+          default: ''
+    - name: UnlinkIssueFromTask
+      kind: command
+      description: Unlink an issue from a task
+      command:
+        name: UnlinkIssueFromTaskCommand
+        attributes:
+        - type: string
+          name: issue_id
+        - type: string
+          name: task_id
+      result:
+        attributes:
+        - type: boolean
+          name: success
+        - type: string
+          name: error
+          default: ''
+    - name: CloseIssue
+      kind: command
+      description: Close an issue that is in RESOLVED status
+      command:
+        name: CloseIssueCommand
+        attributes:
+        - type: string
+          name: issue_id
+        - type: string
+          optional: true
+          name: resolution
+      result:
+        attributes:
+        - type: boolean
+          name: success
+        - type: string
+          name: error
+          default: ''
+    - name: GetIssueDetails
+      kind: query
+      description: Get full issue details including comments and labels
+      query:
+        name: GetIssueDetailsQuery
+        attributes:
+        - type: string
+          name: issue_id
+      result:
+        attributes:
+        - type: boolean
+          name: success
+        - type: dict
+          optional: true
+          name: issue
+        - type: string
+          optional: true
+          name: error
+    - name: ListIssues
+      kind: query
+      description: Paginated list of issues with filtering
+      query:
+        name: ListIssuesQuery
+        attributes:
+        - type: IssueStatus
+          optional: true
+          name: status
+        - type: IssueType
+          optional: true
+          name: type
+        - type: string
+          container: list
+          optional: true
+          name: labels
+        - type: integer
+          name: limit
+          default: '10'
+        - type: integer
+          name: offset
+          default: '0'
+      result:
+        attributes:
+        - type: dict
+          container: list
+          name: issues
+        - type: integer
+          name: total_count
+        - type: string
+          optional: true
+          name: error
+  infrastructure:
+    implementations:
+    - name: SqlAlchemyIssueRepository
+      implements: IssueRepository
+      technology: sql
+      description: SQLAlchemy implementation of IssueRepository
+      attributes:
+      - type: Session
+        name: session
+      private_methods:
+      - name: _to_domain
+        inputs:
+        - type: IssueModel
+          name: model
+        output:
+          type: Issue
+      - name: _to_model
+        inputs:
+        - type: Issue
+          name: issue
+        - type: Session
+          name: session
+        output:
+          type: IssueModel
+    - name: PostgresNotifyEventPublisher
+      implements: IssueEventPublisher
+      technology: postgresql
+      description: PostgreSQL NOTIFY implementation of IssueEventPublisher
+      attributes:
+      - type: Connection
+        name: connection
+  interfaces:
+    cli:
+      commands:
+      - description: Create a new issue
+        name: issue create
+        use_case: CreateIssue
+      - description: List issues with filtering
+        name: issue list
+        use_case: ListIssues
+      - description: Show issue details
+        name: issue show
+        use_case: GetIssueDetails
+      - description: Update issue status
+        name: issue status
+        use_case: UpdateIssueStatus
+      - description: Update issue metadata
+        name: issue metadata
+        use_case: UpdateIssueMetadata
+      - description: Add comment to issue
+        name: issue comment
+        use_case: AddComment
+      - description: Close an issue
+        name: issue close
+        use_case: CloseIssue
+      - description: Link issue to task
+        name: issue link
+        use_case: LinkIssueToTask
+      - description: Unlink issue from task
+        name: issue unlink
+        use_case: UnlinkIssueFromTask
