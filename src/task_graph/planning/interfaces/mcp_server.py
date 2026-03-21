@@ -23,7 +23,7 @@ from mcp.server import FastMCP
 from pydantic import BaseModel, Field
 from typing import Optional
 
-from task_graph.planning.container import PlanningContainer
+from task_graph.planning.container import Container as PlanningContainer
 from task_graph.planning.application.use_cases.create_task import (
     CreateTaskCommand,
     CreateTaskResult,
