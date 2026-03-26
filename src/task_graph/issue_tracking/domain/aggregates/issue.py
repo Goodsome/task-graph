@@ -32,7 +32,7 @@ class Issue(Aggregate):
 
     @classmethod
     def create(
-        cls: Any,
+        cls: type[Self],
         title: str,
         description: str,
         type: IssueType,
