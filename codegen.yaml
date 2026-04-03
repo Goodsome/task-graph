@@ -246,8 +246,6 @@ contexts:
         type: datetime
       - name: updated_at
         type: datetime
-      base_types:
-      - Aggregate
       behaviors:
       - inputs:
         - container: type
@@ -1057,8 +1055,6 @@ contexts:
       - name: review_feedback
         optional: true
         type: ReviewFeedback
-      base_types:
-      - Aggregate
       behaviors:
       - description: Factory method to create a new Task
         inputs:
@@ -1631,5 +1627,92 @@ contexts:
           type: TaskModel
       technology: sql
   name: Planning
-- name: Shared
+- domain:
+    core:
+    - attributes:
+      - name: model_config
+        type: Any
+      base_types:
+      - BaseModel
+      description: 值对象基类 特征： 1. 不可变（frozen=True） 2. 相等性基于所有属性值 3. 无唯一标识
+      name: ValueObject
+    - attributes:
+      - name: model_config
+        type: Any
+      - container: list
+        name: _domain_events
+        type: DomainEvent
+      base_types:
+      - BaseModel
+      behaviors:
+      - description: "添加领域事件\nArgs:\n    event: 要添加的领域事件实例\nRaises:\n    TypeError:\
+          \ 如果 event 不是 DomainEvent 的实例"
+        inputs:
+        - name: self
+          type: Self
+        - name: event
+          type: DomainEvent
+        name: add_domain_event
+        output:
+          type: None
+      - description: "收集并清空领域事件\nReturns:\n    收集到的所有领域事件列表（副本）"
+        inputs:
+        - name: self
+          type: Self
+        name: collect_events
+        output:
+          container: list
+          type: DomainEvent
+      - description: 清空领域事件
+        inputs:
+        - name: self
+          type: Self
+        name: clear_events
+        output:
+          type: None
+      - description: "检查是否有未处理的领域事件\n\nReturns:\n    如果有事件返回 True，否则返回 False"
+        inputs:
+        - name: self
+          type: Self
+        name: has_events
+        output:
+          type: boolean
+      description: 聚合根基类 特征： 1. 继承 Entity 的所有特性 2. 管理领域事件的发布和收集 3. 确保聚合边界内的一致性
+      name: AggregateRoot
+    - attributes:
+      - name: model_config
+        type: Any
+      base_types:
+      - BaseModel
+      description: 实体基类 特征： 1. 具有唯一标识（ID） 2. 相等性基于 ID 判断 3. 可变（但应通过行为方法修改） 4. 使用 UTC
+        时区记录时间
+      name: Entity
+    - attributes:
+      - default: uuid4
+        name: event_id
+        type: uuid
+      - default: 'lambda: datetime.now(timezone.utc)'
+        name: occurred_at
+        type: datetime
+      - default: ''
+        name: event_type
+        type: string
+      - default: 1
+        name: version
+        type: integer
+      - name: model_config
+        type: Any
+      base_types:
+      - BaseModel
+      behaviors:
+      - inputs:
+        - name: self
+          type: Self
+        name: __init__
+        output:
+          type: any
+      description: 领域事件基类 所有领域事件必须： 1. 不可变（frozen=True） 2. 包含唯一标识和时间戳 3. 使用 UTC 时区
+        4. 携带事件类型标识
+      name: DomainEvent
+  name: Shared
 name: TaskGraph

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from task_graph.issue_tracking.domain.enums import IssueStatus, IssueType, Severity
-from task_graph.shared.models import Aggregate
+from task_graph.shared.domain.core.aggregate_root import AggregateRoot
 from task_graph.issue_tracking.domain.value_objects.submitter import Submitter
 from task_graph.issue_tracking.domain.value_objects.issue_description import (
     IssueDescription,
@@ -14,7 +14,7 @@ from task_graph.issue_tracking.domain.value_objects.label import Label
 from typing import Any, Self, Union
 
 
-class Issue(Aggregate):
+class Issue(AggregateRoot):
     """Issue aggregate root managing the complete issue lifecycle"""
 
     id: IssueId

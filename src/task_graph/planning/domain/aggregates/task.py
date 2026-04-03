@@ -11,7 +11,7 @@ from task_graph.planning.domain.exceptions import (
 from task_graph.planning.domain.value_objects.story_point import StoryPoint
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.value_score import ValueScore
-from task_graph.shared.models import Aggregate
+from task_graph.shared.domain.core.aggregate_root import AggregateRoot
 from typing import Union, Any
 from task_graph.planning.domain.value_objects.recurrence_policy import (
     RecurrencePolicy,
@@ -28,7 +28,7 @@ from task_graph.planning.domain.events import (
 )
 
 
-class Task(Aggregate):
+class Task(AggregateRoot):
     """The atomic unit of planning, representing a node in the DAG."""
 
     id: TaskId
