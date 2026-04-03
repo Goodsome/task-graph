@@ -1,126 +1,383 @@
 # yaml-language-server: $schema=./codegen.schema.json
-name: TaskGraph
-description: ''
 contexts:
-- name: IssueTracking
+- application:
+    use_cases:
+    - dependencies:
+      - name: issue_repository
+        type: IssueRepository
+      - name: event_publisher
+        type: IssueEventPublisher
+      description: Link an issue to a task from Planning context
+      inputs:
+      - name: issue_id
+        type: string
+      - name: task_id
+        type: string
+      kind: command
+      name: LinkIssueToTask
+      outputs:
+      - name: success
+        type: boolean
+      - default: ''
+        name: error
+        type: string
+    - dependencies:
+      - name: issue_repository
+        type: IssueRepository
+      - name: event_publisher
+        type: IssueEventPublisher
+      description: Close an issue that is in RESOLVED status
+      inputs:
+      - name: issue_id
+        type: string
+      - name: resolution
+        optional: true
+        type: string
+      kind: command
+      name: CloseIssue
+      outputs:
+      - name: success
+        type: boolean
+      - default: ''
+        name: error
+        type: string
+    - dependencies:
+      - name: issue_repository
+        type: IssueRepository
+      - name: event_publisher
+        type: IssueEventPublisher
+      - name: status_transition_service
+        type: IssueStatusTransitionService
+      description: Update issue status with state machine validation
+      inputs:
+      - name: issue_id
+        type: string
+      - name: new_status
+        type: IssueStatus
+      - name: changed_by
+        type: string
+      kind: command
+      name: UpdateIssueStatus
+      outputs:
+      - name: success
+        type: boolean
+      - default: ''
+        name: error
+        type: string
+    - dependencies:
+      - name: issue_repository
+        type: IssueRepository
+      description: Get full issue details including comments and labels
+      inputs:
+      - name: issue_id
+        type: string
+      kind: query
+      name: GetIssueDetails
+      outputs:
+      - name: success
+        type: boolean
+      - name: issue
+        optional: true
+        type: dict
+      - name: error
+        optional: true
+        type: string
+    - dependencies:
+      - name: issue_repository
+        type: IssueRepository
+      - name: event_publisher
+        type: IssueEventPublisher
+      description: Create a new issue with initial status NEW
+      inputs:
+      - name: title
+        type: string
+      - name: description
+        type: string
+      - name: type
+        type: IssueType
+      - name: severity
+        type: Severity
+      - name: submitter_name
+        type: string
+      - name: submitter_email
+        type: string
+      kind: command
+      name: CreateIssue
+      outputs:
+      - name: success
+        type: boolean
+      - name: issue_id
+        type: string
+      - default: ''
+        name: error
+        type: string
+    - dependencies:
+      - name: issue_repository
+        type: IssueRepository
+      - name: event_publisher
+        type: IssueEventPublisher
+      description: Update issue metadata like type, severity, and labels
+      inputs:
+      - name: issue_id
+        type: string
+      - name: type
+        optional: true
+        type: IssueType
+      - name: severity
+        optional: true
+        type: Severity
+      - container: list
+        name: add_labels
+        optional: true
+        type: string
+      - container: list
+        name: remove_labels
+        optional: true
+        type: string
+      kind: command
+      name: UpdateIssueMetadata
+      outputs:
+      - name: success
+        type: boolean
+      - default: ''
+        name: error
+        type: string
+    - dependencies:
+      - name: issue_repository
+        type: IssueRepository
+      description: Paginated list of issues with filtering
+      inputs:
+      - name: status
+        optional: true
+        type: IssueStatus
+      - name: type
+        optional: true
+        type: IssueType
+      - container: list
+        name: labels
+        optional: true
+        type: string
+      - default: 10
+        name: limit
+        type: integer
+      - default: 0
+        name: offset
+        type: integer
+      kind: query
+      name: ListIssues
+      outputs:
+      - container: list
+        name: issues
+        type: dict
+      - name: total_count
+        type: integer
+      - name: error
+        optional: true
+        type: string
+    - dependencies:
+      - name: issue_repository
+        type: IssueRepository
+      - name: event_publisher
+        type: IssueEventPublisher
+      description: Unlink an issue from a task
+      inputs:
+      - name: issue_id
+        type: string
+      - name: task_id
+        type: string
+      kind: command
+      name: UnlinkIssueFromTask
+      outputs:
+      - name: success
+        type: boolean
+      - default: ''
+        name: error
+        type: string
+    - dependencies:
+      - name: issue_repository
+        type: IssueRepository
+      - name: event_publisher
+        type: IssueEventPublisher
+      description: Add a comment to an issue
+      inputs:
+      - name: issue_id
+        type: string
+      - name: content
+        type: string
+      - name: author
+        type: string
+      kind: command
+      name: AddComment
+      outputs:
+      - name: success
+        type: boolean
+      - name: comment_id
+        type: string
+      - default: ''
+        name: error
+        type: string
   domain:
     aggregates:
-    - name: Issue
-      description: Issue aggregate root managing the complete issue lifecycle
-      attributes:
-      - type: IssueId
-        name: id
-      - type: IssueTitle
-        name: title
-      - type: IssueDescription
-        name: description
-      - type: IssueType
-        name: type
-      - type: Severity
-        name: severity
-      - type: IssueStatus
-        name: status
-      - type: Submitter
-        name: submitter
-      - type: Label
-        container: list
+    - attributes:
+      - name: id
+        type: IssueId
+      - name: title
+        type: IssueTitle
+      - name: description
+        type: IssueDescription
+      - name: type
+        type: IssueType
+      - name: severity
+        type: Severity
+      - name: status
+        type: IssueStatus
+      - name: submitter
+        type: Submitter
+      - container: list
         name: labels
-      - type: Comment
-        container: list
+        type: Label
+      - container: list
         name: comments
-      - type: TaskLink
-        container: list
+        type: Comment
+      - container: list
         name: task_links
-      - type: datetime
-        name: created_at
-      - type: datetime
-        name: updated_at
+        type: TaskLink
+      - name: created_at
+        type: datetime
+      - name: updated_at
+        type: datetime
+      base_types:
+      - Aggregate
       behaviors:
-      - name: create
-        inputs:
-        - type: string
-          name: title
-        - type: string
-          name: description
-        - type: IssueType
-          name: type
-        - type: Severity
-          name: severity
-        - type: Submitter
-          name: submitter
+      - inputs:
+        - container: type
+          name: cls
+          type: Self
+        - name: title
+          type: string
+        - name: description
+          type: string
+        - name: type
+          type: IssueType
+        - name: severity
+          type: Severity
+        - name: submitter
+          type: Submitter
+        name: create
         output:
           type: Self
-      - name: change_status
-        inputs:
-        - type: IssueStatus
-          name: new_status
-        - type: string
-          name: changed_by
+      - inputs:
+        - name: self
+          type: Self
+        - name: new_status
+          type: IssueStatus
+        - name: changed_by
+          type: string
+        name: change_status
         output:
           type: None
-      - name: close
-        inputs:
-        - type: string
+      - inputs:
+        - name: self
+          type: Self
+        - name: resolution
           optional: true
-          name: resolution
-          default: None
+          type: string
+        name: close
         output:
           type: None
-      - name: add_comment
-        inputs:
-        - type: string
-          name: content
-        - type: string
-          name: author
+      - inputs:
+        - name: self
+          type: Self
+        - name: content
+          type: string
+        - name: author
+          type: string
+        name: add_comment
         output:
           type: Comment
-      - name: add_label
-        inputs:
-        - type: Label
-          name: label
+      - inputs:
+        - name: self
+          type: Self
+        - name: label
+          type: Label
+        name: add_label
         output:
           type: None
-      - name: remove_label
-        inputs:
-        - type: string
-          name: label_name
+      - inputs:
+        - name: self
+          type: Self
+        - name: label_name
+          type: string
+        name: remove_label
         output:
           type: None
-      - name: link_to_task
-        inputs:
-        - type: string
-          name: task_id
+      - inputs:
+        - name: self
+          type: Self
+        - name: task_id
+          type: string
+        name: link_to_task
         output:
           type: TaskLink
-      - name: unlink_from_task
-        inputs:
-        - type: string
-          name: task_id
+      - inputs:
+        - name: self
+          type: Self
+        - name: task_id
+          type: string
+        name: unlink_from_task
         output:
           type: None
-      - name: update_metadata
-        inputs:
-        - type: IssueType
+      - inputs:
+        - name: self
+          type: Self
+        - name: type
           optional: true
-          name: type
-          default: None
-        - type: Severity
+          type: IssueType
+        - name: severity
           optional: true
-          name: severity
-          default: None
+          type: Severity
+        name: update_metadata
         output:
           type: None
-      - name: reconstitute
-        inputs: []
+      - inputs:
+        - name: self
+          type: Self
+        name: reconstitute
         output:
           type: Self
-      - name: to_dict
-        inputs: []
+      - inputs:
+        - name: self
+          type: Self
+        name: to_dict
         output:
           type: dict
+      description: Issue aggregate root managing the complete issue lifecycle
+      name: Issue
+    entities:
+    - attributes:
+      - name: id
+        type: CommentId
+      - name: content
+        type: string
+      - name: author
+        type: string
+      - name: created_at
+        type: datetime
+      behaviors:
+      - inputs:
+        - name: self
+          type: Self
+        - name: content
+          type: string
+        - name: author
+          type: string
+        name: create
+        output:
+          type: Comment
+      description: Comment attached to an Issue, immutable after creation
+      name: Comment
     enums:
-    - name: IssueType
-      description: Classification of issue types
+    - description: Classification of issue types
       members:
       - name: BUG
         value: bug
@@ -130,8 +387,8 @@ contexts:
         value: question
       - name: IMPROVEMENT
         value: improvement
-    - name: Severity
-      description: Severity level of an issue
+      name: IssueType
+    - description: Severity level of an issue
       members:
       - name: CRITICAL
         value: critical
@@ -141,8 +398,8 @@ contexts:
         value: minor
       - name: LOW
         value: low
-    - name: IssueStatus
-      description: Lifecycle state of an issue
+      name: Severity
+    - description: Lifecycle state of an issue
       members:
       - name: NEW
         value: new
@@ -154,698 +411,810 @@ contexts:
         value: resolved
       - name: CLOSED
         value: closed
-    value_objects:
-    - name: IssueTitle
-      description: Title of an issue, max 200 characters
-      attributes:
-      - type: string
-        name: value
-        default: Field(..., max_length=200, description='Issue title must not exceed
-          200 characters')
-      behaviors:
-      - name: create
-        inputs:
-        - type: string
-          name: value
-        output:
-          type: IssueTitle
-      - name: serialize
-        inputs: []
-        output:
-          type: string
-    - name: CommentId
-      description: Unique identifier for a Comment
-      attributes:
-      - type: uuid
-        name: value
-      behaviors:
-      - name: create
-        inputs: []
-        output:
-          type: CommentId
-      - name: reconstitute
-        inputs:
-        - type: Any
-          custom_type_string: Union[UUID, str]
-          name: value
-        output:
-          type: CommentId
-      - name: __str__
-        inputs: []
-        output:
-          type: string
-      - name: serialize
-        inputs: []
-        output:
-          type: string
-    - name: IssueDescription
-      description: Description of an issue, max 10000 characters
-      attributes:
-      - type: string
-        name: value
-        default: Field(..., max_length=10000, description='Issue description must
-          not exceed 10000 characters')
-      behaviors:
-      - name: create
-        inputs:
-        - type: string
-          name: value
-        output:
-          type: IssueDescription
-      - name: serialize
-        inputs: []
-        output:
-          type: string
-    - name: Label
-      description: Label for categorizing issues
-      attributes:
-      - type: string
-        name: name
-        default: Field(..., max_length=50, description='Label name must not exceed
-          50 characters')
-      - type: string
-        optional: true
-        name: color
-      behaviors:
-      - name: create
-        inputs:
-        - type: string
-          name: name
-        - type: string
-          optional: true
-          name: color
-          default: None
-        output:
-          type: Label
-    - name: IssueId
-      description: Unique identifier for an Issue
-      attributes:
-      - type: uuid
-        name: value
-      behaviors:
-      - name: create
-        inputs: []
-        output:
-          type: IssueId
-      - name: reconstitute
-        inputs:
-        - type: Any
-          custom_type_string: Union[UUID, str]
-          name: value
-        output:
-          type: IssueId
-      - name: __str__
-        inputs: []
-        output:
-          type: string
-      - name: serialize
-        inputs: []
-        output:
-          type: string
-    - name: TaskLink
-      description: Link between an Issue and a Task from Planning context
-      attributes:
-      - type: string
-        name: task_id
-      - type: datetime
-        name: linked_at
-      behaviors:
-      - name: create
-        inputs:
-        - type: string
-          name: task_id
-        output:
-          type: TaskLink
-    - name: Submitter
-      description: Information about the issue submitter
-      attributes:
-      - type: string
-        name: name
-      - type: string
-        name: email
-      - type: string
-        optional: true
-        name: external_id
-      behaviors:
-      - name: create
-        inputs:
-        - type: string
-          name: name
-        - type: string
-          name: email
-        - type: string
-          optional: true
-          name: external_id
-          default: None
-        output:
-          type: Self
-      - name: validate_email
-        inputs:
-        - type: string
-          name: email
-        output:
-          type: string
-    entities:
-    - name: Comment
-      description: Comment attached to an Issue, immutable after creation
-      attributes:
-      - type: CommentId
-        name: id
-      - type: string
-        name: content
-      - type: string
-        name: author
-      - type: datetime
-        name: created_at
-      behaviors:
-      - name: create
-        inputs:
-        - type: string
-          name: content
-        - type: string
-          name: author
-        output:
-          type: Comment
-    services:
-    - name: IssueStatusTransitionService
-      description: Validates issue status transitions according to state machine rules
-      operations:
-      - name: can_transition
-        inputs:
-        - type: IssueStatus
-          name: current_status
-        - type: IssueStatus
-          name: target_status
-        output:
-          type: boolean
-      - name: validate_transition
-        inputs:
-        - type: IssueStatus
-          name: current_status
-        - type: IssueStatus
-          name: target_status
-        output:
-          type: None
+      name: IssueStatus
     ports:
-    - name: IssueRepository
+    - aggregate: Issue
       description: Persistence interface for Issue aggregate
       kind: repository
-      aggregate: Issue
+      name: IssueRepository
       operations:
-      - name: save
-        inputs:
-        - type: Issue
-          name: issue
+      - inputs:
+        - name: self
+          type: Self
+        - name: issue
+          type: Issue
+        name: save
         output:
           type: None
-      - name: find_by_id
-        inputs:
-        - type: IssueId
-          name: issue_id
+      - inputs:
+        - name: self
+          type: Self
+        - name: issue_id
+          type: IssueId
+        name: find_by_id
         output:
+          optional: true
           type: Issue
+      - inputs:
+        - name: self
+          type: Self
+        - name: status
           optional: true
-      - name: find_all
-        inputs:
-        - type: IssueStatus
+          type: IssueStatus
+        - name: issue_type
           optional: true
-          name: status
-        - type: IssueType
+          type: IssueType
+        - name: severity
           optional: true
-          name: issue_type
-        - type: Severity
-          optional: true
-          name: severity
-          default: None
-        - type: string
-          container: list
-          optional: true
+          type: Severity
+        - container: list
           name: labels
-          default: None
-        - type: integer
-          name: limit
-          default: None
-        - type: integer
-          name: offset
-          default: None
+          optional: true
+          type: string
+        - name: limit
+          type: integer
+        - name: offset
+          type: integer
+        name: find_all
         output:
-          type: Issue
           container: list
-      - name: delete
-        inputs:
-        - type: IssueId
-          name: issue_id
+          type: Issue
+      - inputs:
+        - name: self
+          type: Self
+        - name: issue_id
+          type: IssueId
+        name: delete
         output:
           type: boolean
-      - name: find_by_task_id
-        inputs:
-        - type: string
-          name: task_id
+      - inputs:
+        - name: self
+          type: Self
+        - name: task_id
+          type: string
+        name: find_by_task_id
         output:
-          type: Issue
           container: list
-      - name: count
-        inputs:
-        - type: IssueStatus
+          type: Issue
+      - inputs:
+        - name: self
+          type: Self
+        - name: status
           optional: true
-          name: status
-          default: None
-        - type: IssueType
+          type: IssueStatus
+        - name: issue_type
           optional: true
-          name: issue_type
-          default: None
+          type: IssueType
+        name: count
         output:
           type: integer
-    - name: IssueEventPublisher
-      description: Publisher for Issue domain events
+    - description: Publisher for Issue domain events
       kind: adapter
+      name: IssueEventPublisher
       operations:
-      - name: publish
-        inputs:
-        - type: DomainEvent
-          name: event
+      - inputs:
+        - name: self
+          type: Self
+        - name: event
+          type: DomainEvent
+        name: publish
         output:
           type: None
-      - name: publish_all
-        inputs:
-        - type: DomainEvent
-          container: list
+      - inputs:
+        - name: self
+          type: Self
+        - container: list
           name: events
+          type: DomainEvent
+        name: publish_all
         output:
           type: None
-  application:
-    use_cases:
-    - name: LinkIssueToTask
-      kind: command
-      dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
-      command:
-        attributes:
-        - type: string
-          name: issue_id
-        - type: string
-          name: task_id
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          name: error
-          default: ''''''
-    - name: CloseIssue
-      kind: command
-      dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
-      command:
-        attributes:
-        - type: string
-          name: issue_id
-        - type: string
+    services:
+    - description: Validates issue status transitions according to state machine rules
+      name: IssueStatusTransitionService
+      operations:
+      - inputs:
+        - name: self
+          type: Self
+        - name: current_status
+          type: IssueStatus
+        - name: target_status
+          type: IssueStatus
+        name: can_transition
+        output:
+          type: boolean
+      - inputs:
+        - name: self
+          type: Self
+        - name: current_status
+          type: IssueStatus
+        - name: target_status
+          type: IssueStatus
+        name: validate_transition
+        output:
+          type: None
+    value_objects:
+    - attributes:
+      - name: value
+        type: string
+      behaviors:
+      - inputs:
+        - name: self
+          type: Self
+        - name: value
+          type: string
+        name: create
+        output:
+          type: IssueTitle
+      - inputs:
+        - name: self
+          type: Self
+        name: serialize
+        output:
+          type: string
+      description: Title of an issue, max 200 characters
+      name: IssueTitle
+    - attributes:
+      - name: value
+        type: uuid
+      behaviors:
+      - inputs:
+        - name: self
+          type: Self
+        name: create
+        output:
+          type: CommentId
+      - inputs:
+        - name: self
+          type: Self
+        - custom_type_string: Union[UUID, str]
+          name: value
+          type: Any
+        name: reconstitute
+        output:
+          type: CommentId
+      - inputs:
+        - name: self
+          type: Self
+        name: __str__
+        output:
+          type: string
+      - inputs:
+        - name: self
+          type: Self
+        name: serialize
+        output:
+          type: string
+      description: Unique identifier for a Comment
+      name: CommentId
+    - attributes:
+      - name: value
+        type: string
+      behaviors:
+      - inputs:
+        - name: self
+          type: Self
+        - name: value
+          type: string
+        name: create
+        output:
+          type: IssueDescription
+      - inputs:
+        - name: self
+          type: Self
+        name: serialize
+        output:
+          type: string
+      description: Description of an issue, max 10000 characters
+      name: IssueDescription
+    - attributes:
+      - name: name
+        type: string
+      - name: color
+        optional: true
+        type: string
+      behaviors:
+      - inputs:
+        - name: self
+          type: Self
+        - name: name
+          type: string
+        - name: color
           optional: true
-          name: resolution
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          name: error
-          default: ''''''
-    - name: UpdateIssueStatus
-      kind: command
-      dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
-      - type: IssueStatusTransitionService
-        name: status_transition_service
-      command:
-        attributes:
-        - type: string
-          name: issue_id
-        - type: IssueStatus
-          name: new_status
-        - type: string
-          name: changed_by
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          name: error
-          default: ''''''
-    - name: GetIssueDetails
-      kind: query
-      dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      query:
-        attributes:
-        - type: string
-          name: issue_id
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: dict
+          type: string
+        name: create
+        output:
+          type: Label
+      description: Label for categorizing issues
+      name: Label
+    - attributes:
+      - name: value
+        type: uuid
+      behaviors:
+      - inputs:
+        - name: self
+          type: Self
+        name: create
+        output:
+          type: IssueId
+      - inputs:
+        - name: self
+          type: Self
+        - custom_type_string: Union[UUID, str]
+          name: value
+          type: Any
+        name: reconstitute
+        output:
+          type: IssueId
+      - inputs:
+        - name: self
+          type: Self
+        name: __str__
+        output:
+          type: string
+      - inputs:
+        - name: self
+          type: Self
+        name: serialize
+        output:
+          type: string
+      description: Unique identifier for an Issue
+      name: IssueId
+    - attributes:
+      - name: task_id
+        type: string
+      - name: linked_at
+        type: datetime
+      behaviors:
+      - inputs:
+        - name: self
+          type: Self
+        - name: task_id
+          type: string
+        name: create
+        output:
+          type: TaskLink
+      description: Link between an Issue and a Task from Planning context
+      name: TaskLink
+    - attributes:
+      - name: name
+        type: string
+      - name: email
+        type: string
+      - name: external_id
+        optional: true
+        type: string
+      behaviors:
+      - inputs:
+        - name: self
+          type: Self
+        - name: name
+          type: string
+        - name: email
+          type: string
+        - name: external_id
           optional: true
-          name: issue
-        - type: string
-          optional: true
-          name: error
-    - name: CreateIssue
-      kind: command
-      dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
-      command:
-        attributes:
-        - type: string
-          name: title
-        - type: string
-          name: description
-        - type: IssueType
-          name: type
-        - type: Severity
-          name: severity
-        - type: string
-          name: submitter_name
-        - type: string
-          name: submitter_email
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          name: issue_id
-        - type: string
-          name: error
-          default: ''''''
-    - name: UpdateIssueMetadata
-      kind: command
-      dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
-      command:
-        attributes:
-        - type: string
-          name: issue_id
-        - type: IssueType
-          optional: true
-          name: type
-        - type: Severity
-          optional: true
-          name: severity
-        - type: string
-          container: list
-          optional: true
-          name: add_labels
-        - type: string
-          container: list
-          optional: true
-          name: remove_labels
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          name: error
-          default: ''''''
-    - name: ListIssues
-      kind: query
-      dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      query:
-        attributes:
-        - type: IssueStatus
-          optional: true
-          name: status
-        - type: IssueType
-          optional: true
-          name: type
-        - type: string
-          container: list
-          optional: true
-          name: labels
-        - type: integer
-          name: limit
-          default: '10'
-        - type: integer
-          name: offset
-          default: '0'
-      result:
-        attributes:
-        - type: dict
-          container: list
-          name: issues
-        - type: integer
-          name: total_count
-        - type: string
-          optional: true
-          name: error
-    - name: UnlinkIssueFromTask
-      kind: command
-      dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
-      command:
-        attributes:
-        - type: string
-          name: issue_id
-        - type: string
-          name: task_id
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          name: error
-          default: ''''''
-    - name: AddComment
-      kind: command
-      dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
-      command:
-        attributes:
-        - type: string
-          name: issue_id
-        - type: string
-          name: content
-        - type: string
-          name: author
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          name: comment_id
-        - type: string
-          name: error
-          default: ''''''
+          type: string
+        name: create
+        output:
+          type: Self
+      - inputs:
+        - name: self
+          type: Self
+        - name: email
+          type: string
+        name: validate_email
+        output:
+          type: string
+      description: Information about the issue submitter
+      name: Submitter
   infrastructure:
     implementations:
-    - name: SqlAlchemyIssueRepository
-      implements: IssueRepository
-      technology: sql
+    - attributes:
+      - name: session
+        type: Session
       description: SQLAlchemy implementation of IssueRepository
-      attributes:
-      - type: Session
-        name: session
+      implements: IssueRepository
+      name: SqlAlchemyIssueRepository
       private_methods:
-      - name: _to_domain
-        inputs:
-        - type: IssueModel
-          name: model
+      - inputs:
+        - name: self
+          type: Self
+        - name: model
+          type: IssueModel
+        name: _to_domain
         output:
           type: Issue
-      - name: _to_model
-        inputs:
-        - type: Issue
-          name: issue
-        - type: Session
-          name: session
+      - inputs:
+        - name: self
+          type: Self
+        - name: issue
+          type: Issue
+        - name: session
+          type: Session
+        name: _to_model
         output:
           type: IssueModel
-    - name: PostgresNotifyEventPublisher
-      implements: IssueEventPublisher
-      technology: postgres
+      technology: sql
+    - attributes:
+      - name: connection
+        type: Connection
       description: PostgreSQL NOTIFY implementation of IssueEventPublisher
-      attributes:
-      - type: Connection
-        name: connection
-- name: Planning
+      implements: IssueEventPublisher
+      name: PostgresNotifyEventPublisher
+      technology: postgres
+  name: IssueTracking
+- application:
+    use_cases:
+    - dependencies:
+      - name: uow
+        type: UnitOfWork
+      description: Submit task execution result with artifacts and optional error.
+        Updates task.output.
+      inputs:
+      - name: task_id
+        type: string
+      - name: summary
+        type: string
+      - container: list
+        default: list
+        name: artifacts
+        type: string
+      - name: error
+        optional: true
+        type: string
+      kind: command
+      name: SubmitTaskResult
+      outputs:
+      - name: success
+        type: boolean
+      - name: error
+        optional: true
+        type: string
+    - dependencies:
+      - name: uow
+        type: UnitOfWork
+      description: Create task
+      inputs:
+      - name: project_id
+        type: string
+      - name: name
+        type: string
+      - name: description
+        type: string
+      - name: effort
+        type: integer
+      - name: base_value
+        type: float
+      - name: planning_level
+        type: PlanningLevel
+      - default: CompletionLogic.ALL
+        name: completion_logic
+        type: CompletionLogic
+      - container: list
+        default: list
+        name: dependencies
+        type: string
+      kind: command
+      name: CreateTask
+      outputs:
+      - name: success
+        type: boolean
+      - name: task_id
+        type: string
+      - name: error
+        type: string
+    - dependencies:
+      - name: uow
+        type: UnitOfWork
+      - name: resolution_service
+        type: DependencyResolutionService
+      description: Updates a task's status and triggers chain reactions for dependents.
+      inputs:
+      - name: task_id
+        type: string
+      - name: new_status
+        type: string
+      kind: command
+      name: UpdateTaskStatus
+      outputs:
+      - name: success
+        type: boolean
+      - container: list
+        name: affected_tasks
+        type: string
+      - default: ''
+        name: error
+        type: string
+    - dependencies:
+      - name: uow
+        type: UnitOfWork
+      - name: priority_service
+        type: PriorityAnalysisService
+      description: Returns the highest priority tasks that are ready to execute.
+      inputs:
+      - name: top_n
+        type: integer
+      - name: project_id
+        optional: true
+        type: string
+      kind: query
+      name: SuggestNextAction
+      outputs:
+      - container: list
+        name: tasks
+        type: Task
+    - dependencies:
+      - name: uow
+        type: UnitOfWork
+      description: Use case to get details of a specific task.
+      inputs:
+      - name: task_id
+        type: string
+      kind: query
+      name: GetTaskDetails
+      outputs:
+      - name: success
+        type: boolean
+      - container: map
+        name: task
+        optional: true
+        type: any
+      - name: error
+        optional: true
+        type: string
+    - dependencies:
+      - name: uow
+        type: UnitOfWork
+      - name: resolution_service
+        type: DependencyResolutionService
+      inputs:
+      - name: task_id
+        type: string
+      - name: approved
+        type: boolean
+      - name: feedback
+        type: string
+      kind: command
+      name: ReviewTask
+      outputs:
+      - name: success
+        type: boolean
+      - name: task_id
+        type: string
+      - container: list
+        default: list
+        name: affected_tasks
+        type: string
+      - default: ''
+        name: error
+        type: string
+    - dependencies:
+      - name: uow
+        type: UnitOfWork
+      inputs:
+      - name: task_id
+        type: string
+      kind: command
+      name: DeleteTask
+      outputs:
+      - name: success
+        type: boolean
+      - default: ''
+        name: error
+        optional: true
+        type: string
+    - dependencies:
+      - name: uow
+        type: UnitOfWork
+      - name: cycle_detector
+        type: CycleDetectionService
+      - name: dependency_resolver
+        type: DependencyResolutionService
+      inputs:
+      - name: task_id
+        type: string
+      - container: list
+        default: list
+        name: added_dependencies
+        type: string
+      - container: list
+        default: list
+        name: removed_dependencies
+        type: string
+      kind: command
+      name: ModifyTaskDependencies
+      outputs:
+      - name: success
+        type: boolean
+      - default: str
+        name: error
+        type: string
+    - dependencies:
+      - name: uow
+        type: UnitOfWork
+      description: Revise a task's details like name, description, effort, or base
+        value.
+      inputs:
+      - name: task_id
+        type: string
+      - name: name
+        optional: true
+        type: string
+      - name: description
+        optional: true
+        type: string
+      - name: effort
+        optional: true
+        type: integer
+      - name: base_value
+        optional: true
+        type: float
+      kind: command
+      name: ReviseTaskDetails
+      outputs:
+      - name: success
+        type: boolean
+      - default: ''
+        name: error
+        type: string
+    - dependencies:
+      - name: uow
+        type: UnitOfWork
+      - name: dependency_service
+        type: DependencyResolutionService
+      inputs:
+      - name: task_id
+        type: string
+      - default: str
+        name: executor_id
+        type: string
+      kind: command
+      name: ClaimTask
+      outputs:
+      - name: success
+        type: boolean
+      - name: task_id
+        type: string
+      - default: str
+        name: error
+        type: string
+      - default: str
+        name: error_code
+        type: string
+    - dependencies:
+      - name: uow
+        type: UnitOfWork
+      inputs:
+      - name: project_id
+        optional: true
+        type: string
+      - default: 1
+        name: page
+        type: integer
+      - default: 10
+        name: page_size
+        type: integer
+      - name: status
+        optional: true
+        type: TaskStatus
+      - name: planning_level
+        optional: true
+        type: PlanningLevel
+      - default: ''
+        name: search
+        optional: true
+        type: string
+      kind: query
+      name: ListTasks
+      outputs:
+      - container: list
+        name: tasks
+        type: dict
+      - name: total_count
+        type: integer
+      - name: total_pages
+        type: integer
+      - name: current_page
+        type: integer
+      - name: error
+        optional: true
+        type: string
   domain:
     aggregates:
-    - name: Task
-      description: The atomic unit of planning, representing a node in the DAG.
-      attributes:
-      - type: TaskId
-        name: id
-      - type: string
-        name: project_id
-      - type: string
-        name: name
-      - type: string
-        name: description
-      - type: TaskStatus
-        name: status
-      - type: CompletionLogic
-        name: completion_logic
-      - type: StoryPoint
-        name: effort
-      - type: ValueScore
-        name: base_value
-      - type: TaskId
-        container: set
+    - attributes:
+      - name: id
+        type: TaskId
+      - name: project_id
+        type: string
+      - name: name
+        type: string
+      - name: description
+        type: string
+      - name: status
+        type: TaskStatus
+      - name: completion_logic
+        type: CompletionLogic
+      - name: effort
+        type: StoryPoint
+      - name: base_value
+        type: ValueScore
+      - container: set
         name: dependencies
-      - type: TaskId
-        container: set
-        optional: true
+        type: TaskId
+      - container: set
+        default: set
         name: dependents
-      - type: PlanningLevel
-        name: planning_level
-      - type: RecurrencePolicy
+        type: TaskId
+      - name: planning_level
+        type: PlanningLevel
+      - name: recurrence
         optional: true
-        name: recurrence
-      - type: TaskOutput
+        type: RecurrencePolicy
+      - name: output
         optional: true
-        name: output
-      - type: ReviewFeedback
+        type: TaskOutput
+      - name: review_feedback
         optional: true
-        name: review_feedback
+        type: ReviewFeedback
+      base_types:
+      - Aggregate
       behaviors:
-      - name: create
+      - description: Factory method to create a new Task
         inputs:
-        - type: string
-          name: project_id
-        - type: string
-          name: name
-        - type: string
-          name: description
-        - type: StoryPoint
-          name: effort
-        - type: ValueScore
-          name: base_value
-        - type: CompletionLogic
-          name: completion_logic
-        - type: TaskId
-          container: set
+        - container: type
+          name: cls
+          type: Self
+        - name: project_id
+          type: string
+        - name: name
+          type: string
+        - name: description
+          type: string
+        - name: effort
+          type: StoryPoint
+        - name: base_value
+          type: ValueScore
+        - name: completion_logic
+          type: CompletionLogic
+        - container: set
           name: dependencies
-        - type: Any
-          custom_type_string: Union[str, PlanningLevel]
+          type: TaskId
+        - custom_type_string: Union[str, PlanningLevel]
           name: planning_level
+          type: Any
+        name: create
         output:
           type: Task
-      - name: reconstitute
-        inputs:
-        - type: string
-          name: task_id
-        - type: string
-          name: project_id
-        - type: string
-          name: name
-        - type: string
-          name: description
-        - type: Any
-          custom_type_string: Union[TaskStatus, str]
+      - inputs:
+        - container: type
+          name: cls
+          type: Self
+        - name: task_id
+          type: string
+        - name: project_id
+          type: string
+        - name: name
+          type: string
+        - name: description
+          type: string
+        - custom_type_string: Union[TaskStatus, str]
           name: status
-        - type: Any
-          custom_type_string: Union[StoryPoint, int]
+          type: Any
+        - custom_type_string: Union[StoryPoint, int]
           name: effort
-        - type: Any
-          custom_type_string: Union[ValueScore, float]
+          type: Any
+        - custom_type_string: Union[ValueScore, float]
           name: base_value
-        - type: Any
-          custom_type_string: Union[CompletionLogic, str]
+          type: Any
+        - custom_type_string: Union[CompletionLogic, str]
           name: completion_logic
-        - type: Any
-          custom_type_string: Union[set[str], set[TaskId]]
+          type: Any
+        - custom_type_string: Union[set[str], set[TaskId]]
           name: dependencies
-        - type: Any
-          custom_type_string: Union[PlanningLevel, str]
+          type: Any
+        - custom_type_string: Union[PlanningLevel, str]
           name: planning_level
-        - type: TaskOutput
+          type: Any
+        - name: output
           optional: true
-          name: output
-          default: None
-        - type: ReviewFeedback
+          type: TaskOutput
+        - name: review_feedback
           optional: true
-          name: review_feedback
-          default: None
+          type: ReviewFeedback
+        name: reconstitute
         output:
           type: any
-      - name: to_dict
-        inputs: []
+      - inputs:
+        - name: self
+          type: Self
+        name: to_dict
         output:
           type: dict
-      - name: to_summary_dict
-        inputs: []
+      - description: Returns a simplified dictionary representation for listing.
+        inputs:
+        - name: self
+          type: Self
+        name: to_summary_dict
         output:
           type: dict
-      - name: mark_ready
-        inputs: []
-        output:
-          type: None
-      - name: mark_pending
-        inputs: []
-        output:
-          type: None
-      - name: claim
-        inputs: []
-        output:
-          type: None
-      - name: set_output
+      - description: "将任务标记为 READY（依赖已满足，可被领取）。\n\nRaises:\n    IllegalStateTransitionError:\
+          \ 当前状态不是 PENDING 或 BLOCKED"
         inputs:
-        - type: TaskOutput
-          name: output
+        - name: self
+          type: Self
+        name: mark_ready
         output:
           type: None
-      - name: mark_completed
-        inputs: []
-        output:
-          type: None
-      - name: review
+      - description: "将任务标记为 PENDING（新增了未满足的依赖）。\n\nRaises:\n    IllegalStateTransitionError:\
+          \ 当前状态不是 READY"
         inputs:
-        - type: boolean
-          name: approved
-        - type: string
-          name: feedback
+        - name: self
+          type: Self
+        name: mark_pending
         output:
           type: None
-      - name: is_done
-        inputs: []
+      - description: "领取任务开始执行。\n\nRaises:\n    TaskNotClaimableError: 当前状态不是 READY\
+          \ 或 CHANGES_REQUESTED"
+        inputs:
+        - name: self
+          type: Self
+        name: claim
+        output:
+          type: None
+      - description: "设置任务执行结果。\n\nRaises:\n    IllegalStateTransitionError: 当前状态不是\
+          \ IN_PROGRESS"
+        inputs:
+        - name: self
+          type: Self
+        - name: output
+          type: TaskOutput
+        name: set_output
+        output:
+          type: None
+      - description: "直接标记任务完成（用于手动/自动完成场景）。\n\nRaises:\n    IllegalStateTransitionError:\
+          \ 当前状态不允许直接完成"
+        inputs:
+        - name: self
+          type: Self
+        name: mark_completed
+        output:
+          type: None
+      - description: "验证任务并记录反馈。\n\nArgs:\n    approved: 是否通过\n    feedback: 详细评价意见\n\
+          Raises:\n    IllegalStateTransitionError: 如果当前状态不是 REVIEW"
+        inputs:
+        - name: self
+          type: Self
+        - name: approved
+          type: boolean
+        - name: feedback
+          type: string
+        name: review
+        output:
+          type: None
+      - inputs:
+        - name: self
+          type: Self
+        name: is_done
         output:
           type: boolean
-      - name: is_claimable
-        inputs: []
+      - inputs:
+        - name: self
+          type: Self
+        name: is_claimable
         output:
           type: boolean
+      description: The atomic unit of planning, representing a node in the DAG.
+      name: Task
     enums:
-    - name: CompletionLogic
-      description: Rules defining how a task is unlocked based on its dependencies.
+    - description: Rules defining how a task is unlocked based on its dependencies.
       members:
       - name: ALL
         value: all
       - name: ANY
         value: any
-    - name: TaskStatus
-      description: The lifecycle state of a task.
+      name: CompletionLogic
+    - description: The lifecycle state of a task.
       members:
       - name: PENDING
         value: pending
@@ -865,8 +1234,8 @@ contexts:
         value: skipped
       - name: DISCARDED
         value: discarded
-    - name: PlanningLevel
-      description: Defines the uncertainty and granularity of the task.
+      name: TaskStatus
+    - description: Defines the uncertainty and granularity of the task.
       members:
       - name: INITIATIVE
         value: initiative
@@ -878,602 +1247,389 @@ contexts:
         value: feature
       - name: ATOMIC
         value: atomic
-    - name: RecurrenceType
-      members:
+      name: PlanningLevel
+    - members:
       - name: ON_SUCCESS
         value: on_success
       - name: CRON
         value: cron
       - name: ON_FAILURE
         value: on_failure
-    value_objects:
-    - name: ValueScore
-      description: Numeric representation of business value.
-      attributes:
-      - type: float
-        name: value
-        default: Field(..., gt=0)
-      behaviors:
-      - name: create
-        inputs:
-        - type: float
-          name: value
+      name: RecurrenceType
+    ports:
+    - aggregate: Task
+      description: Persistence interface for Tasks.
+      kind: repository
+      name: TaskRepository
+      operations:
+      - inputs:
+        - name: self
+          type: Self
+        - name: task
+          type: Task
+        name: save
         output:
-          type: ValueScore
-      - name: __add__
-        inputs:
-        - type: any
-          name: other
+          type: None
+      - inputs:
+        - name: self
+          type: Self
+        - name: task_id
+          type: TaskId
+        name: get
         output:
-          type: any
-      - name: __radd__
-        inputs:
-        - type: any
-          name: other
-        output:
-          type: any
-      - name: serialize
-        inputs: []
-        output:
-          type: float
-      - name: validate_from_primitive
-        inputs:
-        - type: any
-          name: data
-        output:
-          type: any
-    - name: TaskOutput
-      description: 任务执行者的交付物
-      attributes:
-      - type: string
-        name: summary
-      - type: string
-        container: list
-        name: artifacts
-      - type: string
-        optional: true
-        name: error
-    - name: RecurrencePolicy
-      description: Rules for creating a successor task upon completion.
-      attributes:
-      - type: RecurrenceType
-        name: type
-      - type: integer
-        optional: true
-        name: max_repetitions
-      - type: integer
-        name: current_iteration
-      behaviors:
-      - name: next_iteration
-        inputs: []
-        output:
-          type: RecurrencePolicy
-    - name: StoryPoint
-      description: Encapsulated Fibonacci number representing effort (1, 2, 3, 5,
-        8, 13...).
-      attributes:
-      - type: integer
-        name: value
-        default: Field(..., gt=0, description='Effort points must be positive')
-      behaviors:
-      - name: create
-        inputs:
-        - type: integer
-          name: effort
-        output:
-          type: StoryPoint
-      - name: serialize
-        inputs: []
-        output:
-          type: integer
-      - name: validate_from_primitive
-        inputs:
-        - type: any
-          name: data
-        output:
-          type: any
-      - name: validate_fibonacci
-        inputs:
-        - type: integer
-          name: v
-        output:
-          type: integer
-      - name: __add__
-        inputs:
-        - type: any
-          name: other
-        output:
-          type: any
-      - name: __radd__
-        inputs:
-        - type: any
-          name: other
-        output:
-          type: any
-      - name: __lt__
-        inputs:
-        - type: any
-          name: other
-        output:
-          type: any
-    - name: ReviewFeedback
-      description: 任务规划者的验收意见
-      attributes:
-      - type: string
-        name: comment
-      - type: string
-        name: decision
-    - name: TaskId
-      description: Unique identifier for a Task.
-      attributes:
-      - type: uuid
-        name: value
-      behaviors:
-      - name: create
-        inputs: []
-        output:
-          type: any
-      - name: reconstitute
-        inputs:
-        - type: Any
-          custom_type_string: Union[UUID, str]
-          name: value
-        output:
-          type: any
-      - name: __str__
-        inputs: []
-        output:
-          type: any
-      - name: serialize
-        inputs: []
-        output:
+          optional: true
+          type: Task
+      - inputs:
+        - name: self
+          type: Self
+        - name: project_id
+          optional: true
           type: string
-      - name: validate_from_primitive
-        inputs:
-        - type: any
-          name: data
+        name: find_all_active
         output:
-          type: any
+          container: list
+          type: Task
+      - inputs:
+        - name: self
+          type: Self
+        name: find_all
+        output:
+          container: list
+          type: Task
+      - inputs:
+        - name: self
+          type: Self
+        - name: task_id
+          type: TaskId
+        name: find_dependents
+        output:
+          container: list
+          type: Task
+      - inputs:
+        - name: self
+          type: Self
+        - name: task_id
+          type: TaskId
+        name: delete
+        output:
+          type: None
+      - inputs:
+        - name: self
+          type: Self
+        - name: task_id
+          type: TaskId
+        name: find_by_id
+        output:
+          optional: true
+          type: Task
+      - inputs:
+        - name: self
+          type: Self
+        - container: set
+          name: task_ids
+          type: TaskId
+        name: find_by_ids
+        output:
+          container: list
+          type: Task
+      - inputs:
+        - name: self
+          type: Self
+        - name: status
+          optional: true
+          type: TaskStatus
+        - name: project_id
+          optional: true
+          type: string
+        - name: planning_level
+          optional: true
+          type: PlanningLevel
+        - name: search
+          optional: true
+          type: string
+        - name: page
+          type: integer
+        - name: page_size
+          type: integer
+        name: find_paged
+        output:
+          custom_type_string: tuple[list[Task], int]
+          type: Any
     services:
     - name: DependencyResolutionService
       operations:
-      - name: evaluate_blocking_status
+      - description: "Evaluates whether a task is blocked based on its dependencies\
+          \ and completion logic.\n\nReturns:\n    True if blocked (dependencies not\
+          \ satisfied).\n    False if unblocked (ready to proceed)."
         inputs:
-        - type: Task
-          name: task
-        - type: TaskRepository
-          name: repository
+        - name: self
+          type: Self
+        - name: task
+          type: Task
+        - name: repository
+          type: TaskRepository
+        name: evaluate_blocking_status
         output:
           type: boolean
-    - name: CycleDetectionService
-      description: Ensures the planning graph remains a DAG.
+    - description: Ensures the planning graph remains a DAG.
+      name: CycleDetectionService
       operations:
-      - name: detect_cycle
+      - description: "Detects if adding a dependency (target -> new_dependency) would\
+          \ create a cycle.\n\nLogic:\n    If we are adding a dependency where 'target'\
+          \ depends on 'new_dependency',\n    a cycle exists if 'target' is already\
+          \ an ancestor of 'new_dependency'.\n    We traverse up from 'new_dependency'\
+          \ to see if we can reach 'target'."
         inputs:
-        - type: TaskId
-          name: target_task_id
-        - type: TaskId
-          name: new_dependency_id
-        - type: TaskRepository
-          name: repository
+        - name: self
+          type: Self
+        - name: target_task_id
+          type: TaskId
+        - name: new_dependency_id
+          type: TaskId
+        - name: repository
+          type: TaskRepository
+        name: detect_cycle
         output:
           type: boolean
-    - name: PriorityAnalysisService
-      description: Calculates dynamic priority (ROI) for all tasks.
+    - description: Calculates dynamic priority (ROI) for all tasks.
+      name: PriorityAnalysisService
       operations:
-      - name: calculate_priorities
+      - description: "Orchestrates the calculation of Dynamic Priority for all active\
+          \ tasks.\n\nAlgorithm:\n1. Load Graph: Fetch all active tasks.\n2. Forward\
+          \ Propagation: Calculate Effective Effort (Cost to implement).\n   - For\
+          \ OR nodes, takes the path of least resistance (Min).\n3. Backward Propagation:\
+          \ Calculate Accumulated Value (Business Value).\n   - Value flows from Dependents\
+          \ back to Dependencies.\n4. Score: ROI = Accumulated Value / Effective Effort."
         inputs:
-        - type: TaskRepository
-          name: repository
-        - type: string
+        - name: self
+          type: Self
+        - name: repository
+          type: TaskRepository
+        - name: project_id
           optional: true
-          name: project_id
-          default: None
+          type: string
+        name: calculate_priorities
         output:
-          type: Task
           container: list
-    ports:
-    - name: TaskRepository
-      description: Persistence interface for Tasks.
-      kind: repository
-      aggregate: Task
-      operations:
-      - name: save
-        inputs:
-        - type: Task
-          name: task
-        output:
-          type: None
-      - name: get
-        inputs:
-        - type: TaskId
-          name: task_id
-        output:
           type: Task
-          optional: true
-      - name: find_all_active
-        inputs:
-        - type: string
-          optional: true
-          name: project_id
-          default: None
+    value_objects:
+    - attributes:
+      - name: value
+        type: float
+      behaviors:
+      - inputs:
+        - container: type
+          name: cls
+          type: Self
+        - name: value
+          type: float
+        name: create
         output:
-          type: Task
-          container: list
-      - name: find_all
-        inputs: []
+          type: ValueScore
+      - inputs:
+        - name: self
+          type: Self
+        - name: other
+          type: any
+        name: __add__
         output:
-          type: Task
-          container: list
-      - name: find_dependents
-        inputs:
-        - type: TaskId
-          name: task_id
+          type: any
+      - inputs:
+        - name: self
+          type: Self
+        - name: other
+          type: any
+        name: __radd__
         output:
-          type: Task
-          container: list
-      - name: delete
-        inputs:
-        - type: TaskId
-          name: task_id
+          type: any
+      - inputs:
+        - name: self
+          type: Self
+        name: serialize
         output:
-          type: None
-      - name: find_by_id
-        inputs:
-        - type: TaskId
-          name: task_id
+          type: float
+      - inputs:
+        - container: type
+          name: cls
+          type: Self
+        - name: data
+          type: any
+        name: validate_from_primitive
         output:
-          type: Task
-          optional: true
-      - name: find_by_ids
-        inputs:
-        - type: TaskId
-          container: set
-          name: task_ids
+          type: any
+      description: Numeric representation of business value.
+      name: ValueScore
+    - attributes:
+      - name: summary
+        type: string
+      - container: list
+        name: artifacts
+        type: string
+      - name: error
+        optional: true
+        type: string
+      description: 任务执行者的交付物
+      name: TaskOutput
+    - attributes:
+      - name: type
+        type: RecurrenceType
+      - default: int
+        name: max_repetitions
+        type: integer
+      - name: current_iteration
+        type: integer
+      behaviors:
+      - inputs:
+        - name: self
+          type: Self
+        name: next_iteration
         output:
-          type: Task
-          container: list
-      - name: find_paged
-        inputs:
-        - type: TaskStatus
-          optional: true
-          name: status
-        - type: string
-          optional: true
-          name: project_id
-        - type: PlanningLevel
-          optional: true
-          name: planning_level
-        - type: string
-          optional: true
-          name: search
-        - type: integer
-          name: page
-        - type: integer
-          name: page_size
+          type: RecurrencePolicy
+      description: Rules for creating a successor task upon completion.
+      name: RecurrencePolicy
+    - attributes:
+      - name: value
+        type: integer
+      behaviors:
+      - inputs:
+        - container: type
+          name: cls
+          type: Self
+        - name: effort
+          type: integer
+        name: create
         output:
+          type: StoryPoint
+      - inputs:
+        - name: self
+          type: Self
+        name: serialize
+        output:
+          type: integer
+      - inputs:
+        - container: type
+          name: cls
+          type: Self
+        - name: data
+          type: any
+        name: validate_from_primitive
+        output:
+          type: any
+      - inputs:
+        - container: type
+          name: cls
+          type: Self
+        - name: v
+          type: integer
+        name: validate_fibonacci
+        output:
+          type: integer
+      - inputs:
+        - name: self
+          type: Self
+        - name: other
+          type: any
+        name: __add__
+        output:
+          type: any
+      - inputs:
+        - name: self
+          type: Self
+        - name: other
+          type: any
+        name: __radd__
+        output:
+          type: any
+      - inputs:
+        - name: self
+          type: Self
+        - name: other
+          type: any
+        name: __lt__
+        output:
+          type: any
+      description: Encapsulated Fibonacci number representing effort (1, 2, 3, 5,
+        8, 13...).
+      name: StoryPoint
+    - attributes:
+      - name: comment
+        type: string
+      - name: decision
+        type: string
+      description: 任务规划者的验收意见
+      name: ReviewFeedback
+    - attributes:
+      - name: value
+        type: uuid
+      behaviors:
+      - inputs:
+        - container: type
+          name: cls
+          type: Self
+        name: create
+        output:
+          type: any
+      - inputs:
+        - container: type
+          name: cls
+          type: Self
+        - custom_type_string: Union[UUID, str]
+          name: value
           type: Any
-          custom_type_string: tuple[list[Task], int]
-  application:
-    use_cases:
-    - name: SubmitTaskResult
-      kind: command
-      command:
-        attributes:
-        - type: string
-          name: task_id
-        - type: string
-          name: summary
-        - type: string
-          container: list
-          optional: true
-          name: artifacts
-        - type: string
-          optional: true
-          name: error
-          default: None
-      result:
-        attributes:
-        - type: UnitOfWork
-          name: uow
-    - name: CreateTask
-      kind: command
-      dependencies:
-      - type: UnitOfWork
-        name: uow
-      command:
-        attributes:
-        - type: string
-          name: project_id
-        - type: string
-          name: name
-        - type: string
-          name: description
-        - type: integer
-          name: effort
-        - type: float
-          name: base_value
-        - type: PlanningLevel
-          name: planning_level
-        - type: CompletionLogic
-          name: completion_logic
-          default: CompletionLogic.ALL
-        - type: string
-          container: list
-          optional: true
-          name: dependencies
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          name: task_id
-        - type: string
-          name: error
-    - name: UpdateTaskStatus
-      kind: command
-      dependencies:
-      - type: UnitOfWork
-        name: uow
-      - type: DependencyResolutionService
-        name: resolution_service
-      command:
-        attributes:
-        - type: string
-          name: task_id
-        - type: string
-          name: new_status
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          container: list
-          name: affected_tasks
-        - type: string
-          name: error
-          default: ''''''
-    - name: SuggestNextAction
-      kind: query
-      dependencies:
-      - type: UnitOfWork
-        name: uow
-      - type: PriorityAnalysisService
-        name: priority_service
-      query:
-        attributes:
-        - type: integer
-          name: top_n
-        - type: string
-          optional: true
-          name: project_id
-          default: None
-      result:
-        attributes:
-        - type: Task
-          container: list
-          name: tasks
-    - name: GetTaskDetails
-      kind: query
-      dependencies:
-      - type: UnitOfWork
-        name: uow
-      query:
-        attributes:
-        - type: string
-          name: task_id
-          default: Field(..., description='The ID of the task to retrieve details
-            for')
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: any
-          container: map
-          optional: true
-          name: task
-          default: None
-        - type: string
-          optional: true
-          name: error
-          default: None
-    - name: ReviewTask
-      kind: command
-      dependencies:
-      - type: UnitOfWork
-        name: uow
-      - type: DependencyResolutionService
-        name: resolution_service
-      command:
-        attributes:
-        - type: string
-          name: task_id
-        - type: boolean
-          name: approved
-        - type: string
-          name: feedback
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          name: task_id
-        - type: string
-          container: list
-          optional: true
-          name: affected_tasks
-        - type: string
-          name: error
-          default: ''''''
-    - name: DeleteTask
-      kind: command
-      dependencies:
-      - type: UnitOfWork
-        name: uow
-      command:
-        attributes:
-        - type: string
-          name: task_id
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          optional: true
-          name: error
-          default: ''''''
-    - name: ModifyTaskDependencies
-      kind: command
-      dependencies:
-      - type: UnitOfWork
-        name: uow
-      - type: CycleDetectionService
-        name: cycle_detector
-      - type: DependencyResolutionService
-        name: dependency_resolver
-      command:
-        attributes:
-        - type: string
-          name: task_id
-        - type: string
-          container: list
-          optional: true
-          name: added_dependencies
-        - type: string
-          container: list
-          optional: true
-          name: removed_dependencies
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          optional: true
-          name: error
-    - name: ReviseTaskDetails
-      kind: command
-      dependencies:
-      - type: UnitOfWork
-        name: uow
-      command:
-        attributes:
-        - type: string
-          name: task_id
-        - type: string
-          optional: true
-          name: name
-          default: None
-        - type: string
-          optional: true
-          name: description
-          default: None
-        - type: integer
-          optional: true
-          name: effort
-          default: None
-        - type: float
-          optional: true
-          name: base_value
-          default: None
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          name: error
-          default: ''''''
-    - name: ClaimTask
-      kind: command
-      dependencies:
-      - type: UnitOfWork
-        name: uow
-      - type: DependencyResolutionService
-        name: dependency_service
-      command:
-        attributes:
-        - type: string
-          name: task_id
-        - type: string
-          optional: true
-          name: executor_id
-      result:
-        attributes:
-        - type: boolean
-          name: success
-        - type: string
-          name: task_id
-        - type: string
-          optional: true
-          name: error
-        - type: string
-          optional: true
-          name: error_code
-    - name: ListTasks
-      kind: query
-      dependencies:
-      - type: UnitOfWork
-        name: uow
-      query:
-        attributes:
-        - type: string
-          optional: true
-          name: project_id
-          default: None
-        - type: integer
-          name: page
-          default: '1'
-        - type: integer
-          name: page_size
-          default: '10'
-        - type: TaskStatus
-          optional: true
-          name: status
-          default: None
-        - type: PlanningLevel
-          optional: true
-          name: planning_level
-          default: None
-        - type: string
-          optional: true
-          name: search
-          default: ''''''
-      result:
-        attributes:
-        - type: dict
-          container: list
-          name: tasks
-        - type: integer
-          name: total_count
-        - type: integer
-          name: total_pages
-        - type: integer
-          name: current_page
-        - type: string
-          optional: true
-          name: error
-          default: None
+        name: reconstitute
+        output:
+          type: any
+      - inputs:
+        - name: self
+          type: Self
+        name: __str__
+        output:
+          type: any
+      - inputs:
+        - name: self
+          type: Self
+        name: serialize
+        output:
+          type: string
+      - inputs:
+        - container: type
+          name: cls
+          type: Self
+        - name: data
+          type: any
+        name: validate_from_primitive
+        output:
+          type: any
+      description: Unique identifier for a Task.
+      name: TaskId
   infrastructure:
     implementations:
-    - name: SqlAlchemyTaskRepository
-      implements: TaskRepository
-      technology: sql
+    - attributes:
+      - name: session
+        type: Session
       description: SQLAlchemy implementation of TaskRepository.
-      attributes:
-      - type: Session
-        name: session
+      implements: TaskRepository
+      name: SqlAlchemyTaskRepository
       private_methods:
-      - name: _to_domain
-        inputs:
-        - type: TaskModel
-          name: model
+      - inputs:
+        - name: self
+          type: Self
+        - name: model
+          type: TaskModel
+        name: _to_domain
         output:
           type: Task
-      - name: _to_model
-        inputs:
-        - type: Task
-          name: task
-        - type: Session
-          name: session
+      - inputs:
+        - name: self
+          type: Self
+        - name: task
+          type: Task
+        - name: session
+          type: Session
+        name: _to_model
         output:
           type: TaskModel
+      technology: sql
+  name: Planning
 - name: Shared
+name: TaskGraph

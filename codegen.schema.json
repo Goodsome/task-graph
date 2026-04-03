@@ -5,18 +5,17 @@
       "description":"Specification of a domain aggregate to be generated.",
       "properties":{
         "attributes":{
+          "$ref":"#/$defs/AttributeSpecList"
+        },
+        "base_types":{
           "items":{
-            "$ref":"#/$defs/AttributeSpec"
+            "type":"string"
           },
-          "title":"Attributes",
+          "title":"Base Types",
           "type":"array"
         },
         "behaviors":{
-          "items":{
-            "$ref":"#/$defs/MethodSpec"
-          },
-          "title":"Behaviors",
-          "type":"array"
+          "$ref":"#/$defs/MethodSpecList"
         },
         "description":{
           "title":"Description",
@@ -28,7 +27,8 @@
         }
       },
       "required":[
-        "name"
+        "name",
+        "description"
       ],
       "title":"AggregateSpec",
       "type":"object"
@@ -84,9 +84,7 @@
         },
         "default":{
           "anyOf":[
-            {
-              "type":"string"
-            },
+            {},
             {
               "type":"null"
             }
@@ -95,8 +93,16 @@
           "title":"Default"
         },
         "description":{
-          "title":"Description",
-          "type":"string"
+          "anyOf":[
+            {
+              "type":"string"
+            },
+            {
+              "type":"null"
+            }
+          ],
+          "default":null,
+          "title":"Description"
         },
         "name":{
           "title":"Name",
@@ -117,6 +123,13 @@
       ],
       "title":"AttributeSpec",
       "type":"object"
+    },
+    "AttributeSpecList":{
+      "items":{
+        "$ref":"#/$defs/AttributeSpec"
+      },
+      "title":"AttributeSpecList",
+      "type":"array"
     },
     "BootstrapSpec":{
       "additionalProperties":false,
@@ -156,30 +169,10 @@
           "$ref":"#/$defs/ApplicationSpec"
         },
         "config":{
-          "anyOf":[
-            {
-              "$ref":"#/$defs/ConfigSpec"
-            },
-            {
-              "type":"null"
-            }
-          ],
-          "default":null
+          "$ref":"#/$defs/ConfigSpec"
         },
         "container":{
-          "anyOf":[
-            {
-              "$ref":"#/$defs/ContainerSpec"
-            },
-            {
-              "type":"null"
-            }
-          ],
-          "default":null
-        },
-        "description":{
-          "title":"Description",
-          "type":"string"
+          "$ref":"#/$defs/ContainerSpec"
         },
         "domain":{
           "$ref":"#/$defs/DomainSpec"
@@ -188,15 +181,7 @@
           "$ref":"#/$defs/InfrastructureSpec"
         },
         "interfaces":{
-          "anyOf":[
-            {
-              "$ref":"#/$defs/InterfaceSpec"
-            },
-            {
-              "type":"null"
-            }
-          ],
-          "default":null
+          "$ref":"#/$defs/InterfaceSpec"
         },
         "name":{
           "title":"Name",
@@ -233,30 +218,29 @@
       "title":"CliCommandSpec",
       "type":"object"
     },
-    "CliInterfaceSpec":{
-      "additionalProperties":false,
-      "description":"CLI \u63a5\u53e3\u5c42\u89c4\u8303",
-      "properties":{
-        "commands":{
-          "items":{
-            "$ref":"#/$defs/CliCommandSpec"
-          },
-          "title":"Commands",
-          "type":"array"
-        }
-      },
-      "title":"CliInterfaceSpec",
-      "type":"object"
-    },
     "ConfigFieldSpec":{
       "additionalProperties":false,
       "description":"Specification for a single configuration field.",
       "properties":{
-        "default":{
+        "container":{
+          "$ref":"#/$defs/ContainerType",
+          "default":"none"
+        },
+        "custom_type_string":{
           "anyOf":[
             {
               "type":"string"
             },
+            {
+              "type":"null"
+            }
+          ],
+          "default":null,
+          "title":"Custom Type String"
+        },
+        "default":{
+          "anyOf":[
+            {},
             {
               "type":"null"
             }
@@ -285,14 +269,18 @@
           "title":"Name",
           "type":"string"
         },
+        "optional":{
+          "title":"Optional",
+          "type":"boolean"
+        },
         "type":{
           "title":"Type",
           "type":"string"
         }
       },
       "required":[
-        "name",
-        "type"
+        "type",
+        "name"
       ],
       "title":"ConfigFieldSpec",
       "type":"object"
@@ -363,21 +351,29 @@
         "set",
         "map",
         "iterable",
-        "callable"
+        "callable",
+        "type",
+        "class_var"
       ],
       "title":"ContainerType",
       "type":"string"
     },
-    "DataContractSpec":{
+    "CoreSpec":{
       "additionalProperties":false,
-      "description":"Generic data contract specification for use case command/query/result.",
+      "description":"Specification of a core entity to be generated.",
       "properties":{
         "attributes":{
+          "$ref":"#/$defs/AttributeSpecList"
+        },
+        "base_types":{
           "items":{
-            "$ref":"#/$defs/AttributeSpec"
+            "type":"string"
           },
-          "title":"Attributes",
+          "title":"Base Types",
           "type":"array"
+        },
+        "behaviors":{
+          "$ref":"#/$defs/MethodSpecList"
         },
         "description":{
           "title":"Description",
@@ -388,7 +384,11 @@
           "type":"string"
         }
       },
-      "title":"DataContractSpec",
+      "required":[
+        "name",
+        "description"
+      ],
+      "title":"CoreSpec",
       "type":"object"
     },
     "DomainSpec":{
@@ -400,6 +400,13 @@
             "$ref":"#/$defs/AggregateSpec"
           },
           "title":"Aggregates",
+          "type":"array"
+        },
+        "core":{
+          "items":{
+            "$ref":"#/$defs/CoreSpec"
+          },
+          "title":"Core",
           "type":"array"
         },
         "entities":{
@@ -446,18 +453,17 @@
       "description":"Specification of an entity.",
       "properties":{
         "attributes":{
+          "$ref":"#/$defs/AttributeSpecList"
+        },
+        "base_types":{
           "items":{
-            "$ref":"#/$defs/AttributeSpec"
+            "type":"string"
           },
-          "title":"Attributes",
+          "title":"Base Types",
           "type":"array"
         },
         "behaviors":{
-          "items":{
-            "$ref":"#/$defs/MethodSpec"
-          },
-          "title":"Behaviors",
-          "type":"array"
+          "$ref":"#/$defs/MethodSpecList"
         },
         "description":{
           "title":"Description",
@@ -469,7 +475,8 @@
         }
       },
       "required":[
-        "name"
+        "name",
+        "description"
       ],
       "title":"EntitySpec",
       "type":"object"
@@ -564,31 +571,12 @@
       "title":"HttpEndpointSpec",
       "type":"object"
     },
-    "HttpInterfaceSpec":{
-      "additionalProperties":false,
-      "description":"HTTP \u63a5\u53e3\u5c42\u89c4\u8303",
-      "properties":{
-        "endpoints":{
-          "items":{
-            "$ref":"#/$defs/HttpEndpointSpec"
-          },
-          "title":"Endpoints",
-          "type":"array"
-        }
-      },
-      "title":"HttpInterfaceSpec",
-      "type":"object"
-    },
     "ImplementationSpec":{
       "additionalProperties":false,
       "description":"Specification of an implementation to be generated.",
       "properties":{
         "attributes":{
-          "items":{
-            "$ref":"#/$defs/AttributeSpec"
-          },
-          "title":"Attributes",
-          "type":"array"
+          "$ref":"#/$defs/AttributeSpecList"
         },
         "description":{
           "title":"Description",
@@ -603,11 +591,7 @@
           "type":"string"
         },
         "private_methods":{
-          "items":{
-            "$ref":"#/$defs/MethodSpec"
-          },
-          "title":"Private Methods",
-          "type":"array"
+          "$ref":"#/$defs/MethodSpecList"
         },
         "technology":{
           "title":"Technology",
@@ -615,6 +599,7 @@
         }
       },
       "required":[
+        "name",
         "implements",
         "technology"
       ],
@@ -640,56 +625,29 @@
       "additionalProperties":false,
       "description":"\u63a5\u53e3\u5c42\u603b\u89c4\u8303",
       "properties":{
-        "cli":{
-          "anyOf":[
-            {
-              "$ref":"#/$defs/CliInterfaceSpec"
-            },
-            {
-              "type":"null"
-            }
-          ],
-          "default":null
+        "cli_commands":{
+          "items":{
+            "$ref":"#/$defs/CliCommandSpec"
+          },
+          "title":"Cli Commands",
+          "type":"array"
         },
-        "http":{
-          "anyOf":[
-            {
-              "$ref":"#/$defs/HttpInterfaceSpec"
-            },
-            {
-              "type":"null"
-            }
-          ],
-          "default":null
+        "http_endpoints":{
+          "items":{
+            "$ref":"#/$defs/HttpEndpointSpec"
+          },
+          "title":"Http Endpoints",
+          "type":"array"
         },
-        "mcp":{
-          "anyOf":[
-            {
-              "$ref":"#/$defs/McpInterfaceSpec"
-            },
-            {
-              "type":"null"
-            }
-          ],
-          "default":null
-        }
-      },
-      "title":"InterfaceSpec",
-      "type":"object"
-    },
-    "McpInterfaceSpec":{
-      "additionalProperties":false,
-      "description":"MCP \u63a5\u53e3\u5c42\u89c4\u8303",
-      "properties":{
-        "tools":{
+        "mcp_tools":{
           "items":{
             "$ref":"#/$defs/McpToolSpec"
           },
-          "title":"Tools",
+          "title":"Mcp Tools",
           "type":"array"
         }
       },
-      "title":"McpInterfaceSpec",
+      "title":"InterfaceSpec",
       "type":"object"
     },
     "McpToolSpec":{
@@ -756,8 +714,16 @@
       "description":"Standard specification for a class method.",
       "properties":{
         "description":{
-          "title":"Description",
-          "type":"string"
+          "anyOf":[
+            {
+              "type":"string"
+            },
+            {
+              "type":"null"
+            }
+          ],
+          "default":null,
+          "title":"Description"
         },
         "inputs":{
           "items":{
@@ -772,6 +738,13 @@
         },
         "output":{
           "$ref":"#/$defs/MethodOutput"
+        },
+        "rules":{
+          "items":{
+            "$ref":"#/$defs/RuleSpec"
+          },
+          "title":"Rules",
+          "type":"array"
         }
       },
       "required":[
@@ -780,6 +753,13 @@
       ],
       "title":"MethodSpec",
       "type":"object"
+    },
+    "MethodSpecList":{
+      "items":{
+        "$ref":"#/$defs/MethodSpec"
+      },
+      "title":"MethodSpecList",
+      "type":"array"
     },
     "PortBinding":{
       "additionalProperties":false,
@@ -829,11 +809,7 @@
           "type":"string"
         },
         "operations":{
-          "items":{
-            "$ref":"#/$defs/MethodSpec"
-          },
-          "title":"Operations",
-          "type":"array"
+          "$ref":"#/$defs/MethodSpecList"
         }
       },
       "required":[
@@ -853,18 +829,45 @@
       "title":"PortType",
       "type":"string"
     },
+    "RuleSpec":{
+      "additionalProperties":false,
+      "description":"BDD rule specification with given/when/then",
+      "properties":{
+        "given":{
+          "title":"Given",
+          "type":"string"
+        },
+        "name":{
+          "title":"Name",
+          "type":"string"
+        },
+        "then":{
+          "title":"Then",
+          "type":"string"
+        },
+        "when":{
+          "title":"When",
+          "type":"string"
+        }
+      },
+      "required":[
+        "name",
+        "given",
+        "when",
+        "then"
+      ],
+      "title":"RuleSpec",
+      "type":"object"
+    },
     "ServiceSpec":{
       "additionalProperties":false,
       "description":"Specification of a domain service to be generated.",
       "properties":{
         "dependencies":{
-          "items":{
-            "$ref":"#/$defs/AttributeSpec"
-          },
-          "title":"Dependencies",
-          "type":"array"
+          "$ref":"#/$defs/AttributeSpecList"
         },
         "description":{
+          "default":"",
           "title":"Description",
           "type":"string"
         },
@@ -873,11 +876,7 @@
           "type":"string"
         },
         "operations":{
-          "items":{
-            "$ref":"#/$defs/MethodSpec"
-          },
-          "title":"Operations",
-          "type":"array"
+          "$ref":"#/$defs/MethodSpecList"
         }
       },
       "required":[
@@ -898,19 +897,15 @@
       "additionalProperties":false,
       "description":"Specification of a use case to be generated.",
       "properties":{
-        "command":{
-          "$ref":"#/$defs/DataContractSpec"
-        },
         "dependencies":{
-          "items":{
-            "$ref":"#/$defs/AttributeSpec"
-          },
-          "title":"Dependencies",
-          "type":"array"
+          "$ref":"#/$defs/AttributeSpecList"
         },
         "description":{
           "title":"Description",
           "type":"string"
+        },
+        "inputs":{
+          "$ref":"#/$defs/AttributeSpecList"
         },
         "kind":{
           "$ref":"#/$defs/UseCaseKind"
@@ -919,11 +914,8 @@
           "title":"Name",
           "type":"string"
         },
-        "query":{
-          "$ref":"#/$defs/DataContractSpec"
-        },
-        "result":{
-          "$ref":"#/$defs/DataContractSpec"
+        "outputs":{
+          "$ref":"#/$defs/AttributeSpecList"
         }
       },
       "required":[
@@ -938,18 +930,17 @@
       "description":"Specification of a value object to be generated.",
       "properties":{
         "attributes":{
+          "$ref":"#/$defs/AttributeSpecList"
+        },
+        "base_types":{
           "items":{
-            "$ref":"#/$defs/AttributeSpec"
+            "type":"string"
           },
-          "title":"Attributes",
+          "title":"Base Types",
           "type":"array"
         },
         "behaviors":{
-          "items":{
-            "$ref":"#/$defs/MethodSpec"
-          },
-          "title":"Behaviors",
-          "type":"array"
+          "$ref":"#/$defs/MethodSpecList"
         },
         "description":{
           "title":"Description",
@@ -961,7 +952,8 @@
         }
       },
       "required":[
-        "name"
+        "name",
+        "description"
       ],
       "title":"ValueObjectSpec",
       "type":"object"
@@ -980,22 +972,13 @@
       "title":"Contexts",
       "type":"array"
     },
-    "description":{
-      "title":"Description",
-      "type":"string"
-    },
-    "layout":{
-      "title":"Layout",
-      "type":"string"
-    },
     "name":{
       "title":"Name",
       "type":"string"
     }
   },
   "required":[
-    "name",
-    "description"
+    "name"
   ],
   "title":"Blueprint",
   "type":"object"
