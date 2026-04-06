@@ -247,7 +247,8 @@ contexts:
       - name: updated_at
         type: datetime
       behaviors:
-      - inputs:
+      - description: Create a new Issue aggregate
+        inputs:
         - container: type
           name: cls
           type: Self
@@ -255,7 +256,7 @@ contexts:
           type: string
         - name: description
           type: string
-        - name: type
+        - name: issue_type
           type: IssueType
         - name: severity
           type: Severity
@@ -264,7 +265,8 @@ contexts:
         name: create
         output:
           type: Self
-      - inputs:
+      - description: Change issue status with audit trail
+        inputs:
         - name: self
           type: Self
         - name: new_status
@@ -274,7 +276,8 @@ contexts:
         name: change_status
         output:
           type: None
-      - inputs:
+      - description: Close the issue with optional resolution note
+        inputs:
         - name: self
           type: Self
         - name: resolution
@@ -283,7 +286,8 @@ contexts:
         name: close
         output:
           type: None
-      - inputs:
+      - description: Add a comment to the issue
+        inputs:
         - name: self
           type: Self
         - name: content
@@ -293,7 +297,8 @@ contexts:
         name: add_comment
         output:
           type: Comment
-      - inputs:
+      - description: Add a label to the issue (duplicates ignored)
+        inputs:
         - name: self
           type: Self
         - name: label
@@ -301,7 +306,8 @@ contexts:
         name: add_label
         output:
           type: None
-      - inputs:
+      - description: Remove a label from the issue by name
+        inputs:
         - name: self
           type: Self
         - name: label_name
@@ -309,7 +315,8 @@ contexts:
         name: remove_label
         output:
           type: None
-      - inputs:
+      - description: Link this issue to a planning task
+        inputs:
         - name: self
           type: Self
         - name: task_id
@@ -317,7 +324,8 @@ contexts:
         name: link_to_task
         output:
           type: TaskLink
-      - inputs:
+      - description: Remove link to a planning task
+        inputs:
         - name: self
           type: Self
         - name: task_id
@@ -325,10 +333,11 @@ contexts:
         name: unlink_from_task
         output:
           type: None
-      - inputs:
+      - description: Update issue type and/or severity
+        inputs:
         - name: self
           type: Self
-        - name: type
+        - name: issue_type
           optional: true
           type: IssueType
         - name: severity
@@ -337,18 +346,13 @@ contexts:
         name: update_metadata
         output:
           type: None
-      - inputs:
+      - description: Reconstitute aggregate after loading from storage
+        inputs:
         - name: self
           type: Self
         name: reconstitute
         output:
           type: Self
-      - inputs:
-        - name: self
-          type: Self
-        name: to_dict
-        output:
-          type: dict
       description: Issue aggregate root managing the complete issue lifecycle
       name: Issue
     entities:
@@ -363,7 +367,8 @@ contexts:
         type: datetime
       behaviors:
       - inputs:
-        - name: self
+        - container: type
+          name: cls
           type: Self
         - name: content
           type: string
@@ -399,8 +404,8 @@ contexts:
       name: Severity
     - description: Lifecycle state of an issue
       members:
-      - name: NEW
-        value: new
+      - name: REPORTED
+        value: reported
       - name: TRIAGED
         value: triaged
       - name: IN_PROGRESS
@@ -537,7 +542,8 @@ contexts:
         type: string
       behaviors:
       - inputs:
-        - name: self
+        - container: type
+          name: cls
           type: Self
         - name: value
           type: string
@@ -590,7 +596,8 @@ contexts:
         type: string
       behaviors:
       - inputs:
-        - name: self
+        - container: type
+          name: cls
           type: Self
         - name: value
           type: string
@@ -630,13 +637,15 @@ contexts:
         type: uuid
       behaviors:
       - inputs:
-        - name: self
+        - container: type
+          name: cls
           type: Self
         name: create
         output:
           type: IssueId
       - inputs:
-        - name: self
+        - container: type
+          name: cls
           type: Self
         - name: value
           type: uuid
@@ -664,7 +673,8 @@ contexts:
         type: datetime
       behaviors:
       - inputs:
-        - name: self
+        - container: type
+          name: cls
           type: Self
         - name: task_id
           type: string

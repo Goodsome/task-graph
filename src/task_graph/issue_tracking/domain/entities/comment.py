@@ -13,4 +13,5 @@ class Comment(Entity):
     author: str
     created_at: datetime
 
-    def create(self, content: str, author: str) -> Comment: ...
+    @classmethod
+    def create(cls, content: str, author: str) -> Comment: ...

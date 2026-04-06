@@ -22,7 +22,7 @@ class Severity(Enum):
 class IssueStatus(Enum):
     """Lifecycle state of an issue"""
 
-    NEW = "new"
+    REPORTED = "reported"
     TRIAGED = "triaged"
     IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"

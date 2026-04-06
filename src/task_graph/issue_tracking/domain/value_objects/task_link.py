@@ -10,4 +10,5 @@ class TaskLink(ValueObject):
     task_id: str
     linked_at: datetime
 
-    def create(self, task_id: str) -> TaskLink: ...
+    @classmethod
+    def create(cls, task_id: str) -> TaskLink: ...
