@@ -638,9 +638,8 @@ contexts:
       - inputs:
         - name: self
           type: Self
-        - custom_type_string: Union[UUID, str]
-          name: value
-          type: Any
+        - name: value
+          type: uuid
         name: reconstitute
         output:
           type: IssueId
