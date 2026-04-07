@@ -134,13 +134,6 @@ contexts:
           name: severity
         output:
           type: None
-      - name: reconstitute
-        description: Reconstitute aggregate after loading from storage
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: Self
     enums:
     - name: IssueType
       description: Classification of issue types
@@ -379,7 +372,7 @@ contexts:
         - type: string
           name: author
         output:
-          type: Comment
+          type: Self
     services:
     - name: IssueStatusTransitionService
       description: Validates issue status transitions according to state machine rules

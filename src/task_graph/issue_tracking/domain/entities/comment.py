@@ -1,5 +1,4 @@
-from __future__ import annotations
-
+from typing import Self
 from datetime import datetime
 from task_graph.issue_tracking.domain.value_objects.comment_id import CommentId
 from task_graph.shared.models import Entity
@@ -14,4 +13,4 @@ class Comment(Entity):
     created_at: datetime
 
     @classmethod
-    def create(cls, content: str, author: str) -> Comment: ...
+    def create(cls, content: str, author: str) -> Self: ...

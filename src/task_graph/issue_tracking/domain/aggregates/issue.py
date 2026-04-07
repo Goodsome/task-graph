@@ -122,14 +122,3 @@ class Issue(AggregateRoot):
             self.severity = severity
         if issue_type is not None or severity is not None:
             self.updated_at = datetime.now(timezone.utc)
-
-    def reconstitute(self: Self) -> Self:
-        """Reconstitute aggregate after loading from storage"""
-        # Validate invariants
-        if self.id is None:
-            raise ValueError("Issue id cannot be None")
-        if self.title is None:
-            raise ValueError("Issue title cannot be None")
-        if self.submitter is None:
-            raise ValueError("Issue submitter cannot be None")
-        return self

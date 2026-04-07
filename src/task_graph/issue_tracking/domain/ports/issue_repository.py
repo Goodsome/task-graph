@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from task_graph.issue_tracking.domain.enums import IssueStatus, IssueType, Severity
 from abc import ABC, abstractmethod
 from task_graph.issue_tracking.domain.aggregates.issue import Issue
