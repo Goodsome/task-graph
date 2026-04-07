@@ -1314,6 +1314,10 @@ contexts:
         inputs:
         - type: Self
           name: self
+        - type: integer
+          name: page
+        - type: integer
+          name: page_size
         - type: TaskStatus
           optional: true
           name: status
@@ -1326,10 +1330,6 @@ contexts:
         - type: string
           optional: true
           name: search
-        - type: integer
-          name: page
-        - type: integer
-          name: page_size
         output:
           type: Any
           custom_type_string: tuple[list[Task], int]

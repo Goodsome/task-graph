@@ -64,12 +64,12 @@ class SqlAlchemyTaskRepository(TaskRepository):
 
     def find_paged(
         self,
+        page: int,
+        page_size: int,
         status: Optional[TaskStatus],
         project_id: Optional[str],
         planning_level: Optional[PlanningLevel],
         search: Optional[str],
-        page: int,
-        page_size: int,
     ) -> tuple[list[Task], int]:
         # Create base select statement
         stmt = select(TaskModel)
