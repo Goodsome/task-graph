@@ -737,8 +737,6 @@ contexts:
           type: Self
         - name: issue
           type: Issue
-        - name: session
-          type: Session
         name: _to_model
         output:
           type: IssueModel
@@ -1629,8 +1627,6 @@ contexts:
           type: Self
         - name: task
           type: Task
-        - name: session
-          type: Session
         name: _to_model
         output:
           type: TaskModel

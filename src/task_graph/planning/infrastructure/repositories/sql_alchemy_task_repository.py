@@ -16,7 +16,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
     session: Session
 
     def save(self, task: Task) -> None:
-        model = self._to_model(task, self.session)
+        model = self._to_model(task)
         self.session.add(model)
         self.session.flush()
 
@@ -113,9 +113,9 @@ class SqlAlchemyTaskRepository(TaskRepository):
             review_feedback=model.review_feedback,
         )
 
-    def _to_model(self, task: Task, session: Session) -> TaskModel:
+    def _to_model(self, task: Task) -> TaskModel:
         stmt = select(TaskModel).where(TaskModel.id == task.id.value)
-        model = session.execute(stmt).scalar_one_or_none()
+        model = self.session.execute(stmt).scalar_one_or_none()
         
         if not model:
             model = TaskModel(id=task.id.value)
@@ -137,7 +137,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
         dep_ids = [tid.value for tid in task.dependencies]
         if dep_ids:
             dep_stmt = select(TaskModel).where(TaskModel.id.in_(dep_ids))
-            dependencies = session.execute(dep_stmt).scalars().all()
+            dependencies = self.session.execute(dep_stmt).scalars().all()
             model.dependencies = list(dependencies)
         else:
             model.dependencies = []
