@@ -83,7 +83,7 @@ def mock_repo():
 
 from task_graph.planning.application.unit_of_work import UnitOfWork
 from task_graph.shared.ports.event_bus import EventBus
-from task_graph.shared.events import DomainEvent
+from task_graph.shared.domain.core.domain_event import DomainEvent
 
 class MockEventBus(EventBus):
     def __init__(self):

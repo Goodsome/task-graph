@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pydantic import Field
-from task_graph.shared.models import ValueObject
+from task_graph.shared.domain.core.value_object import ValueObject
 from typing import Self, Union
 
 

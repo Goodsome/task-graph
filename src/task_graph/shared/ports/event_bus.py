@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from task_graph.shared.events import DomainEvent
+from task_graph.shared.domain.core.domain_event import DomainEvent
 
 class EventBus(ABC):
     """

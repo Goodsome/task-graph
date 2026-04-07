@@ -8,23 +8,6 @@ TaskGraph is a DAG-based task planning and orchestration engine following Domain
 
 **Key Technologies**: Python 3.13, uv, Pydantic v2, SQLAlchemy async, dependency-injector, MCP
 
-## Common Commands
-
-```bash
-# Setup
-uv sync
-
-# Run tests
-uv run pytest
-uv run pytest -v                                    # verbose
-uv run pytest tests/path/to/test_file.py           # single file
-uv run pytest -k "test_pattern"                    # pattern match
-
-# Run MCP server
-uv run task-graph-mcp
-uv run python -m task_graph.planning.interfaces.mcp_server
-```
-
 ## Architecture
 
 ```
@@ -109,23 +92,9 @@ PENDING → BLOCKED → READY → IN_PROGRESS → REVIEW → DONE
                    CHANGES_REQUESTED ←───────┘
 ```
 
-## Code Generation
-
-This project uses `codegen.yaml` as a DDD blueprint. Use the codegen MCP tools:
-- `mcp__codegen__build` - Generate code from blueprint
-- `mcp__codegen__tree` - Visualize blueprint structure
-- `mcp__codegen__get/set/rm` - Query/modify blueprint
-
 ## Database Configuration
 
 Set `DATABASE_URL` in `.env`:
 ```
 DATABASE_URL=postgresql://user:pass@localhost:5432/taskgraph
 ```
-
-## Testing
-
-- Tests mirror source structure under `tests/`
-- Use pytest fixtures in `conftest.py` files
-- Mock repositories with `unittest.mock.Mock`
-- In-memory implementations for unit tests

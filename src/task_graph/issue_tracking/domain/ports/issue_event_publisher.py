@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from task_graph.shared.events import DomainEvent
+from task_graph.shared.domain.core.domain_event import DomainEvent
 
 
 class IssueEventPublisher(ABC):

@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import Field, model_validator, model_serializer, field_validator
 
-from task_graph.shared.models import ValueObject
+from task_graph.shared.domain.core.value_object import ValueObject
 
 
 class StoryPoint(ValueObject):

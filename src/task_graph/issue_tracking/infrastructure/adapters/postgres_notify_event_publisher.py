@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from task_graph.issue_tracking.domain.ports.issue_event_publisher import (
     IssueEventPublisher,
 )
-from task_graph.shared.events import DomainEvent
+from task_graph.shared.domain.core.domain_event import DomainEvent
 
 Connection = Any
 

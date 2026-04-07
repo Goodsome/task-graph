@@ -1,4 +1,4 @@
-from task_graph.shared.events import DomainEvent
+from task_graph.shared.domain.core.domain_event import DomainEvent
 from pydantic import Field
 from task_graph.planning.domain.enums import PlanningLevel
 
