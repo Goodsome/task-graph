@@ -431,6 +431,10 @@ contexts:
         inputs:
         - type: Self
           name: self
+        - type: integer
+          name: limit
+        - type: integer
+          name: offset
         - type: IssueStatus
           optional: true
           name: status
@@ -444,10 +448,6 @@ contexts:
           container: list
           optional: true
           name: labels
-        - type: integer
-          name: limit
-        - type: integer
-          name: offset
         output:
           type: Issue
           container: list

@@ -24,12 +24,12 @@ class SqlAlchemyIssueRepository(IssueRepository):
 
     def find_all(
         self,
+        limit: int,
+        offset: int,
         status: IssueStatus | None,
         issue_type: IssueType | None,
         severity: Severity | None = None,
         labels: list[str] | None = None,
-        limit: int = None,
-        offset: int = None,
     ) -> list[Issue]: ...
 
     def delete(self, issue_id: IssueId) -> bool: ...
