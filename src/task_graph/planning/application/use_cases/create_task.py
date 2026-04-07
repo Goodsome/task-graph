@@ -49,8 +49,6 @@ class CreateTask:
                 effort_vo = StoryPoint.create(cmd.effort)
                 value_vo = ValueScore.create(cmd.base_value)
 
-                logic_enum = cmd.completion_logic
-
                 # 2. 处理依赖 (Primitives -> TaskId Set)
                 dep_ids = set()
                 existing_deps = []
@@ -69,14 +67,7 @@ class CreateTask:
 
                 # 4. 计算是否需要标记为 READY
                 should_be_ready = False
-                if dep_ids:
-                    if logic_enum == CompletionLogic.ALL:
-                        if all(t.status == TaskStatus.DONE for t in existing_deps):
-                            should_be_ready = True
-                    elif logic_enum == CompletionLogic.ANY:
-                        if any(t.status == TaskStatus.DONE for t in existing_deps):
-                            should_be_ready = True
-                else:
+                if dep_ids and all(t.status == TaskStatus.DONE for t in existing_deps):
                     should_be_ready = True
 
                 # 5. 创建实体 (默认状态 PENDING)
@@ -86,7 +77,7 @@ class CreateTask:
                     description=cmd.description,
                     effort=effort_vo,
                     base_value=value_vo,
-                    completion_logic=logic_enum,
+                    completion_logic=cmd.completion_logic,
                     dependencies=dep_ids,
                     planning_level=cmd.planning_level,
                 )

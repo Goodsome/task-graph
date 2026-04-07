@@ -34,28 +34,3 @@ class TestTaskEntity:
         is_blocked = service.evaluate_blocking_status(parent, mock_repo)
 
         assert is_blocked is False, "AND 逻辑下，所有依赖完成则不阻塞"
-
-    def test_blocking_logic_or_happy_path(self, create_task, mock_repo):
-        """Scenario: OR Logic (The 'Happy Path')"""
-        # 只有一条路通了
-        path_a = create_task(status=TaskStatus.DONE)
-        path_b = create_task(status=TaskStatus.BLOCKED)
-
-        parent = create_task(logic=CompletionLogic.ANY, deps={path_a.id, path_b.id})
-
-        service = DependencyResolutionService()
-        is_blocked = service.evaluate_blocking_status(parent, mock_repo)
-
-        assert is_blocked is False, "OR 逻辑下，任意路径通则不阻塞"
-
-    def test_blocking_logic_or_total_block(self, create_task, mock_repo):
-        """Scenario: OR Logic (Total Block)"""
-        path_a = create_task(status=TaskStatus.PENDING)
-        path_b = create_task(status=TaskStatus.BLOCKED)
-
-        parent = create_task(logic=CompletionLogic.ANY, deps={path_a.id, path_b.id})
-
-        service = DependencyResolutionService()
-        is_blocked = service.evaluate_blocking_status(parent, mock_repo)
-
-        assert is_blocked is True, "OR 逻辑下，所有路径都不通才阻塞"

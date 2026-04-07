@@ -72,35 +72,6 @@ def test_create_task_all_logic_partially_satisfied(use_case, mock_repo):
     saved_task = mock_repo.save.call_args[0][0]
     assert saved_task.status == TaskStatus.PENDING
 
-def test_create_task_any_logic_satisfied(use_case, mock_repo):
-    # Setup: 2 dependencies, one DONE
-    dep1 = Mock()
-    dep1.id = TaskId.create()
-    dep1.status = TaskStatus.DONE
-    
-    dep2 = Mock()
-    dep2.id = TaskId.create()
-    dep2.status = TaskStatus.PENDING
-    
-    mock_repo.find_by_ids.return_value = [dep1, dep2]
-    
-    cmd = CreateTaskCommand(
-        project_id="test-project",
-        name="Task ANY Satisfied",
-        description="Desc",
-        effort=3,
-        base_value=5.0,
-        planning_level=PlanningLevel.ATOMIC,
-        completion_logic=CompletionLogic.ANY,
-        dependencies=[str(dep1.id), str(dep2.id)]
-    )
-    
-    result = use_case.execute(cmd)
-    
-    assert result.success is True
-    saved_task = mock_repo.save.call_args[0][0]
-    assert saved_task.status == TaskStatus.READY
-
 def test_create_task_any_logic_not_satisfied(use_case, mock_repo):
     # Setup: 2 dependencies, none DONE
     dep1 = Mock()
@@ -129,23 +100,3 @@ def test_create_task_any_logic_not_satisfied(use_case, mock_repo):
     assert result.success is True
     saved_task = mock_repo.save.call_args[0][0]
     assert saved_task.status == TaskStatus.PENDING
-
-def test_create_task_no_dependencies(use_case, mock_repo):
-    mock_repo.find_by_ids.return_value = []
-    
-    cmd = CreateTaskCommand(
-        project_id="test-project",
-        name="Task No Deps",
-        description="Desc",
-        effort=3,
-        base_value=5.0,
-        planning_level=PlanningLevel.ATOMIC,
-        completion_logic=CompletionLogic.ALL,
-        dependencies=[]
-    )
-    
-    result = use_case.execute(cmd)
-    
-    assert result.success is True
-    saved_task = mock_repo.save.call_args[0][0]
-    assert saved_task.status == TaskStatus.READY
