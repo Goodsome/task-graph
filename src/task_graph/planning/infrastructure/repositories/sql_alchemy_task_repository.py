@@ -4,7 +4,7 @@ from sqlalchemy import select, func, or_
 from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.value_objects.task_id import TaskId
-from task_graph.planning.domain.enums import PlanningLevel, TaskStatus
+from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
 from task_graph.planning.infrastructure.orm import TaskModel
 from dataclasses import dataclass
 
@@ -68,7 +68,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
         page_size: int,
         status: Optional[TaskStatus],
         project_id: Optional[str],
-        planning_level: Optional[PlanningLevel],
+        scope_level: Optional[ScopeLevel],
         search: Optional[str],
     ) -> tuple[list[Task], int]:
         # Create base select statement
@@ -77,8 +77,8 @@ class SqlAlchemyTaskRepository(TaskRepository):
             stmt = stmt.where(TaskModel.status == status.value)
         if project_id:
             stmt = stmt.where(TaskModel.project_id == project_id)
-        if planning_level:
-            stmt = stmt.where(TaskModel.planning_level == planning_level.value)
+        if scope_level:
+            stmt = stmt.where(TaskModel.scope_level == scope_level.value)
         if search:
             stmt = stmt.where(
                 or_(
@@ -108,7 +108,8 @@ class SqlAlchemyTaskRepository(TaskRepository):
             base_value=model.base_value,
             completion_logic=model.completion_logic,
             dependencies={d.id for d in model.dependencies},
-            planning_level=model.planning_level,
+            scope_level=model.scope_level,
+            parent_id=model.parent_id,
             output=model.output,
             review_feedback=model.review_feedback,
         )
@@ -124,8 +125,9 @@ class SqlAlchemyTaskRepository(TaskRepository):
         model.name = task.name
         model.description = task.description
         model.status = task.status.value
-        model.planning_level = task.planning_level.value
+        model.scope_level = task.scope_level.value
         model.completion_logic = task.completion_logic.value
+        model.parent_id = task.parent_id.value if task.parent_id else None
         model.effort = task.effort.value
         model.base_value = task.base_value.value
         model.output = task.output.model_dump(mode="json") if task.output else None

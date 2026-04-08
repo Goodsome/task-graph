@@ -1,7 +1,7 @@
 """Tests for Task aggregate status transition behaviors: mark_ready, mark_completed, set_output."""
 import pytest
 from task_graph.planning.domain.aggregates.task import Task
-from task_graph.planning.domain.enums import TaskStatus, CompletionLogic, PlanningLevel
+from task_graph.planning.domain.enums import TaskStatus, CompletionLogic, ScopeLevel
 from task_graph.planning.domain.value_objects.story_point import StoryPoint
 from task_graph.planning.domain.value_objects.value_score import ValueScore
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
@@ -24,7 +24,7 @@ def task():
         base_value=ValueScore.create(5.0),
         completion_logic=CompletionLogic.ALL,
         dependencies=set(),
-        planning_level=PlanningLevel.ATOMIC,
+        scope_level=ScopeLevel.ATOMIC,
     )
 
 
@@ -40,7 +40,7 @@ class TestMarkReady:
         assert len(events) == 1
         assert isinstance(events[0], TaskReadyEvent)
         assert events[0].task_id == str(task.id)
-        assert events[0].planning_level == task.planning_level
+        assert events[0].scope_level == task.scope_level
 
     @pytest.mark.parametrize(
         "initial_status",
@@ -66,7 +66,7 @@ class TestMarkCompleted:
         events = task.collect_events()
         assert len(events) == 1
         assert isinstance(events[0], TaskCompletedEvent)
-        assert events[0].planning_level == task.planning_level
+        assert events[0].scope_level == task.scope_level
 
     @pytest.mark.parametrize(
         "initial_status",
@@ -91,7 +91,7 @@ class TestSetOutput:
         events = task.collect_events()
         assert len(events) == 1
         assert isinstance(events[0], TaskReviewRequestedEvent)
-        assert events[0].planning_level == task.planning_level
+        assert events[0].scope_level == task.scope_level
 
     def test_set_output_with_error_transitions_to_blocked(self, task):
         task.status = TaskStatus.IN_PROGRESS
@@ -105,7 +105,7 @@ class TestSetOutput:
         assert len(events) == 1
         assert isinstance(events[0], TaskBlockedEvent)
         assert events[0].reason == "Runtime crash"
-        assert events[0].planning_level == task.planning_level
+        assert events[0].scope_level == task.scope_level
 
     def test_set_output_from_invalid_status_raises(self, task):
         task.status = TaskStatus.READY

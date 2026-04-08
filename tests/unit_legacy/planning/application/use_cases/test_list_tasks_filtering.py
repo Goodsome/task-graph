@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock
 from task_graph.planning.application.use_cases.list_tasks import ListTasks, ListTasksQuery
 from task_graph.planning.domain.ports.task_repository import TaskRepository
-from task_graph.planning.domain.enums import TaskStatus, PlanningLevel
+from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
 
 @pytest.fixture
 def mock_repo():
@@ -23,7 +23,7 @@ def test_list_tasks_filtering_params_passed(use_case, mock_repo):
     query = ListTasksQuery(
         project_id="test-project",
         status=TaskStatus.READY,
-        planning_level=PlanningLevel.ATOMIC,
+        scope_level=ScopeLevel.ATOMIC,
         search="test keyword",
         page=1,
         page_size=10
@@ -36,7 +36,7 @@ def test_list_tasks_filtering_params_passed(use_case, mock_repo):
     mock_repo.find_paged.assert_called_once_with(
         status=TaskStatus.READY,
         project_id="test-project",
-        planning_level=PlanningLevel.ATOMIC,
+        scope_level=ScopeLevel.ATOMIC,
         search="test keyword",
         page=1,
         page_size=10

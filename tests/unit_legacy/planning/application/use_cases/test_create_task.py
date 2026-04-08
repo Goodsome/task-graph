@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock, ANY
 from task_graph.planning.application.use_cases.create_task import CreateTask, CreateTaskCommand
 from task_graph.planning.domain.ports.task_repository import TaskRepository
-from task_graph.planning.domain.enums import PlanningLevel, CompletionLogic
+from task_graph.planning.domain.enums import ScopeLevel, CompletionLogic
 from task_graph.planning.domain.value_objects import TaskId
 
 @pytest.fixture
@@ -20,7 +20,7 @@ def test_create_task_success(use_case, mock_repo):
         description="Description",
         effort=5,
         base_value=10.0,
-        planning_level=PlanningLevel.FEATURE,
+        scope_level=ScopeLevel.CONTEXT,
         completion_logic=CompletionLogic.ALL,
         dependencies=[]
     )
@@ -42,7 +42,7 @@ def test_create_task_with_dependencies_success(use_case, mock_repo):
         description="Desc",
         effort=3,
         base_value=5.0,
-        planning_level=PlanningLevel.ATOMIC,
+        scope_level=ScopeLevel.ATOMIC,
         completion_logic=CompletionLogic.ANY,
         dependencies=[str(dep_id)]
     )
@@ -64,7 +64,7 @@ def test_create_task_missing_dependency(use_case, mock_repo):
         description="Desc",
         effort=1,
         base_value=1.0,
-        planning_level=PlanningLevel.ATOMIC,
+        scope_level=ScopeLevel.ATOMIC,
         completion_logic=CompletionLogic.ALL,
         dependencies=[missing_id]
     )

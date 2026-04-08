@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, Float, Text, ForeignKey, Table, DateTime
 from sqlalchemy.dialects.postgresql import JSONB, UUID, ARRAY, ENUM
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
 from datetime import datetime, timezone
 from typing import List, Optional
 import uuid
@@ -28,8 +28,16 @@ class TaskModel(Base):
 
     # 2. 如果状态是固定的，可以使用 Enum (可选，依然用 String 也可以)
     status: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
-    planning_level: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    scope_level: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
     completion_logic: Mapped[str] = mapped_column(String(32), nullable=False)
+    parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey('tasks.id'), nullable=True)
+
+    # 父子层级关系
+    children: Mapped[List["TaskModel"]] = relationship(
+        "TaskModel",
+        backref=backref("parent", remote_side=[id]),
+        cascade="all, delete-orphan"
+    )
 
     effort: Mapped[int] = mapped_column(Integer, nullable=False)
     base_value: Mapped[float] = mapped_column(Float, nullable=False)

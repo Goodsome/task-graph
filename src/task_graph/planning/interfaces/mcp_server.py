@@ -64,7 +64,7 @@ from task_graph.planning.application.use_cases.delete_task import (
     DeleteTaskCommand,
     DeleteTaskResult,
 )
-from task_graph.planning.domain.enums import CompletionLogic, PlanningLevel, TaskStatus
+from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel
 
 # Initialize MCP Server
 mcp = FastMCP("Planning MCP Server")
@@ -93,9 +93,10 @@ def create_task(
     description: str,
     effort: int,
     base_value: float,
-    planning_level: str,
+    scope_level: str,
     completion_logic: str = "all",
     dependencies: list[str] | None = None,
+    parent_id: str | None = None,
 ) -> dict:
     """
     创建一个新的规划任务。
@@ -107,12 +108,14 @@ def create_task(
         effort: 基于斐波那契数列的工作量估算。Allowed values: [1, 2, 3, 5, 8, 13, 21, ...].
                 1-3 for atomic tasks, 5-8 for feature tasks, 8-13 for architectural tasks.
         base_value: 业务价值评分 (1.0 - 10.0)，高价值任务会被优先建议。
-        planning_level: 任务层级。Allowed values: ['architectural', 'feature', 'atomic'].
-                        - architectural: 高层设计与决策。
-                        - feature: 接口定义与 Schema 设计。
-                        - atomic: 具体代码实现。
+        scope_level: 任务范围层级。Allowed values: ['project', 'context', 'architectural', 'atomic'].
+                        - project: PM/系统架构师：负责跨上下文的需求路由与最终交付
+                        - context: 领域专家：负责单一上下文内的业务分析与架构拆解
+                        - architectural: 技术负责人：负责特定代码分层的技术设计与原子任务派发
+                        - atomic: 程序员：负责单一职责的代码落地
         completion_logic: 依赖完成逻辑。'all' (默认) = 等待所有依赖完成; 'any' = 任一依赖完成即可。
         dependencies: 前置任务的 task_id 列表。当前任务会在依赖任务全部完成后自动变为 READY。
+        parent_id: 父任务ID (可选)，用于构建任务层级树
     Returns:
         包含 success, task_id, error 的结果
     """
@@ -120,15 +123,15 @@ def create_task(
     use_case = container.create_task()
 
     try:
-        level = PlanningLevel(planning_level.lower())
+        level = ScopeLevel(scope_level.lower())
     except ValueError:
-        return {"success": False, "task_id": "", "error": f"Invalid planning_level: {planning_level}"}
+        return {"success": False, "task_id": "", "error": f"Invalid scope_level: {scope_level}"}
 
     try:
         logic = CompletionLogic(completion_logic.lower())
     except ValueError:
         return {"success": False, "task_id": "", "error": f"Invalid completion_logic: {completion_logic}"}
-    
+
     if dependencies is None:
         dependencies = []
 
@@ -138,9 +141,10 @@ def create_task(
         description=description,
         effort=effort,
         base_value=base_value,
-        planning_level=level,
+        scope_level=level,
         completion_logic=logic,
         dependencies=dependencies,
+        parent_id=parent_id,
     )
 
     result = use_case.execute(cmd)
@@ -157,7 +161,7 @@ def list_tasks(
     page_size: int = 5,
     project_id: Optional[str] = None,
     status: Optional[str] = None,
-    planning_level: Optional[str] = None,
+    scope_level: Optional[str] = None,
     search: Optional[str] = None,
 ) -> dict:
     """
@@ -168,7 +172,7 @@ def list_tasks(
         page_size: 每页数量
         project_id: 按项目标识符筛选
         status: 按任务状态筛选 (pending, blocked, ready, in_progress, review, done, changes_requested, skipped, discarded)
-        planning_level: 按规划层级筛选 (architectural, feature, atomic)
+        scope_level: 按范围层级筛选 (project, context, architectural, atomic)
         search: 关键字搜索（匹配任务名称或描述）
 
     Returns:
@@ -186,18 +190,18 @@ def list_tasks(
             return {"error": f"Invalid status: {status}"}
 
     level = None
-    if planning_level:
+    if scope_level:
         try:
-            level = PlanningLevel(planning_level.lower())
+            level = ScopeLevel(scope_level.lower())
         except ValueError:
-            return {"error": f"Invalid planning_level: {planning_level}"}
+            return {"error": f"Invalid scope_level: {scope_level}"}
 
     query = ListTasksQuery(
         page=page,
         page_size=page_size,
         project_id=project_id,
         status=task_status,
-        planning_level=level,
+        scope_level=level,
         search=search
     )
     result = use_case.execute(query)

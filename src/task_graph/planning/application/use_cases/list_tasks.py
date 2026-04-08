@@ -2,7 +2,7 @@ import math
 from dataclasses import dataclass
 from typing import Optional
 
-from task_graph.planning.domain.enums import PlanningLevel, TaskStatus
+from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
 from task_graph.planning.application.unit_of_work import UnitOfWork
 
 
@@ -13,7 +13,7 @@ class ListTasksQuery:
     page: int = 1
     page_size: int = 10
     status: Optional[TaskStatus] = None
-    planning_level: Optional[PlanningLevel] = None
+    scope_level: Optional[ScopeLevel] = None
     search: Optional[str] = ""
 
 
@@ -39,7 +39,7 @@ class ListTasks:
                 paged_tasks, total_count = self.uow.tasks.find_paged(
                     status=query.status,
                     project_id=query.project_id,
-                    planning_level=query.planning_level,
+                    scope_level=query.scope_level,
                     search=query.search,
                     page=query.page,
                     page_size=query.page_size

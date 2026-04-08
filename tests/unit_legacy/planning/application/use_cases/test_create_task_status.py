@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import Mock
 from task_graph.planning.application.use_cases.create_task import CreateTask, CreateTaskCommand
 from task_graph.planning.domain.ports.task_repository import TaskRepository
-from task_graph.planning.domain.enums import PlanningLevel, CompletionLogic, TaskStatus
+from task_graph.planning.domain.enums import ScopeLevel, CompletionLogic, TaskStatus
 from task_graph.planning.domain.value_objects import TaskId
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def test_create_task_all_logic_satisfied(use_case, mock_repo):
         description="Desc",
         effort=3,
         base_value=5.0,
-        planning_level=PlanningLevel.ATOMIC,
+        scope_level=ScopeLevel.ATOMIC,
         completion_logic=CompletionLogic.ALL,
         dependencies=[str(dep1.id), str(dep2.id)]
     )
@@ -61,7 +61,7 @@ def test_create_task_all_logic_partially_satisfied(use_case, mock_repo):
         description="Desc",
         effort=3,
         base_value=5.0,
-        planning_level=PlanningLevel.ATOMIC,
+        scope_level=ScopeLevel.ATOMIC,
         completion_logic=CompletionLogic.ALL,
         dependencies=[str(dep1.id), str(dep2.id)]
     )
@@ -90,7 +90,7 @@ def test_create_task_any_logic_not_satisfied(use_case, mock_repo):
         description="Desc",
         effort=3,
         base_value=5.0,
-        planning_level=PlanningLevel.ATOMIC,
+        scope_level=ScopeLevel.ATOMIC,
         completion_logic=CompletionLogic.ANY,
         dependencies=[str(dep1.id), str(dep2.id)]
     )

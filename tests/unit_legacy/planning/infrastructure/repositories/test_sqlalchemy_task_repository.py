@@ -4,7 +4,7 @@ from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.story_point import StoryPoint
 from task_graph.planning.domain.value_objects.value_score import ValueScore
-from task_graph.planning.domain.enums import TaskStatus, PlanningLevel, CompletionLogic
+from task_graph.planning.domain.enums import TaskStatus, ScopeLevel, CompletionLogic
 from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import SqlAlchemyTaskRepository
 from task_graph.planning.infrastructure.orm import TaskModel
 
@@ -24,7 +24,7 @@ def test_save_and_get_task(repository):
         base_value=ValueScore.create(5.0),
         completion_logic=CompletionLogic.ALL,
         dependencies=set(),
-        planning_level=PlanningLevel.ATOMIC
+        scope_level=ScopeLevel.ATOMIC
     )
 
     # When
@@ -48,7 +48,7 @@ def test_delete_task(repository):
         base_value=ValueScore.create(1.0),
         completion_logic=CompletionLogic.ALL,
         dependencies=set(),
-        planning_level=PlanningLevel.ATOMIC
+        scope_level=ScopeLevel.ATOMIC
     )
     repository.save(task)
     
@@ -70,7 +70,7 @@ def test_find_paged(repository):
             base_value=ValueScore.create(1.0),
             completion_logic=CompletionLogic.ALL,
             dependencies=set(),
-            planning_level=PlanningLevel.ATOMIC
+            scope_level=ScopeLevel.ATOMIC
         )
         if i % 2 == 0:
             task.mark_ready()
@@ -80,7 +80,7 @@ def test_find_paged(repository):
     tasks, total = repository.find_paged(
         status=TaskStatus.READY,
         project_id="test-project",
-        planning_level=PlanningLevel.ATOMIC,
+        scope_level=ScopeLevel.ATOMIC,
         search="Task",
         page=1,
         page_size=5
@@ -100,7 +100,7 @@ def test_task_dependencies(repository):
         base_value=ValueScore.create(1.0),
         completion_logic=CompletionLogic.ALL,
         dependencies=set(),
-        planning_level=PlanningLevel.ATOMIC
+        scope_level=ScopeLevel.ATOMIC
     )
     repository.save(task_a)
     
@@ -112,7 +112,7 @@ def test_task_dependencies(repository):
         base_value=ValueScore.create(1.0),
         completion_logic=CompletionLogic.ALL,
         dependencies={task_a.id},
-        planning_level=PlanningLevel.ATOMIC
+        scope_level=ScopeLevel.ATOMIC
     )
     repository.save(task_b)
     
@@ -135,7 +135,7 @@ def test_optimistic_locking(repository, session_factory):
         base_value=ValueScore.create(1.0),
         completion_logic=CompletionLogic.ALL,
         dependencies=set(),
-        planning_level=PlanningLevel.ATOMIC
+        scope_level=ScopeLevel.ATOMIC
     )
     repository.save(task)
     

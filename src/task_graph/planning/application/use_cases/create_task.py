@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
 from task_graph.planning.domain.aggregates import Task
-from task_graph.planning.domain.enums import CompletionLogic, PlanningLevel, TaskStatus
+from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel
 from task_graph.planning.application.unit_of_work import UnitOfWork
 from task_graph.planning.domain.value_objects import StoryPoint, ValueScore, TaskId
 
@@ -23,9 +23,10 @@ class CreateTaskCommand(BaseModel):
     description: str
     effort: int
     base_value: float
-    planning_level: PlanningLevel
+    scope_level: ScopeLevel
     completion_logic: CompletionLogic = Field(default=CompletionLogic.ALL)
     dependencies: list[str] = Field(default_factory=list)
+    parent_id: Optional[str] = Field(default=None)
 
 
 @dataclass
@@ -79,7 +80,8 @@ class CreateTask:
                     base_value=value_vo,
                     completion_logic=cmd.completion_logic,
                     dependencies=dep_ids,
-                    planning_level=cmd.planning_level,
+                    scope_level=cmd.scope_level,
+                    parent_id=cmd.parent_id,
                 )
 
                 # 如果条件满足，则标记为 READY（此方法会添加 TaskReadyEvent 到聚合根）

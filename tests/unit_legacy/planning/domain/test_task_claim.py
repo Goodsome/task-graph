@@ -1,6 +1,6 @@
 import pytest
 from task_graph.planning.domain.aggregates.task import Task
-from task_graph.planning.domain.enums import TaskStatus, CompletionLogic, PlanningLevel
+from task_graph.planning.domain.enums import TaskStatus, CompletionLogic, ScopeLevel
 from task_graph.planning.domain.value_objects.story_point import StoryPoint
 from task_graph.planning.domain.value_objects.value_score import ValueScore
 from task_graph.planning.domain.exceptions import TaskNotClaimableError
@@ -18,7 +18,7 @@ class TestTaskClaimBehaviors:
             base_value=ValueScore.create(10),
             completion_logic=CompletionLogic.ALL,
             dependencies=set(),
-            planning_level=PlanningLevel.ATOMIC
+            scope_level=ScopeLevel.ATOMIC
         )
 
     def test_claim_ready_task_success(self, ready_task):
@@ -48,7 +48,7 @@ class TestTaskClaimBehaviors:
         assert isinstance(events[0], TaskInProgressEvent)
         assert events[0].task_id == str(ready_task.id)
         assert events[0].project_id == ready_task.project_id
-        assert events[0].planning_level == ready_task.planning_level
+        assert events[0].scope_level == ready_task.scope_level
 
     def test_claim_pending_task_fails(self, ready_task):
         """Scenario: Claiming a PENDING task raises error"""

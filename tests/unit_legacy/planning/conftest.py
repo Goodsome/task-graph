@@ -5,7 +5,7 @@ from uuid import uuid4, UUID
 
 # 假设的导入路径，根据 Specs 调整
 from task_graph.planning.domain.aggregates import Task
-from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, PlanningLevel
+from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel
 from task_graph.planning.domain.value_objects import TaskId, StoryPoint, ValueScore
 from task_graph.planning.domain.ports.task_repository import TaskRepository
 
@@ -51,7 +51,7 @@ class InMemoryTaskRepository(TaskRepository):
         self,
         status: Optional[TaskStatus] = None,
         project_id: Optional[str] = None,
-        planning_level: Optional[PlanningLevel] = None,
+        scope_level: Optional[ScopeLevel] = None,
         search: Optional[str] = None,
         page: int = 1,
         page_size: int = 10,
@@ -63,8 +63,8 @@ class InMemoryTaskRepository(TaskRepository):
 
         if status:
             tasks = [t for t in tasks if t.status == status]
-        if planning_level:
-            tasks = [t for t in tasks if t.planning_level == planning_level]
+        if scope_level:
+            tasks = [t for t in tasks if t.scope_level == scope_level]
         if search:
             search_lower = search.lower()
             tasks = [
@@ -126,7 +126,7 @@ def mock_uow(mock_repo):
 @pytest.fixture
 def create_task(mock_repo):
     """快速创建 Task 的 Helper"""
-    def _factory(project_id="test-project", name="Test Task", effort=1, value=10, logic=CompletionLogic.ALL, deps=None, status=None):
+    def _factory(project_id="test-project", name="Test Task", effort=1, value=10, logic=CompletionLogic.ALL, deps=None, status=None, parent_id=None):
         t = Task.create(
             project_id=project_id,
             name=name,
@@ -135,7 +135,8 @@ def create_task(mock_repo):
             effort=StoryPoint.create(effort),
             base_value=ValueScore.create(value),
             dependencies=deps or set(),
-            planning_level=PlanningLevel.ARCHITECTURAL,
+            scope_level=ScopeLevel.ARCHITECTURAL,
+            parent_id=parent_id,
         )
         if status:
             t.status = status

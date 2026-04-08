@@ -3,7 +3,7 @@ from typing import Union, Optional
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from uuid import UUID
 from abc import abstractmethod, ABC
-from task_graph.planning.domain.enums import TaskStatus, PlanningLevel
+from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
 
 
 class TaskRepository(ABC):
@@ -45,6 +45,6 @@ class TaskRepository(ABC):
         page_size: int,
         status: Optional[TaskStatus],
         project_id: Optional[str],
-        planning_level: Optional[PlanningLevel],
+        scope_level: Optional[ScopeLevel],
         search: Optional[str],
     ) -> tuple[list[Task], int]: ...

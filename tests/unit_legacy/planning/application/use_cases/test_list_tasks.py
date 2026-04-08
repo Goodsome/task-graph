@@ -18,7 +18,7 @@ def test_list_tasks_pagination(use_case, mock_repo):
         t.to_summary_dict.return_value = {"id": i}
     
     # Mock find_paged to handle pagination
-    def mock_find_paged(status=None, project_id=None, planning_level=None, search=None, page=1, page_size=10):
+    def mock_find_paged(status=None, project_id=None, scope_level=None, search=None, page=1, page_size=10):
         start = (page - 1) * page_size
         end = start + page_size
         return mock_tasks[start:end], len(mock_tasks)

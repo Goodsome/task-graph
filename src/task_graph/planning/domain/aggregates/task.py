@@ -1,5 +1,5 @@
 from pydantic import Field
-from task_graph.planning.domain.enums import CompletionLogic, PlanningLevel, TaskStatus
+from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel
 from task_graph.planning.domain.exceptions import (
     IllegalStateTransitionError,
     TaskNotClaimableError,
@@ -34,8 +34,8 @@ class Task(AggregateRoot):
     effort: StoryPoint
     base_value: ValueScore
     dependencies: set[TaskId]
-    dependents: set[TaskId] = Field(default_factory=set)
-    planning_level: PlanningLevel
+    scope_level: ScopeLevel
+    parent_id: TaskId | None = Field(default=None)
     recurrence: RecurrencePolicy | None = Field(default=None)
     output: TaskOutput | None = Field(default=None)
     review_feedback: ReviewFeedback | None = Field(default=None)
@@ -50,11 +50,16 @@ class Task(AggregateRoot):
         base_value: ValueScore,
         completion_logic: CompletionLogic,
         dependencies: set[TaskId],
-        planning_level: str | PlanningLevel,
+        scope_level: str | ScopeLevel,
+        parent_id: TaskId | str | None = None,
     ) -> Self:
         """Factory method to create a new Task"""
-        if isinstance(planning_level, str):
-            planning_level = PlanningLevel(planning_level)
+        if isinstance(scope_level, str):
+            scope_level = ScopeLevel(scope_level)
+
+        if parent_id and isinstance(parent_id, str):
+            parent_id = TaskId.reconstitute(parent_id)
+
         return cls(
             id=TaskId.create(),
             project_id=project_id,
@@ -65,8 +70,8 @@ class Task(AggregateRoot):
             effort=effort,
             base_value=base_value,
             dependencies=dependencies,
-            dependents=set(),
-            planning_level=planning_level,
+            scope_level=scope_level,
+            parent_id=parent_id,
         )
 
     @classmethod
@@ -81,7 +86,8 @@ class Task(AggregateRoot):
         base_value: Union[ValueScore, float],
         completion_logic: Union[CompletionLogic, str],
         dependencies: Union[set[str], set[TaskId]],
-        planning_level: Union[PlanningLevel, str],
+        scope_level: Union[ScopeLevel, str],
+        parent_id: Union[TaskId, str, None] = None,
         output: TaskOutput | None = None,
         review_feedback: ReviewFeedback | None = None,
     ) -> Self:
@@ -93,9 +99,13 @@ class Task(AggregateRoot):
             base_value = ValueScore.create(base_value)
         if not isinstance(completion_logic, CompletionLogic):
             completion_logic = CompletionLogic(completion_logic)
-        if not isinstance(planning_level, PlanningLevel):
-            planning_level = PlanningLevel(planning_level)
+        if not isinstance(scope_level, ScopeLevel):
+            scope_level = ScopeLevel(scope_level)
         dependencies = set((TaskId.reconstitute(d) for d in dependencies))
+
+        if parent_id and isinstance(parent_id, str):
+            parent_id = TaskId.reconstitute(parent_id)
+
         return cls(
             id=TaskId.reconstitute(task_id),
             project_id=project_id,
@@ -106,13 +116,16 @@ class Task(AggregateRoot):
             base_value=base_value,
             completion_logic=completion_logic,
             dependencies=dependencies,
-            planning_level=planning_level,
+            scope_level=scope_level,
+            parent_id=parent_id,
             output=output,
             review_feedback=review_feedback,
         )
 
     def to_dict(self: Self) -> dict:
-        return self.model_dump(mode="json")
+        data = self.model_dump(mode="json")
+        data["parent_id"] = str(self.parent_id.value) if self.parent_id else None
+        return data
 
     def to_summary_dict(self: Self) -> dict:
         """Returns a simplified dictionary representation for listing."""
@@ -121,7 +134,8 @@ class Task(AggregateRoot):
             "project_id": self.project_id,
             "name": self.name,
             "status": self.status.value,
-            "planning_level": self.planning_level.value,
+            "scope_level": self.scope_level.value,
+            "parent_id": str(self.parent_id.value) if self.parent_id else None,
             "effort": self.effort.value,
             "base_value": self.base_value.value,
         }
@@ -140,7 +154,7 @@ class Task(AggregateRoot):
             TaskReadyEvent(
                 task_id=str(self.id),
                 project_id=self.project_id,
-                planning_level=self.planning_level,
+                scope_level=self.scope_level,
             )
         )
 
@@ -169,7 +183,7 @@ class Task(AggregateRoot):
             TaskInProgressEvent(
                 task_id=str(self.id),
                 project_id=self.project_id,
-                planning_level=self.planning_level,
+                scope_level=self.scope_level,
             )
         )
 
@@ -189,7 +203,7 @@ class Task(AggregateRoot):
                 TaskBlockedEvent(
                     task_id=str(self.id),
                     project_id=self.project_id,
-                    planning_level=self.planning_level,
+                    scope_level=self.scope_level,
                     reason=output.error,
                 )
             )
@@ -199,7 +213,7 @@ class Task(AggregateRoot):
                 TaskReviewRequestedEvent(
                     task_id=str(self.id),
                     project_id=self.project_id,
-                    planning_level=self.planning_level,
+                    scope_level=self.scope_level,
                 )
             )
 
@@ -218,7 +232,7 @@ class Task(AggregateRoot):
             TaskCompletedEvent(
                 task_id=str(self.id),
                 project_id=self.project_id,
-                planning_level=self.planning_level,
+                scope_level=self.scope_level,
             )
         )
 
@@ -243,7 +257,7 @@ class Task(AggregateRoot):
                 TaskCompletedEvent(
                     task_id=str(self.id),
                     project_id=self.project_id,
-                    planning_level=self.planning_level,
+                    scope_level=self.scope_level,
                 )
             )
         else:
@@ -252,7 +266,7 @@ class Task(AggregateRoot):
                 TaskChangesRequestedEvent(
                     task_id=str(self.id),
                     project_id=self.project_id,
-                    planning_level=self.planning_level,
+                    scope_level=self.scope_level,
                     feedback=feedback,
                 )
             )

@@ -7,7 +7,7 @@ from rich.table import Table
 
 from task_graph.planning.container import Container
 from task_graph.planning.application.use_cases.create_task import CreateTaskCommand
-from task_graph.planning.domain.enums import CompletionLogic, PlanningLevel
+from task_graph.planning.domain.enums import CompletionLogic, ScopeLevel
 
 container = Container()
 console = Console()
@@ -19,11 +19,11 @@ def create_task(
     description: str = typer.Option(..., "--desc", "-d", help="任务描述"),
     effort: int = typer.Option(..., "--effort", "-e", help="工作量估算 (斐波那契数列: 1, 2, 3, 5, 8, 13...)"),
     base_value: float = typer.Option(..., "--value", "-v", help="业务价值评分 (1.0-10.0)"),
-    planning_level: str = typer.Option(
+    scope_level: str = typer.Option(
         "atomic",
         "--level",
         "-l",
-        help="任务层级: architectural, feature, atomic",
+        help="任务范围层级: project, context, architectural, atomic",
     ),
     completion_logic: str = typer.Option(
         "all",
@@ -35,15 +35,20 @@ def create_task(
         "--dep",
         help="前置任务ID (可多次指定)",
     ),
+    parent_id: Optional[str] = typer.Option(
+        None,
+        "--parent",
+        help="父任务ID",
+    ),
 ):
     """
     创建一个新的规划任务。
     """
     try:
-        level = PlanningLevel(planning_level.lower())
+        level = ScopeLevel(scope_level.lower())
     except ValueError:
-        console.print(f"[red]错误: 无效的 planning_level: {planning_level}[/red]")
-        console.print("可选值: architectural, feature, atomic")
+        console.print(f"[red]错误: 无效的 scope_level: {scope_level}[/red]")
+        console.print("可选值: project, context, architectural, atomic")
         raise typer.Exit(1)
 
     try:
@@ -59,9 +64,10 @@ def create_task(
         description=description,
         effort=effort,
         base_value=base_value,
-        planning_level=level,
+        scope_level=level,
         completion_logic=logic,
         dependencies=dependencies or [],
+        parent_id=parent_id,
     )
 
     use_case = container.create_task()
