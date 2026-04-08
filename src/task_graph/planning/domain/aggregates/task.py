@@ -73,8 +73,8 @@ class Task(AggregateRoot):
         base_value: ValueScore,
         completion_logic: CompletionLogic,
         dependencies: set[TaskId],
-        scope_level: str | ScopeLevel,
-        parent_id: TaskId | str | None = None,
+        scope_level: ScopeLevel,
+        parent_id: TaskId | None = None,
     ) -> Self:
         """Factory method to create a new Task"""
         if isinstance(scope_level, str):
