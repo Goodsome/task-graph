@@ -6,7 +6,10 @@ from .domain_event import DomainEvent
 class AggregateRoot(BaseModel):
     """聚合根基类 特征： 1. 继承 Entity 的所有特性 2. 管理领域事件的发布和收集 3. 确保聚合边界内的一致性"""
     
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        from_attributes=True,
+    )
 
     _domain_events: list[DomainEvent] = PrivateAttr(default_factory=list)
 

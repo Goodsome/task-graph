@@ -7,4 +7,5 @@ class ValueObject(BaseModel):
     model_config = ConfigDict(
         frozen=True,
         extra="forbid",
+        from_attributes=True,
     )

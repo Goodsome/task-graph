@@ -98,21 +98,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
         return [self._to_domain(m) for m in models], total
 
     def _to_domain(self, model: TaskModel) -> Task:
-        return Task.reconstitute(
-            task_id=model.id,
-            project_id=model.project_id,
-            name=model.name,
-            description=model.description,
-            status=model.status,
-            effort=model.effort,
-            base_value=model.base_value,
-            completion_logic=model.completion_logic,
-            dependencies={d.id for d in model.dependencies},
-            scope_level=model.scope_level,
-            parent_id=model.parent_id,
-            output=model.output,
-            review_feedback=model.review_feedback,
-        )
+        return Task.model_validate(model)
 
     def _to_model(self, task: Task) -> TaskModel:
         stmt = select(TaskModel).where(TaskModel.id == task.id.value)

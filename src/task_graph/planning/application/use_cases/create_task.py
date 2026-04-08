@@ -55,7 +55,7 @@ class CreateTask:
                 existing_deps = []
                 if cmd.dependencies:
                     for d_str in cmd.dependencies:
-                        dep_ids.add(TaskId.reconstitute(d_str))
+                        dep_ids.add(TaskId.model_validate(d_str))
 
                     # 3. 校验依赖是否存在
                     existing_deps = self.uow.tasks.find_by_ids(dep_ids)

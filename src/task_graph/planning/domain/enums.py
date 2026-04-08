@@ -1,4 +1,29 @@
 from enum import Enum
+from typing import Any, Type
+from pydantic import GetCoreSchemaHandler
+from pydantic_core import core_schema
+
+
+class ValidatedEnum(Enum):
+    """Base class for enums that can be validated from strings via Pydantic."""
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Type[Any], handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        def validate_from_str(value: Any) -> ValidatedEnum:
+            if isinstance(value, str):
+                return cls(value)
+            if isinstance(value, cls):
+                return value
+            raise TypeError(f"Cannot convert {type(value)} to {cls.__name__}")
+
+        str_schema = core_schema.no_info_plain_validator_function(validate_from_str)
+        return core_schema.json_or_python_schema(
+            json_schema=str_schema,
+            python_schema=str_schema,
+            serialization=core_schema.plain_serializer_function_ser_schema(lambda x: x.value),
+        )
 
 
 class CompletionLogic(Enum):

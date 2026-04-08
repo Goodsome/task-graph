@@ -31,7 +31,7 @@ class ValueScore(ValueObject):
     @model_validator(mode="before")
     @classmethod
     def validate_from_primitive(cls, data: Any) -> Any:
-        if isinstance(data, int):
+        if isinstance(data, (int, float)):
             return {"value": data}
         return data
 

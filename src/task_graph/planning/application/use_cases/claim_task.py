@@ -36,7 +36,7 @@ class ClaimTask:
             with self.uow:
                 # 1. Retrieve task
                 try:
-                    task_id = TaskId.reconstitute(cmd.task_id)
+                    task_id = TaskId.model_validate(cmd.task_id)
                 except (ValueError, AttributeError):
                     return ClaimTaskResult(
                         success=False,

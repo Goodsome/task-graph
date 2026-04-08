@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, field_validator
 from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel
 from task_graph.planning.domain.exceptions import (
     IllegalStateTransitionError,
@@ -40,6 +40,29 @@ class Task(AggregateRoot):
     output: TaskOutput | None = Field(default=None)
     review_feedback: ReviewFeedback | None = Field(default=None)
 
+    @field_validator("dependencies", mode="before")
+    @classmethod
+    def validate_dependencies(cls, value: Any) -> set[TaskId]:
+        """Convert dependencies from various formats to TaskId set.
+
+        Supports:
+        - Set of TaskId objects
+        - Set of str/UUID
+        - Set of ORM objects with 'id' attribute
+        """
+        if not isinstance(value, (set, list)):
+            raise ValueError("Dependencies must be a set or list")
+
+        deps = set()
+        for item in value:
+            if hasattr(item, "id"):
+                # ORM model or other object with id attribute
+                deps.add(TaskId.model_validate(item.id))
+            else:
+                # Direct primitive or TaskId
+                deps.add(TaskId.model_validate(item))
+        return deps
+
     @classmethod
     def create(
         cls: type[Self],
@@ -57,9 +80,6 @@ class Task(AggregateRoot):
         if isinstance(scope_level, str):
             scope_level = ScopeLevel(scope_level)
 
-        if parent_id and isinstance(parent_id, str):
-            parent_id = TaskId.reconstitute(parent_id)
-
         return cls(
             id=TaskId.create(),
             project_id=project_id,
@@ -72,54 +92,6 @@ class Task(AggregateRoot):
             dependencies=dependencies,
             scope_level=scope_level,
             parent_id=parent_id,
-        )
-
-    @classmethod
-    def reconstitute(
-        cls: type[Self],
-        task_id: str,
-        project_id: str,
-        name: str,
-        description: str,
-        status: Union[TaskStatus, str],
-        effort: Union[StoryPoint, int],
-        base_value: Union[ValueScore, float],
-        completion_logic: Union[CompletionLogic, str],
-        dependencies: Union[set[str], set[TaskId]],
-        scope_level: Union[ScopeLevel, str],
-        parent_id: Union[TaskId, str, None] = None,
-        output: TaskOutput | None = None,
-        review_feedback: ReviewFeedback | None = None,
-    ) -> Self:
-        if not isinstance(status, TaskStatus):
-            status = TaskStatus(status)
-        if not isinstance(effort, StoryPoint):
-            effort = StoryPoint.create(effort=effort)
-        if not isinstance(base_value, ValueScore):
-            base_value = ValueScore.create(base_value)
-        if not isinstance(completion_logic, CompletionLogic):
-            completion_logic = CompletionLogic(completion_logic)
-        if not isinstance(scope_level, ScopeLevel):
-            scope_level = ScopeLevel(scope_level)
-        dependencies = set((TaskId.reconstitute(d) for d in dependencies))
-
-        if parent_id and isinstance(parent_id, str):
-            parent_id = TaskId.reconstitute(parent_id)
-
-        return cls(
-            id=TaskId.reconstitute(task_id),
-            project_id=project_id,
-            name=name,
-            description=description,
-            status=status,
-            effort=effort,
-            base_value=base_value,
-            completion_logic=completion_logic,
-            dependencies=dependencies,
-            scope_level=scope_level,
-            parent_id=parent_id,
-            output=output,
-            review_feedback=review_feedback,
         )
 
     def to_dict(self: Self) -> dict:

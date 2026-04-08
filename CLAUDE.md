@@ -44,8 +44,8 @@ src/task_graph/
 - **Interfaces** → Orchestrates Application use cases
 
 ### Aggregate & Value Object Pattern
-- Aggregates: `Task.create()`, `Task.reconstitute()` factory methods
-- Value Objects: Frozen Pydantic models with `create()` factory
+- Aggregates: `Task.create()` for new instances, `Task.model_validate()` for reconstructing from persistence
+- Value Objects: Frozen Pydantic models with `create()` factory and `model_validator` for primitive type conversion
 - All models use `ConfigDict(extra="forbid")` or `ConfigDict(frozen=True, extra="forbid")`
 
 ### Use Case Pattern
