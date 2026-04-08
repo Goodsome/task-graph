@@ -1,5 +1,6 @@
 import time
 import sys
+import argparse
 import logging
 from sqlalchemy import text, create_engine
 from task_graph.planning.config import get_settings
@@ -64,27 +65,32 @@ def wait_for_db(database: Database, max_retries: int = 10, delay: int = 3):
     return False
 
 def main():
+    parser = argparse.ArgumentParser(description="Initialize database tables")
+    parser.add_argument("--test", action="store_true", help="Use TEST_DATABASE_URL instead of DATABASE_URL")
+    args = parser.parse_args()
+
     settings = get_settings()
-    
-    if not settings.DATABASE_URL:
-        logger.error("DATABASE_URL is not set in environment variables or .env file.")
+
+    db_url = settings.TEST_DATABASE_URL if args.test else settings.DATABASE_URL
+    if not db_url:
+        env_var = "TEST_DATABASE_URL" if args.test else "DATABASE_URL"
+        logger.error(f"{env_var} is not set in environment variables or .env file.")
         sys.exit(1)
-    
-    logger.info(f"Initializing database at {str(settings.DATABASE_URL).split('@')[-1]}")
-    
+
+    logger.info(f"Initializing database at {str(db_url).split('@')[-1]}")
+
     try:
-        db_url = str(settings.DATABASE_URL)
-        create_database_if_not_exists(db_url)
-        
-        db = Database(db_url)
-        
+        create_database_if_not_exists(str(db_url))
+
+        db = Database(str(db_url))
+
         if not wait_for_db(db):
             sys.exit(1)
-            
+
         logger.info("Creating database tables...")
         db.init_db()
         logger.info("Database initialization completed successfully.")
-        
+
     except Exception as e:
         logger.error(f"Initialization failed: {e}")
         sys.exit(1)

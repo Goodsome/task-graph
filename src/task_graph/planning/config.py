@@ -18,6 +18,10 @@ class Settings(BaseSettings):
         default=None,
         description="PostgreSQL Database Connection String"
     )
+    TEST_DATABASE_URL: Optional[PostgresDsn] = Field(
+        default=None,
+        description="PostgreSQL Test Database Connection String"
+    )
 
     # Logging Configuration
     LOG_LEVEL: str = Field(
