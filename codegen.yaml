@@ -770,12 +770,11 @@ contexts:
       - type: TaskId
         container: set
         name: dependencies
+      - type: ScopeLevel
+        name: scope_level
       - type: TaskId
-        container: set
-        name: dependents
-        default: set
-      - type: PlanningLevel
-        name: planning_level
+        optional: true
+        name: parent_id
       - type: RecurrencePolicy
         optional: true
         name: recurrence
@@ -808,8 +807,11 @@ contexts:
           container: set
           name: dependencies
         - type: Any
-          custom_type_string: Union[str, PlanningLevel]
-          name: planning_level
+          custom_type_string: Union[str, ScopeLevel]
+          name: scope_level
+        - type: Any
+          custom_type_string: TaskId | str | None
+          name: parent_id
         output:
           type: Self
       - name: reconstitute
@@ -841,8 +843,11 @@ contexts:
           custom_type_string: Union[set[str], set[TaskId]]
           name: dependencies
         - type: Any
-          custom_type_string: Union[PlanningLevel, str]
-          name: planning_level
+          custom_type_string: Union[ScopeLevel, str]
+          name: scope_level
+        - type: Any
+          custom_type_string: TaskId | str | None
+          name: parent_id
         - type: TaskOutput
           optional: true
           name: output
@@ -959,19 +964,6 @@ contexts:
         value: skipped
       - name: DISCARDED
         value: discarded
-    - name: PlanningLevel
-      description: Defines the uncertainty and granularity of the task.
-      members:
-      - name: INITIATIVE
-        value: initiative
-      - name: MILESTONE
-        value: milestone
-      - name: ARCHITECTURAL
-        value: architectural
-      - name: FEATURE
-        value: feature
-      - name: ATOMIC
-        value: atomic
     - name: RecurrenceType
       members:
       - name: ON_SUCCESS
@@ -1344,9 +1336,9 @@ contexts:
         - type: string
           optional: true
           name: project_id
-        - type: PlanningLevel
+        - type: ScopeLevel
           optional: true
-          name: planning_level
+          name: scope_level
         - type: string
           optional: true
           name: search
@@ -1393,8 +1385,8 @@ contexts:
         name: effort
       - type: float
         name: base_value
-      - type: PlanningLevel
-        name: planning_level
+      - type: ScopeLevel
+        name: scope_level
       - type: CompletionLogic
         name: completion_logic
         default: CompletionLogic.ALL
@@ -1402,6 +1394,9 @@ contexts:
         container: list
         name: dependencies
         default: list
+      - type: string
+        optional: true
+        name: parent_id
       outputs:
       - type: boolean
         name: success
@@ -1606,9 +1601,9 @@ contexts:
       - type: TaskStatus
         optional: true
         name: status
-      - type: PlanningLevel
+      - type: ScopeLevel
         optional: true
-        name: planning_level
+        name: scope_level
       - type: string
         optional: true
         name: search
