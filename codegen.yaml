@@ -1260,6 +1260,19 @@ contexts:
           name: task
         output:
           type: None
+        rules:
+        - name: save_persists_task_for_subsequent_retrieval
+          given: a valid Task with a unique TaskId
+          when: save is invoked with the Task
+          then: the Task can be retrieved from the repository by its TaskId
+        - name: save_is_idempotent_for_existing_task
+          given: a Task already persisted in the repository
+          when: save is invoked again with the same Task
+          then: no error is raised and the Task state remains unchanged
+        - name: save_preserves_task_dependencies
+          given: a Task with a non-empty set of dependencies
+          when: save is invoked with the Task
+          then: the saved Task's dependencies are identical to the original set of TaskIds
       - name: get
         inputs:
         - type: Self
@@ -1269,6 +1282,19 @@ contexts:
         output:
           type: Task
           optional: true
+        rules:
+        - name: get_returns_task_for_existing_id
+          given: a Task with the given TaskId exists in the repository
+          when: get is invoked with that TaskId
+          then: the complete Task is returned with all its attributes intact
+        - name: get_returns_none_for_nonexistent_id
+          given: no Task with the given TaskId exists in the repository
+          when: get is invoked with that TaskId
+          then: None is returned without raising an error
+        - name: get_returns_fully_reconstituted_task
+          given: a Task was previously saved with all attributes populated
+          when: get is invoked with the Task's TaskId
+          then: the returned Task has identical attribute values including nested objects and value objects
       - name: find_all_active
         inputs:
         - type: Self
