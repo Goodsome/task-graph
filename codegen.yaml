@@ -811,7 +811,7 @@ contexts:
           custom_type_string: Union[str, PlanningLevel]
           name: planning_level
         output:
-          type: Task
+          type: Self
       - name: reconstitute
         inputs:
         - type: Self
@@ -850,7 +850,7 @@ contexts:
           optional: true
           name: review_feedback
         output:
-          type: any
+          type: Self
       - name: to_dict
         inputs:
         - type: Self
@@ -980,6 +980,33 @@ contexts:
         value: cron
       - name: ON_FAILURE
         value: on_failure
+    - name: ScopeLevel
+      description: Defines the delegation level of the task, mapping directly to Agent
+        roles and context boundaries.
+      members:
+      - name: PROJECT
+        value: project
+      - name: CONTEXT
+        value: context
+      - name: ARCHITECTURAL
+        value: architectural
+      - name: ATOMIC
+        value: atomic
+    - name: ArchitectureLayer
+      description: DDD architecture layers.
+      members:
+      - name: DOMAIN
+        value: domain
+      - name: APPLICATION
+        value: application
+      - name: INFRASTRUCTURE
+        value: infrastructure
+      - name: INTERFACES
+        value: interfaces
+      - name: CROSS_CUTTING
+        value: cross_cutting
+      - name: NONE
+        value: none
     value_objects:
     - name: ValueScore
       description: Numeric representation of business value.

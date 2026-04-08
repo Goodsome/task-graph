@@ -1,30 +1,24 @@
 from pydantic import Field
-from task_graph.planning.domain.enums import (
-    CompletionLogic,
-    TaskStatus,
-    PlanningLevel,
-)
+from task_graph.planning.domain.enums import CompletionLogic, PlanningLevel, TaskStatus
 from task_graph.planning.domain.exceptions import (
-    TaskNotClaimableError,
     IllegalStateTransitionError,
+    TaskNotClaimableError,
 )
 from task_graph.planning.domain.value_objects.story_point import StoryPoint
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.value_score import ValueScore
 from task_graph.shared.domain.core.aggregate_root import AggregateRoot
-from typing import Union, Any
-from task_graph.planning.domain.value_objects.recurrence_policy import (
-    RecurrencePolicy,
-)
+from typing import Any, Self, Union
+from task_graph.planning.domain.value_objects.recurrence_policy import RecurrencePolicy
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
 from task_graph.planning.domain.events import (
-    TaskReadyEvent,
-    TaskCompletedEvent,
-    TaskReviewRequestedEvent,
     TaskBlockedEvent,
-    TaskInProgressEvent,
     TaskChangesRequestedEvent,
+    TaskCompletedEvent,
+    TaskInProgressEvent,
+    TaskReadyEvent,
+    TaskReviewRequestedEvent,
 )
 
 
@@ -48,7 +42,7 @@ class Task(AggregateRoot):
 
     @classmethod
     def create(
-        cls: Any,
+        cls: type[Self],
         project_id: str,
         name: str,
         description: str,
@@ -57,11 +51,10 @@ class Task(AggregateRoot):
         completion_logic: CompletionLogic,
         dependencies: set[TaskId],
         planning_level: str | PlanningLevel,
-    ) -> "Task":
+    ) -> Self:
         """Factory method to create a new Task"""
         if isinstance(planning_level, str):
             planning_level = PlanningLevel(planning_level)
-                
         return cls(
             id=TaskId.create(),
             project_id=project_id,
@@ -78,7 +71,7 @@ class Task(AggregateRoot):
 
     @classmethod
     def reconstitute(
-        cls: Any,
+        cls: type[Self],
         task_id: str,
         project_id: str,
         name: str,
@@ -89,10 +82,9 @@ class Task(AggregateRoot):
         completion_logic: Union[CompletionLogic, str],
         dependencies: Union[set[str], set[TaskId]],
         planning_level: Union[PlanningLevel, str],
-        output: Union[TaskOutput, None] = None,
-        review_feedback: Union[ReviewFeedback, None] = None,
-    ) -> Any:
-
+        output: TaskOutput | None = None,
+        review_feedback: ReviewFeedback | None = None,
+    ) -> Self:
         if not isinstance(status, TaskStatus):
             status = TaskStatus(status)
         if not isinstance(effort, StoryPoint):
@@ -103,7 +95,7 @@ class Task(AggregateRoot):
             completion_logic = CompletionLogic(completion_logic)
         if not isinstance(planning_level, PlanningLevel):
             planning_level = PlanningLevel(planning_level)
-        dependencies = set(TaskId.reconstitute(d) for d in dependencies)
+        dependencies = set((TaskId.reconstitute(d) for d in dependencies))
         return cls(
             id=TaskId.reconstitute(task_id),
             project_id=project_id,
@@ -118,13 +110,11 @@ class Task(AggregateRoot):
             output=output,
             review_feedback=review_feedback,
         )
-    
-    def to_dict(self) -> dict:
-        return self.model_dump(
-            mode="json"
-        )
 
-    def to_summary_dict(self) -> dict:
+    def to_dict(self: Self) -> dict:
+        return self.model_dump(mode="json")
+
+    def to_summary_dict(self: Self) -> dict:
         """Returns a simplified dictionary representation for listing."""
         return {
             "id": str(self.id),
@@ -136,18 +126,14 @@ class Task(AggregateRoot):
             "base_value": self.base_value.value,
         }
 
-    # ── 公开行为方法 ──────────────────────────────────────────────
-
-    def mark_ready(self) -> None:
+    def mark_ready(self: Self) -> None:
         """将任务标记为 READY（依赖已满足，可被领取）。
 
         Raises:
-            IllegalStateTransitionError: 当前状态不是 PENDING 或 BLOCKED
-        """
+            IllegalStateTransitionError: 当前状态不是 PENDING 或 BLOCKED"""
         if self.status not in (TaskStatus.PENDING, TaskStatus.BLOCKED):
             raise IllegalStateTransitionError(
-                f"Task {self.id} cannot be marked ready: "
-                f"current status is {self.status}, expected PENDING or BLOCKED"
+                f"Task {self.id} cannot be marked ready: current status is {self.status}, expected PENDING or BLOCKED"
             )
         self.status = TaskStatus.READY
         self.add_domain_event(
@@ -158,29 +144,25 @@ class Task(AggregateRoot):
             )
         )
 
-    def mark_pending(self) -> None:
+    def mark_pending(self: Self) -> None:
         """将任务标记为 PENDING（新增了未满足的依赖）。
 
         Raises:
-            IllegalStateTransitionError: 当前状态不是 READY
-        """
+            IllegalStateTransitionError: 当前状态不是 READY"""
         if self.status != TaskStatus.READY:
             raise IllegalStateTransitionError(
-                f"Task {self.id} cannot be marked pending: "
-                f"current status is {self.status}, expected READY"
+                f"Task {self.id} cannot be marked pending: current status is {self.status}, expected READY"
             )
         self.status = TaskStatus.PENDING
 
-    def claim(self) -> None:
+    def claim(self: Self) -> None:
         """领取任务开始执行。
 
         Raises:
-            TaskNotClaimableError: 当前状态不是 READY 或 CHANGES_REQUESTED
-        """
+            TaskNotClaimableError: 当前状态不是 READY 或 CHANGES_REQUESTED"""
         if not self.is_claimable():
             raise TaskNotClaimableError(
-                f"Task {self.id} cannot be claimed: "
-                f"current status is {self.status}, expected READY or CHANGES_REQUESTED"
+                f"Task {self.id} cannot be claimed: current status is {self.status}, expected READY or CHANGES_REQUESTED"
             )
         self.status = TaskStatus.IN_PROGRESS
         self.add_domain_event(
@@ -191,16 +173,14 @@ class Task(AggregateRoot):
             )
         )
 
-    def set_output(self, output: TaskOutput) -> None:
+    def set_output(self: Self, output: TaskOutput) -> None:
         """设置任务执行结果。
 
         Raises:
-            IllegalStateTransitionError: 当前状态不是 IN_PROGRESS
-        """
+            IllegalStateTransitionError: 当前状态不是 IN_PROGRESS"""
         if self.status is not TaskStatus.IN_PROGRESS:
             raise IllegalStateTransitionError(
-                f"Task {self.id} cannot set output: "
-                f"current status is {self.status}, expected IN_PROGRESS"
+                f"Task {self.id} cannot set output: current status is {self.status}, expected IN_PROGRESS"
             )
         self.output = output
         if output.error:
@@ -223,17 +203,15 @@ class Task(AggregateRoot):
                 )
             )
 
-    def mark_completed(self) -> None:
+    def mark_completed(self: Self) -> None:
         """直接标记任务完成（用于手动/自动完成场景）。
 
         Raises:
-            IllegalStateTransitionError: 当前状态不允许直接完成
-        """
+            IllegalStateTransitionError: 当前状态不允许直接完成"""
         allowed = (TaskStatus.REVIEW, TaskStatus.IN_PROGRESS, TaskStatus.READY)
         if self.status not in allowed:
             raise IllegalStateTransitionError(
-                f"Task {self.id} cannot be marked completed: "
-                f"current status is {self.status}"
+                f"Task {self.id} cannot be marked completed: current status is {self.status}"
             )
         self.status = TaskStatus.DONE
         self.add_domain_event(
@@ -244,26 +222,21 @@ class Task(AggregateRoot):
             )
         )
 
-    def review(self, approved: bool, feedback: str) -> None:
+    def review(self: Self, approved: bool, feedback: str) -> None:
         """验证任务并记录反馈。
 
         Args:
             approved: 是否通过
             feedback: 详细评价意见
         Raises:
-            IllegalStateTransitionError: 如果当前状态不是 REVIEW
-        """
+            IllegalStateTransitionError: 如果当前状态不是 REVIEW"""
         if self.status != TaskStatus.REVIEW:
             raise IllegalStateTransitionError(
-                f"Task {self.id} cannot be reviewed: "
-                f"current status is {self.status}, expected REVIEW"
+                f"Task {self.id} cannot be reviewed: current status is {self.status}, expected REVIEW"
             )
-        
         self.review_feedback = ReviewFeedback(
-            decision="approved" if approved else "changes_requested",
-            comment=feedback,
+            decision="approved" if approved else "changes_requested", comment=feedback
         )
-
         if approved:
             self.status = TaskStatus.DONE
             self.add_domain_event(
@@ -284,10 +257,8 @@ class Task(AggregateRoot):
                 )
             )
 
-    # ── 查询方法 ──────────────────────────────────────────────────
-
-    def is_done(self) -> bool:
+    def is_done(self: Self) -> bool:
         return self.status is TaskStatus.DONE
 
-    def is_claimable(self) -> bool:
+    def is_claimable(self: Self) -> bool:
         return self.status in (TaskStatus.READY, TaskStatus.CHANGES_REQUESTED)
