@@ -39,3 +39,8 @@ class Database:
     @property
     def session_factory(self) -> sessionmaker[Session]:
         return self._session_factory
+
+    @property
+    def engine(self) -> Engine:
+        """Get the underlying SQLAlchemy engine."""
+        return self._engine

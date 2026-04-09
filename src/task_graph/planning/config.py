@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     )
 
     model_config = SettingsConfigDict(
-        case_sensitive=True,
+        case_sensitive=False,
         extra="ignore"
     )
 
