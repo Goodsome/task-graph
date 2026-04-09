@@ -2,7 +2,7 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 from typing import Optional
-from task_graph.shared.config import SharedSettings, get_settings as get_shared_settings
+from task_graph.shared.config import Settings as SharedSettings, get_settings as get_shared_settings
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent

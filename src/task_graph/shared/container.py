@@ -3,8 +3,8 @@ from dependency_injector.providers import Singleton, Configuration
 from task_graph.shared.infrastructure.database import Database
 
 
-class SharedContainer(DeclarativeContainer):
-    """Shared DI container for cross-cutting concerns."""
+class Container(DeclarativeContainer):
+    """Shared kernel DI container for cross-cutting concerns."""
 
     # Use Dependency Injector native Configuration provider
     config = Configuration()

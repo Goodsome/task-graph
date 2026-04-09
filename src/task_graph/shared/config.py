@@ -8,8 +8,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 _ENV_FILE_PATH = PROJECT_ROOT / ".env"
 
 
-class SharedSettings(BaseSettings):
-    """Shared application settings."""
+class Settings(BaseSettings):
+    """Shared kernel application settings."""
 
     # Database Configuration
     DATABASE_URL: Optional[PostgresDsn] = Field(
@@ -41,12 +41,12 @@ class SharedSettings(BaseSettings):
     )
 
 
-_settings: Optional[SharedSettings] = None
+_settings: Optional[Settings] = None
 
 
-def get_settings() -> SharedSettings:
-    """Singleton getter for shared settings."""
+def get_settings() -> Settings:
+    """Singleton getter for shared kernel settings."""
     global _settings
     if _settings is None:
-        _settings = SharedSettings()
+        _settings = Settings()
     return _settings
