@@ -6,7 +6,7 @@ from task_graph.planning.domain.value_objects.story_point import StoryPoint
 from task_graph.planning.domain.value_objects.value_score import ValueScore
 from task_graph.planning.domain.enums import TaskStatus, ScopeLevel, CompletionLogic
 from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import SqlAlchemyTaskRepository
-from task_graph.planning.infrastructure.orm import TaskModel
+from task_graph.planning.infrastructure.orm_models import TaskModel
 
 @pytest.fixture
 def repository(session_factory):

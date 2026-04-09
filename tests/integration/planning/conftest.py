@@ -1,15 +1,15 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from task_graph.planning.infrastructure.orm import Base
-from task_graph.planning.config import get_settings
+from task_graph.shared.infrastructure.orm import Base
+from task_graph.shared.config import get_settings
 
 # 1. Session 级别的 Engine Fixture：每次运行 pytest 只创建一次表
 @pytest.fixture(scope="session")
 def db_engine():
     settings = get_settings()
 
-    db_url = settings.TEST_DATABASE_URL
+    db_url = settings.test_database_url
     assert db_url is not None, "TEST_DATABASE_URL is not set in environment variables"
     # 这里可以是 SQLite 内存库，也可以是你的专属测试库连接字符串
     engine = create_engine(str(db_url))

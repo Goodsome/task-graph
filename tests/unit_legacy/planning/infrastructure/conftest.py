@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID, ARRAY
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy import create_engine, JSON
 from sqlalchemy.orm import sessionmaker, Session
-from task_graph.planning.infrastructure.orm import Base
+from task_graph.shared.infrastructure.orm import Base
 
 @compiles(JSONB, "sqlite")
 def compile_jsonb(type_, compiler, **kw):

@@ -5,7 +5,7 @@ from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
-from task_graph.planning.infrastructure.orm import TaskModel
+from task_graph.planning.infrastructure.orm_models.task_model import TaskModel
 from dataclasses import dataclass
 
 

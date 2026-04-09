@@ -81,7 +81,7 @@ class InMemoryTaskRepository(TaskRepository):
 def mock_repo():
     return InMemoryTaskRepository()
 
-from task_graph.planning.application.unit_of_work import UnitOfWork
+from task_graph.planning.application.ports.unit_of_work import UnitOfWork
 from task_graph.shared.ports.event_bus import EventBus
 from task_graph.shared.domain.core.domain_event import DomainEvent
 
