@@ -1,7 +1,7 @@
 import sys
 import argparse
 from sqlalchemy import create_engine, inspect
-from task_graph.planning.config import get_settings
+from task_graph.shared.config import get_settings
 
 def inspect_database(url: str):
     engine = create_engine(url)
@@ -46,7 +46,7 @@ def main():
 
     settings = get_settings()
 
-    db_url = settings.TEST_DATABASE_URL if args.test else settings.DATABASE_URL
+    db_url = settings.test_database_url if args.test else settings.database_url
     if not db_url:
         env_var = "TEST_DATABASE_URL" if args.test else "DATABASE_URL"
         print(f"{env_var} is not set in environment variables or .env file.")

@@ -12,25 +12,13 @@ class Settings(BaseSettings):
     """Shared kernel application settings."""
 
     # Database Configuration
-    DATABASE_URL: Optional[PostgresDsn] = Field(
+    database_url: Optional[PostgresDsn] = Field(
         default=None,
         description="PostgreSQL Database Connection String"
     )
-    TEST_DATABASE_URL: Optional[PostgresDsn] = Field(
+    test_database_url: Optional[PostgresDsn] = Field(
         default=None,
         description="PostgreSQL Test Database Connection String"
-    )
-
-    # Event Bus Configuration
-    EVENT_BUS_CHANNEL: str = Field(
-        default="taskgraph_events",
-        description="PostgreSQL NOTIFY channel for domain events"
-    )
-
-    # General Configuration
-    PROJECT_ROOT: str = Field(
-        default=".",
-        description="Root directory of the project"
     )
 
     model_config = SettingsConfigDict(

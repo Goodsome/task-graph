@@ -13,7 +13,7 @@ class Container(DeclarativeContainer):
     # Shared infrastructure
     database = Singleton(
         Database,
-        connection_string=config.DATABASE_URL.as_(str),
+        connection_string=config.database_url.as_(str),
     )
 
     # Shared event bus factory

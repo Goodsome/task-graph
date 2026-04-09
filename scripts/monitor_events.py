@@ -3,7 +3,9 @@ import json
 import psycopg
 from datetime import datetime
 
-from task_graph.planning.config import get_settings
+from task_graph import planning
+from task_graph.shared.config import get_settings
+from task_graph.planning.config import get_settings as get_planning_settings
 
 async def event_handler(payload: str, channel_name: str):
     """处理接收到的事件数据"""
@@ -28,13 +30,14 @@ async def event_handler(payload: str, channel_name: str):
 async def listen_for_events():
     """监听 PostgreSQL NOTIFY 的主循环"""
     settings = get_settings()
+    planning_settings = get_planning_settings()
     
-    if not settings.DATABASE_URL:
+    if not settings.database_url:
         print("❌ DATABASE_URL is not set in environment variables or .env file.")
         return
 
     # Pydantic 的 DSN 默认是 postgresql://，如果包含 +psycopg 则替换为原生协议
-    db_url = str(settings.DATABASE_URL)
+    db_url = str(settings.database_url)
     if db_url.startswith("postgresql+psycopg://"):
         db_url = db_url.replace("postgresql+psycopg://", "postgresql://", 1)
 
@@ -43,7 +46,7 @@ async def listen_for_events():
         # 因为 LISTEN 命令会一直阻塞当前连接，我们绝对不能使用 SQLAlchemy 的引擎连接池 (Engine)
         # 否则这个常驻进程会长期霸占并消耗尽池里的一个工作连接。
         async with await psycopg.AsyncConnection.connect(db_url, autocommit=True) as conn:
-            channel = settings.EVENT_BUS_CHANNEL
+            channel = planning_settings.event_bus_channel
             print(f"✅ 已连接到数据库，正在监听频道: '{channel}'...")
             
             # 执行 LISTEN 指令

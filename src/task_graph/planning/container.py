@@ -40,7 +40,7 @@ class Container(containers.DeclarativeContainer):
     unit_of_work = providers.Factory(
         SqlAlchemyUnitOfWork,
         session_factory=database.provided.session_factory,
-        event_bus_channel=config.EVENT_BUS_CHANNEL,
+        event_bus_channel=config.event_bus_channel,
         task_repository_factory=task_repository_factory,
         event_bus_factory=event_bus_factory
     )

@@ -1,7 +1,6 @@
 import sys
 import argparse
 import logging
-from sqlalchemy import text, create_engine
 from task_graph.shared.config import get_settings
 from task_graph.shared.infrastructure.database import Database
 
@@ -28,7 +27,7 @@ def main():
 
     settings = get_settings()
 
-    db_url = settings.TEST_DATABASE_URL if args.test else settings.DATABASE_URL
+    db_url = settings.test_database_url if args.test else settings.database_url
     if not db_url:
         env_var = "TEST_DATABASE_URL" if args.test else "DATABASE_URL"
         logger.error(f"{env_var} is not set in environment variables or .env file.")
