@@ -1,12 +1,10 @@
 from sqlalchemy import Column, String, Integer, Float, Text, ForeignKey, Table, DateTime
 from sqlalchemy.dialects.postgresql import JSONB, UUID, ARRAY, ENUM
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, backref
+from sqlalchemy.orm import Mapped, mapped_column, relationship, backref
 from datetime import datetime, timezone
 from typing import List, Optional
 import uuid
-
-class Base(DeclarativeBase):
-    pass
+from task_graph.shared.infrastructure.orm import Base
 
 # 保留这个表！它是图数据的核心
 task_dependencies = Table(

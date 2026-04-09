@@ -1,8 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.engine import Engine
-from task_graph.planning.infrastructure.orm import Base
-from task_graph.planning.config import get_settings
+from task_graph.shared.infrastructure.orm import Base
 import logging
 
 class Database:

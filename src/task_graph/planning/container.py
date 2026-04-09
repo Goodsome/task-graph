@@ -1,4 +1,5 @@
 from dependency_injector import containers, providers
+from dependency_injector.providers import Dependency, Configuration
 
 from task_graph.planning.application.use_cases.claim_task import ClaimTask
 # 3. 导入 Use Cases
@@ -18,8 +19,8 @@ from task_graph.planning.domain.services.dependency_resolution_service import De
 from task_graph.planning.domain.services.priority_analysis_service import PriorityAnalysisService
 from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import SqlAlchemyTaskRepository
 from task_graph.planning.application.unit_of_work import SqlAlchemyUnitOfWork
-from task_graph.planning.infrastructure.database import Database
-from task_graph.planning.config import get_settings
+from task_graph.shared.infrastructure.database import Database
+from task_graph.planning.config import Settings as PlanningSettings
 
 
 class Container(containers.DeclarativeContainer):
@@ -27,18 +28,9 @@ class Container(containers.DeclarativeContainer):
     Dependency Injection Container for the Planning Context.
     """
 
-    # --- Configuration ---
-    config = providers.Configuration()
-
-    # --- Infrastructure Layer ---
-
-    _settings_obj = get_settings()
-
-    # Database connection
-    database = providers.Singleton(
-        Database,
-        connection_string=str(_settings_obj.DATABASE_URL)
-    )
+    # --- Dependencies injected from parent container ---
+    config = Configuration()
+    database = Dependency(instance_of=Database)
     
     unit_of_work = providers.Factory(
         SqlAlchemyUnitOfWork,

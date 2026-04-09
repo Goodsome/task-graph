@@ -3,8 +3,8 @@ import sys
 import argparse
 import logging
 from sqlalchemy import text, create_engine
-from task_graph.planning.config import get_settings
-from task_graph.planning.infrastructure.database import Database
+from task_graph.shared.config import get_settings
+from task_graph.shared.infrastructure.database import Database
 
 # Configure logging
 logging.basicConfig(
