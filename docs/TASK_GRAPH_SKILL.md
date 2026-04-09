@@ -55,7 +55,7 @@ create_task(project_id="", name="...", ...)
 ### Recommended `project_id` Conventions
 
 - Use the project's directory name or repository name
-- Examples: `"TaskGraph"`, `"CodingAgent"`, `"agent-engine"`
+- Examples: `"task-graph"`, `"coding-agent"`, `"agent-engine"`， use `kebab-case` string
 - Keep consistent across all task operations in a project
 
 ## Automatic State Transitions
@@ -111,17 +111,16 @@ REVIEW ──(review_task, approved=False)──> CHANGES_REQUESTED
 | `skipped` | Intentionally skipped |
 | `discarded` | Removed from consideration |
 
-## Planning Level Hierarchy
+## Scope Level Hierarchy
 
-Tasks are organized by planning granularity. Use appropriate levels:
+Tasks are organized by scope granularity. Use appropriate levels:
 
 | Level | Description | Typical Effort |
 |-------|-------------|----------------|
-| `initiative` | Strategic goals, multi-project scope | 13-21 |
-| `milestone` | Major delivery points | 8-13 |
-| `architectural` | System design decisions | 8-13 |
-| `feature` | User-facing functionality | 5-8 |
-| `atomic` | Code implementation tasks | 1-3 |
+| `project` | PM/系统架构师:负责跨上下文的需求路由与最终交付 | 13-21 |
+| `context` | 领域专家:负责单一上下文内的业务分析与架构拆解 | 8-13 |
+| `architectural` | 技术负责人:负责特定代码分层的技术设计与原子任务派发 | 5-8 |
+| `atomic` | 程序员:负责单一职责的代码落地 | 1-3 |
 
 **Effort values must be Fibonacci numbers**: 1, 2, 3, 5, 8, 13, 21...
 
@@ -167,7 +166,7 @@ create_task(
     description="Add JWT authentication to the API",
     effort=5,
     base_value=8.0,
-    planning_level="feature",
+    scope_level="architectural",
     completion_logic="all",
     dependencies=["task-id-of-prerequisite-1", "task-id-of-prerequisite-2"]
 )
@@ -225,10 +224,10 @@ list_tasks(
     search="authentication"
 )
 
-# Filter by planning level
+# Filter by scope level
 list_tasks(
     project_id="MyProject",
-    planning_level="atomic"
+    scope_level="atomic"
 )
 ```
 
@@ -238,13 +237,13 @@ list_tasks(
 
 Never leave `project_id` empty. This ensures proper task isolation across projects.
 
-### 2. Use Appropriate Planning Levels
+### 2. Use Appropriate Scope Levels
 
-Match the planning level to the task scope:
+Match the scope level to the task scope:
 - `atomic` for code-level tasks (file modifications, functions)
-- `feature` for user-facing features
 - `architectural` for design decisions
-- `milestone`/`initiative` for project planning
+- `context` for single context business analysis and architecture disassembly
+- `project` for cross-context requirement routing and final delivery
 
 ### 3. Set Realistic Effort Estimates
 
@@ -283,7 +282,7 @@ Use `get_task_details` to verify prerequisite tasks exist before adding dependen
 
 | Error | Cause | Resolution |
 |-------|-------|------------|
-| Invalid planning_level | Wrong enum value | Use: `initiative`, `milestone`, `architectural`, `feature`, `atomic` |
+| Invalid scope_level | Wrong enum value | Use: `project`, `context`, `architectural`, `atomic` |
 | Invalid status | Wrong enum value | Use lowercase: `pending`, `ready`, `in_progress`, etc. |
 | Task not claimable | Task not in READY state | Check current status, wait for dependencies |
 | Cycle detected | Circular dependency | Remove conflicting dependencies |
@@ -294,5 +293,3 @@ Use `get_task_details` to verify prerequisite tasks exist before adding dependen
 Effort must be a Fibonacci number. Common values: 1, 2, 3, 5, 8, 13, 21.
 
 ---
-
-**Note**: This skill is maintained in the TaskGraph project at `docs/TASK_GRAPH_SKILL.md`. Update when MCP tools or domain logic changes.

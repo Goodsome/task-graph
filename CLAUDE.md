@@ -18,7 +18,7 @@ src/task_graph/
 │   │   ├── value_objects/       # TaskId, StoryPoint, ValueScore, etc.
 │   │   ├── services/            # CycleDetection, DependencyResolution, PriorityAnalysis
 │   │   ├── ports/               # TaskRepository interface
-│   │   ├── enums.py             # TaskStatus, PlanningLevel, CompletionLogic
+│   │   ├── enums.py             # TaskStatus, ScopeLevel, CompletionLogic
 │   │   └── exceptions.py
 │   ├── application/             # Use cases (CQRS: Command/Query)
 │   │   ├── use_cases/           # CreateTask, ClaimTask, ReviewTask, etc.
