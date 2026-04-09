@@ -1,14 +1,12 @@
 from pathlib import Path
 from pydantic import Field
-from pydantic_settings import SettingsConfigDict
 from typing import Optional
-from task_graph.shared.config import Settings as SharedSettings, get_settings as get_shared_settings
-
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 
-class Settings(SharedSettings):
+class Settings(BaseSettings):
     """Planning context specific settings."""
 
     # Event Bus Configuration
