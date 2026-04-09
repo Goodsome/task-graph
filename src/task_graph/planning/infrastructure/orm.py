@@ -29,6 +29,7 @@ class TaskModel(Base):
     # 2. 如果状态是固定的，可以使用 Enum (可选，依然用 String 也可以)
     status: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
     scope_level: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    scope_context: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     completion_logic: Mapped[str] = mapped_column(String(32), nullable=False)
     parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey('tasks.id'), nullable=True)
 

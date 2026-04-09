@@ -112,6 +112,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
         model.description = task.description
         model.status = task.status.value
         model.scope_level = task.scope_level.value
+        model.scope_context = task.scope_context.model_dump(mode="json") if task.scope_context else None
         model.completion_logic = task.completion_logic.value
         model.parent_id = task.parent_id.value if task.parent_id else None
         model.effort = task.effort.value

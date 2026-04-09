@@ -4,9 +4,9 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 from task_graph.planning.domain.aggregates import Task
-from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel
+from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel, ArchitectureLayer
 from task_graph.planning.application.unit_of_work import UnitOfWork
-from task_graph.planning.domain.value_objects import StoryPoint, ValueScore, TaskId
+from task_graph.planning.domain.value_objects import StoryPoint, ValueScore, TaskId, ScopeContext
 
 import logging
 
@@ -27,6 +27,8 @@ class CreateTaskCommand(BaseModel):
     completion_logic: CompletionLogic = Field(default=CompletionLogic.ALL)
     dependencies: list[str] = Field(default_factory=list)
     parent_id: Optional[str] = Field(default=None)
+    bounded_context: Optional[str] = Field(default=None)
+    architecture_layer: Optional[ArchitectureLayer] = Field(default=None)
 
 
 @dataclass
@@ -75,6 +77,14 @@ class CreateTask:
                 if cmd.parent_id:
                     parent_id = TaskId.reconstitute(cmd.parent_id)
 
+                # 4.1 构建 ScopeContext
+                scope_context = None
+                if cmd.bounded_context is not None or cmd.architecture_layer is not None:
+                    scope_context = ScopeContext.create(
+                        bounded_context=cmd.bounded_context,
+                        architecture_layer=cmd.architecture_layer,
+                    )
+
                 # 5. 创建实体 (默认状态 PENDING)
                 new_task = Task.create(
                     project_id=cmd.project_id,
@@ -86,6 +96,7 @@ class CreateTask:
                     dependencies=dep_ids,
                     scope_level=cmd.scope_level,
                     parent_id=parent_id,
+                    scope_context=scope_context,
                 )
 
                 # 如果条件满足，则标记为 READY（此方法会添加 TaskReadyEvent 到聚合根）

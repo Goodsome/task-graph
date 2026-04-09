@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.orm import Session
 from dataclasses import dataclass, field
 
-from tests.factories.task_factory import TaskFactory, TaskOutputFactory
+from tests.factories.task_factory import TaskFactory, TaskOutputFactory, ScopeContextFactory
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.enums import ScopeLevel
@@ -85,6 +85,7 @@ class GetBindings:
             name="Fully Populated Task",
             description="Task with all fields set",
             scope_level=ScopeLevel.ARCHITECTURAL,
+            scope_context=ScopeContextFactory.build(),
         )
         # PENDING -> READY -> IN_PROGRESS (required for set_output)
         self._arranged_task.mark_ready()
@@ -105,13 +106,8 @@ class GetBindings:
         assert self._arranged_task is not None
         self._retrieved_task = self.repository.get(self._arranged_task.id)
         assert self._retrieved_task is not None
-        assert str(self._retrieved_task.id) == str(self._arranged_task.id)
-        assert self._retrieved_task.name == self._arranged_task.name
-        assert self._retrieved_task.description == self._arranged_task.description
-        assert self._retrieved_task.project_id == self._arranged_task.project_id
-        assert self._retrieved_task.status == self._arranged_task.status
-        assert self._retrieved_task.effort.value == self._arranged_task.effort.value
-        assert self._retrieved_task.base_value.value == self._arranged_task.base_value.value
+        # 深度比对所有属性，自动覆盖所有新增字段
+        assert self._retrieved_task.model_dump() == self._arranged_task.model_dump()
 
     def _then_returns_none(self) -> None:
         assert self._arranged_task_id is not None
@@ -122,19 +118,8 @@ class GetBindings:
         assert self._arranged_task is not None
         self._retrieved_task = self.repository.get(self._arranged_task.id)
         assert self._retrieved_task is not None
-        assert str(self._retrieved_task.id) == str(self._arranged_task.id)
-        assert self._retrieved_task.name == self._arranged_task.name
-        assert self._retrieved_task.description == self._arranged_task.description
-        assert self._retrieved_task.project_id == self._arranged_task.project_id
-        assert self._retrieved_task.status == self._arranged_task.status
-        assert self._retrieved_task.effort.value == self._arranged_task.effort.value
-        assert self._retrieved_task.base_value.value == self._arranged_task.base_value.value
-        assert self._retrieved_task.completion_logic == self._arranged_task.completion_logic
-        assert self._retrieved_task.scope_level == self._arranged_task.scope_level
-        assert self._retrieved_task.output is not None
-        assert self._arranged_task.output is not None
-        assert self._retrieved_task.output.summary == self._arranged_task.output.summary
-        assert self._retrieved_task.output.artifacts == self._arranged_task.output.artifacts
+        # 全量深度比对，包含所有嵌套值对象、集合和新增字段
+        assert self._retrieved_task.model_dump() == self._arranged_task.model_dump()
 
 
 @pytest.fixture

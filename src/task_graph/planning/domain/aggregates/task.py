@@ -7,6 +7,7 @@ from task_graph.planning.domain.exceptions import (
 from task_graph.planning.domain.value_objects.story_point import StoryPoint
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.value_score import ValueScore
+from task_graph.planning.domain.value_objects.scope_context import ScopeContext
 from task_graph.shared.domain.core.aggregate_root import AggregateRoot
 from typing import Any, Self, Union
 from task_graph.planning.domain.value_objects.recurrence_policy import RecurrencePolicy
@@ -35,6 +36,7 @@ class Task(AggregateRoot):
     base_value: ValueScore
     dependencies: set[TaskId]
     scope_level: ScopeLevel
+    scope_context: ScopeContext | None = Field(default=None)
     parent_id: TaskId | None = Field(default=None)
     recurrence: RecurrencePolicy | None = Field(default=None)
     output: TaskOutput | None = Field(default=None)
@@ -75,6 +77,7 @@ class Task(AggregateRoot):
         dependencies: set[TaskId],
         scope_level: ScopeLevel,
         parent_id: TaskId | None = None,
+        scope_context: ScopeContext | None = None,
     ) -> Self:
         """Factory method to create a new Task"""
         if isinstance(scope_level, str):
@@ -91,6 +94,7 @@ class Task(AggregateRoot):
             base_value=base_value,
             dependencies=dependencies,
             scope_level=scope_level,
+            scope_context=scope_context,
             parent_id=parent_id,
         )
 
@@ -102,6 +106,10 @@ class Task(AggregateRoot):
             "name": self.name,
             "status": self.status.value,
             "scope_level": self.scope_level.value,
+            "scope_context": {
+                "bounded_context": self.scope_context.bounded_context,
+                "architecture_layer": self.scope_context.architecture_layer.value if self.scope_context and self.scope_context.architecture_layer else None,
+            } if self.scope_context else None,
             "parent_id": str(self.parent_id.value) if self.parent_id else None,
             "effort": self.effort.value,
             "base_value": self.base_value.value,

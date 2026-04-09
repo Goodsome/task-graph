@@ -64,7 +64,7 @@ from task_graph.planning.application.use_cases.delete_task import (
     DeleteTaskCommand,
     DeleteTaskResult,
 )
-from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel
+from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel, ArchitectureLayer
 
 # Initialize MCP Server
 mcp = FastMCP("Planning MCP Server")
@@ -97,6 +97,8 @@ def create_task(
     completion_logic: str = "all",
     dependencies: list[str] | None = None,
     parent_id: str | None = None,
+    bounded_context: str | None = None,
+    architecture_layer: str | None = None,
 ) -> dict:
     """
     创建一个新的规划任务。
@@ -116,6 +118,8 @@ def create_task(
         completion_logic: 依赖完成逻辑。'all' (默认) = 等待所有依赖完成; 'any' = 任一依赖完成即可。
         dependencies: 前置任务的 task_id 列表。当前任务会在依赖任务全部完成后自动变为 READY。
         parent_id: 父任务ID (可选)，用于构建任务层级树
+        bounded_context: 所属限界上下文名称 (可选)，例如 "planning", "user_management"
+        architecture_layer: 所属架构层 (可选)，Allowed values: ['domain', 'application', 'infrastructure', 'interfaces', 'cross_cutting', 'none']
     Returns:
         包含 success, task_id, error 的结果
     """
@@ -132,6 +136,14 @@ def create_task(
     except ValueError:
         return {"success": False, "task_id": "", "error": f"Invalid completion_logic: {completion_logic}"}
 
+    # 处理 architecture_layer 参数
+    layer = None
+    if architecture_layer:
+        try:
+            layer = ArchitectureLayer(architecture_layer.lower())
+        except ValueError:
+            return {"success": False, "task_id": "", "error": f"Invalid architecture_layer: {architecture_layer}"}
+
     if dependencies is None:
         dependencies = []
 
@@ -145,6 +157,8 @@ def create_task(
         completion_logic=logic,
         dependencies=dependencies,
         parent_id=parent_id,
+        bounded_context=bounded_context,
+        architecture_layer=layer,
     )
 
     result = use_case.execute(cmd)

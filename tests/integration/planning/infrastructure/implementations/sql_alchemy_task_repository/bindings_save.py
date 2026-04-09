@@ -120,9 +120,8 @@ class SaveBindings:
         assert self._arranged_task is not None
         self._retrieved_task = self.repository.get(self._arranged_task.id)
         assert self._retrieved_task is not None
-        assert str(self._retrieved_task.id) == str(self._arranged_task.id)
-        assert self._retrieved_task.name == self._arranged_task.name
-        assert self._retrieved_task.project_id == self._arranged_task.project_id
+        # 全量深度比对所有属性，确保没有字段遗漏
+        assert self._retrieved_task.model_dump() == self._arranged_task.model_dump()
 
     def _then_no_error_and_state_unchanged(self) -> None:
         assert self._arranged_task is not None
@@ -130,16 +129,19 @@ class SaveBindings:
         self.repository.save(self._arranged_task)
         self._retrieved_task = self.repository.get(self._arranged_task.id)
         assert self._retrieved_task is not None
-        assert self._retrieved_task.name == self._arranged_task.name
-        assert self._retrieved_task.status == self._arranged_task.status
+        # 验证幂等性：重复保存后所有状态完全不变
+        assert self._retrieved_task.model_dump() == self._arranged_task.model_dump()
 
     def _then_dependencies_preserved(self) -> None:
         assert self._arranged_task is not None
         self._retrieved_task = self.repository.get(self._arranged_task.id)
         assert self._retrieved_task is not None
+        # 专门验证依赖关系正确性
         original_ids = {str(d) for d in self._arranged_task.dependencies}
         retrieved_ids = {str(d) for d in self._retrieved_task.dependencies}
         assert original_ids == retrieved_ids
+        # 同时全量比对其他属性，确保依赖保存时没有破坏其他字段
+        assert self._retrieved_task.model_dump() == self._arranged_task.model_dump()
 
 
 @pytest.fixture
