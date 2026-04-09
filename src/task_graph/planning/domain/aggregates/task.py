@@ -94,11 +94,6 @@ class Task(AggregateRoot):
             parent_id=parent_id,
         )
 
-    def to_dict(self: Self) -> dict:
-        data = self.model_dump(mode="json")
-        data["parent_id"] = str(self.parent_id.value) if self.parent_id else None
-        return data
-
     def to_summary_dict(self: Self) -> dict:
         """Returns a simplified dictionary representation for listing."""
         return {

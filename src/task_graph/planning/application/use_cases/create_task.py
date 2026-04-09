@@ -67,9 +67,13 @@ class CreateTask:
                         return CreateTaskResult(False, "", f"Dependencies not found: {missing_str}")
 
                 # 4. 计算是否需要标记为 READY
-                should_be_ready = False
-                if dep_ids and all(t.status == TaskStatus.DONE for t in existing_deps):
-                    should_be_ready = True
+                should_be_ready = True
+                if dep_ids and not all(t.status == TaskStatus.DONE for t in existing_deps):
+                    should_be_ready = False
+                
+                parent_id = None
+                if cmd.parent_id:
+                    parent_id = TaskId.reconstitute(cmd.parent_id)
 
                 # 5. 创建实体 (默认状态 PENDING)
                 new_task = Task.create(
@@ -81,7 +85,7 @@ class CreateTask:
                     completion_logic=cmd.completion_logic,
                     dependencies=dep_ids,
                     scope_level=cmd.scope_level,
-                    parent_id=cmd.parent_id,
+                    parent_id=parent_id,
                 )
 
                 # 如果条件满足，则标记为 READY（此方法会添加 TaskReadyEvent 到聚合根）
