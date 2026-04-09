@@ -772,6 +772,9 @@ contexts:
         name: dependencies
       - type: ScopeLevel
         name: scope_level
+      - type: ScopeContext
+        optional: true
+        name: scope_context
       - type: TaskId
         optional: true
         name: parent_id
@@ -785,6 +788,26 @@ contexts:
         optional: true
         name: review_feedback
       behaviors:
+      - name: validate_dependencies
+        description: 'Convert dependencies from various formats to TaskId set.
+
+
+          Supports:
+
+          - Set of TaskId objects
+
+          - Set of str/UUID
+
+          - Set of ORM objects with ''id'' attribute'
+        inputs:
+        - type: Self
+          container: type
+          name: cls
+        - type: any
+          name: value
+        output:
+          type: TaskId
+          container: set
       - name: create
         description: Factory method to create a new Task
         inputs:
@@ -806,62 +829,16 @@ contexts:
         - type: TaskId
           container: set
           name: dependencies
-        - type: Any
-          custom_type_string: Union[str, ScopeLevel]
+        - type: ScopeLevel
           name: scope_level
-        - type: Any
-          custom_type_string: TaskId | str | None
+        - type: TaskId
+          optional: true
           name: parent_id
+        - type: ScopeContext
+          optional: true
+          name: scope_context
         output:
           type: Self
-      - name: reconstitute
-        inputs:
-        - type: Self
-          container: type
-          name: cls
-        - type: string
-          name: task_id
-        - type: string
-          name: project_id
-        - type: string
-          name: name
-        - type: string
-          name: description
-        - type: Any
-          custom_type_string: Union[TaskStatus, str]
-          name: status
-        - type: Any
-          custom_type_string: Union[StoryPoint, int]
-          name: effort
-        - type: Any
-          custom_type_string: Union[ValueScore, float]
-          name: base_value
-        - type: Any
-          custom_type_string: Union[CompletionLogic, str]
-          name: completion_logic
-        - type: Any
-          custom_type_string: Union[set[str], set[TaskId]]
-          name: dependencies
-        - type: Any
-          custom_type_string: Union[ScopeLevel, str]
-          name: scope_level
-        - type: Any
-          custom_type_string: TaskId | str | None
-          name: parent_id
-        - type: TaskOutput
-          optional: true
-          name: output
-        - type: ReviewFeedback
-          optional: true
-          name: review_feedback
-        output:
-          type: Self
-      - name: to_dict
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: dict
       - name: to_summary_dict
         description: Returns a simplified dictionary representation for listing.
         inputs:
@@ -936,6 +913,9 @@ contexts:
         output:
           type: boolean
     enums:
+    - name: ValidatedEnum
+      description: Base class for enums that can be validated from strings via Pydantic.
+      members: []
     - name: CompletionLogic
       description: Rules defining how a task is unlocked based on its dependencies.
       members:
@@ -1057,6 +1037,31 @@ contexts:
       - type: string
         optional: true
         name: error
+    - name: ScopeContext
+      description: Value object containing context information related to the task's
+        scope level.
+      attributes:
+      - type: string
+        optional: true
+        name: bounded_context
+      - type: ArchitectureLayer
+        optional: true
+        name: architecture_layer
+      behaviors:
+      - name: create
+        description: Factory method to create a new ScopeContext instance.
+        inputs:
+        - type: Self
+          container: type
+          name: cls
+        - type: string
+          optional: true
+          name: bounded_context
+        - type: ArchitectureLayer
+          optional: true
+          name: architecture_layer
+        output:
+          type: Self
     - name: RecurrencePolicy
       description: Rules for creating a successor task upon completion.
       attributes:
@@ -1272,7 +1277,8 @@ contexts:
         - name: save_preserves_task_dependencies
           given: a Task with a non-empty set of dependencies
           when: save is invoked with the Task
-          then: the saved Task's dependencies are identical to the original set of TaskIds
+          then: the saved Task's dependencies are identical to the original set of
+            TaskIds
       - name: get
         inputs:
         - type: Self
@@ -1294,7 +1300,8 @@ contexts:
         - name: get_returns_fully_reconstituted_task
           given: a Task was previously saved with all attributes populated
           when: get is invoked with the Task's TaskId
-          then: the returned Task has identical attribute values including nested objects and value objects
+          then: the returned Task has identical attribute values including nested
+            objects and value objects
       - name: find_all_active
         inputs:
         - type: Self
@@ -1423,6 +1430,12 @@ contexts:
       - type: string
         optional: true
         name: parent_id
+      - type: string
+        optional: true
+        name: bounded_context
+      - type: ArchitectureLayer
+        optional: true
+        name: architecture_layer
       outputs:
       - type: boolean
         name: success
