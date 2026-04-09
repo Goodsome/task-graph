@@ -1,22 +1,37 @@
 from pydantic import BaseModel, Field
-from typing import Union
-from task_graph.issue_tracking.domain.enums import IssueStatus, IssueType
+from datetime import datetime
+from task_graph.issue_tracking.domain.enums import IssueStatus, IssueType, Severity
 from dataclasses import dataclass
 from task_graph.issue_tracking.domain.ports.issue_repository import IssueRepository
+
+
+class IssueSummaryDTO(BaseModel):
+    id: str
+    title: str
+    type: IssueType
+    severity: Severity
+    status: IssueStatus
+    submitter_name: str
+    comment_count: int
+    label_count: int
+    task_link_count: int
+    created_at: datetime
+    updated_at: datetime
 
 
 class ListIssuesQuery(BaseModel):
     status: IssueStatus | None = Field(default=None)
     type: IssueType | None = Field(default=None)
+    severity: Severity | None = Field(default=None)
     labels: list[str] | None = Field(default=None)
-    limit: int = Field(default=10)
-    offset: int = Field(default=0)
+    limit: int = Field(default=10, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)
 
 
 class ListIssuesResult(BaseModel):
-    issues: list[dict]
+    issues: list[IssueSummaryDTO]
     total_count: int
-    error: str | None = Field(default=None)
+    error: str = Field(default="")
 
 
 @dataclass
@@ -25,4 +40,50 @@ class ListIssues:
 
     issue_repository: IssueRepository
 
-    def execute(self, query: ListIssuesQuery) -> ListIssuesResult: ...
+    def execute(self, query: ListIssuesQuery) -> ListIssuesResult:
+        try:
+            # Get issues from repository
+            issues = self.issue_repository.find_all(
+                limit=query.limit,
+                offset=query.offset,
+                status=query.status,
+                issue_type=query.type,
+                severity=query.severity,
+                labels=query.labels
+            )
+
+            # Get total count
+            total_count = self.issue_repository.count(
+                status=query.status,
+                issue_type=query.type
+            )
+
+            # Convert to DTOs
+            issue_dtos = [
+                IssueSummaryDTO(
+                    id=str(issue.id),
+                    title=issue.title.value,
+                    type=issue.type,
+                    severity=issue.severity,
+                    status=issue.status,
+                    submitter_name=issue.submitter.name,
+                    comment_count=len(issue.comments),
+                    label_count=len(issue.labels),
+                    task_link_count=len(issue.task_links),
+                    created_at=issue.created_at,
+                    updated_at=issue.updated_at
+                )
+                for issue in issues
+            ]
+
+            return ListIssuesResult(
+                issues=issue_dtos,
+                total_count=total_count
+            )
+        except Exception as e:
+            return ListIssuesResult(
+                issues=[],
+                total_count=0,
+                error=str(e)
+            )
+
