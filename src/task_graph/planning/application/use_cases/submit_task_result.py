@@ -1,4 +1,4 @@
-from task_graph.planning.application.unit_of_work import UnitOfWork
+from task_graph.planning.application.ports.unit_of_work import UnitOfWork
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from dataclasses import dataclass, field

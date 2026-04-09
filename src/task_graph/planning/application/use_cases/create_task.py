@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from task_graph.planning.domain.aggregates import Task
 from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel, ArchitectureLayer
-from task_graph.planning.application.unit_of_work import UnitOfWork
+from task_graph.planning.application.ports.unit_of_work import UnitOfWork
 from task_graph.planning.domain.value_objects import StoryPoint, ValueScore, TaskId, ScopeContext
 
 import logging

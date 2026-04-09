@@ -1,6 +1,7 @@
 from dependency_injector.containers import DeclarativeContainer
-from dependency_injector.providers import Singleton, Configuration
+from dependency_injector.providers import Singleton, Configuration, Factory
 from task_graph.shared.infrastructure.database import Database
+from task_graph.shared.infrastructure.event_bus import PgNotifyEventBus
 
 
 class Container(DeclarativeContainer):
@@ -14,3 +15,6 @@ class Container(DeclarativeContainer):
         Database,
         connection_string=config.DATABASE_URL.as_(str),
     )
+
+    # Shared event bus factory
+    event_bus_factory = Factory(PgNotifyEventBus)

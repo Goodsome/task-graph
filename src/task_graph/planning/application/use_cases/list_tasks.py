@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
-from task_graph.planning.application.unit_of_work import UnitOfWork
+from task_graph.planning.application.ports.unit_of_work import UnitOfWork
 
 
 @dataclass(frozen=True)

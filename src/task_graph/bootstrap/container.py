@@ -35,6 +35,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         PlanningContainer,
         config=config.planning,
         database=shared.database,
+        event_bus_factory=shared.event_bus_factory,
     )
 
 

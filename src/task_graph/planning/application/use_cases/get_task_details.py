@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
-from task_graph.planning.application.unit_of_work import UnitOfWork
+from task_graph.planning.application.ports.unit_of_work import UnitOfWork
 from task_graph.planning.domain.value_objects.task_id import TaskId
 
 class GetTaskDetailsQuery(BaseModel):

@@ -1,4 +1,4 @@
-from task_graph.planning.application.unit_of_work import UnitOfWork
+from task_graph.planning.application.ports.unit_of_work import UnitOfWork
 from dataclasses import dataclass, field
 from task_graph.planning.domain.services import CycleDetectionService
 from task_graph.planning.domain.value_objects import TaskId

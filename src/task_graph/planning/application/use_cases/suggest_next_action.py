@@ -4,7 +4,7 @@ from task_graph.planning.domain.services.priority_analysis_service import (
     PriorityAnalysisService,
 )
 from dataclasses import dataclass
-from task_graph.planning.application.unit_of_work import UnitOfWork
+from task_graph.planning.application.ports.unit_of_work import UnitOfWork
 
 
 from typing import Optional
