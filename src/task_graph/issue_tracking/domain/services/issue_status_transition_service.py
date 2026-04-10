@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import ClassVar
 from task_graph.issue_tracking.domain.enums import IssueStatus
 
 
@@ -6,8 +7,8 @@ from task_graph.issue_tracking.domain.enums import IssueStatus
 class IssueStatusTransitionService:
     """Validates issue status transitions according to state machine rules"""
 
-    # Define valid status transitions
-    _VALID_TRANSITIONS: dict[IssueStatus, set[IssueStatus]] = {
+    # Define valid status transitions - ClassVar means it's shared across all instances, not an instance field
+    _VALID_TRANSITIONS: ClassVar[dict[IssueStatus, set[IssueStatus]]] = {
         IssueStatus.REPORTED: {
             IssueStatus.TRIAGED,
             IssueStatus.IN_PROGRESS,

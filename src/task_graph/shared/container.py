@@ -1,6 +1,6 @@
 from dependency_injector.containers import DeclarativeContainer
-from dependency_injector.providers import Singleton, Configuration, Factory
-from task_graph.shared.infrastructure.database import Database
+from dependency_injector.providers import Singleton, Configuration, Factory, Resource
+from task_graph.shared.infrastructure.database import Database, init_database
 from task_graph.shared.infrastructure.event_bus import PgNotifyEventBus
 
 
@@ -11,8 +11,8 @@ class Container(DeclarativeContainer):
     config = Configuration()
 
     # Shared infrastructure
-    database = Singleton(
-        Database,
+    database = Resource(
+        init_database,
         connection_string=config.database_url.as_(str),
     )
 

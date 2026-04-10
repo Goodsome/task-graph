@@ -11,14 +11,11 @@ test_env_path = PROJECT_ROOT / ".env.test"
 load_dotenv(dotenv_path=test_env_path, override=True)
 
 import pytest
-
-
 from typing import Generator
 from sqlalchemy.orm import Session
 
 # 导入容器和配置
 from task_graph.bootstrap import create_container, ApplicationContainer, AppConfig, load_all_configurations
-from task_graph.shared.config import get_settings
 from task_graph.shared.infrastructure.orm import Base
 
 # 1. 准备测试环境的配置

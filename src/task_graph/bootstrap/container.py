@@ -6,6 +6,7 @@ Aggregates all bounded context containers and provides shared dependencies.
 from dependency_injector import containers, providers
 from task_graph.shared.container import Container as SharedContainer
 from task_graph.planning.container import Container as PlanningContainer
+from task_graph.issue_tracking.container import Container as IssueTrackingContainer
 # Add other context container imports here as they are created
 
 
@@ -16,6 +17,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         packages=[
             "task_graph.planning.interfaces.cli",
+            "task_graph.issue_tracking.interfaces.cli",
         ]
     )
 
@@ -34,6 +36,13 @@ class ApplicationContainer(containers.DeclarativeContainer):
         config=config.planning,
         database=shared.database,
         event_bus_factory=shared.event_bus_factory,
+    )
+
+    # Issue Tracking bounded context container
+    issue_tracking = providers.Container(
+        IssueTrackingContainer,
+        config=config.issue_tracking,
+        database=shared.database,
     )
 
 

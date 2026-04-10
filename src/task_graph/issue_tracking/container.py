@@ -1,3 +1,5 @@
+from dependency_injector.providers import Dependency, Configuration
+
 from task_graph.issue_tracking.infrastructure.repositories.sql_alchemy_issue_repository import (
     SqlAlchemyIssueRepository,
 )
@@ -26,9 +28,17 @@ from task_graph.issue_tracking.infrastructure.adapters.postgres_notify_event_pub
     PostgresNotifyEventPublisher,
 )
 
+from task_graph.shared.infrastructure.database import Database
 
 class Container(DeclarativeContainer):
-    sql_alchemy_issue_repository = Factory(SqlAlchemyIssueRepository)
+    
+    config = Configuration()
+    database = Dependency(instance_of=Database)
+    
+    sql_alchemy_issue_repository = Factory(
+        SqlAlchemyIssueRepository,
+        session=database.provided.session_factory,
+    )
     postgres_notify_event_publisher = Factory(PostgresNotifyEventPublisher)
     create_issue = Factory(
         CreateIssue,
