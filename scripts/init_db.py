@@ -44,7 +44,7 @@ def create_database_if_not_exists(url: str):
     finally:
         engine.dispose()
 
-def wait_for_db(database: Database, max_retries: int = 10, delay: int = 3):
+def wait_for_db(database, max_retries: int = 10, delay: int = 3):
     """Wait for the database to be ready and accepting connections."""
     retry_count = 0
     while retry_count < max_retries:
@@ -64,9 +64,6 @@ def wait_for_db(database: Database, max_retries: int = 10, delay: int = 3):
     return False
 
 def main():
-    parser = argparse.ArgumentParser(description="Initialize database tables")
-    args = parser.parse_args()
-
     try:
         # 先创建容器不初始化资源，因为我们需要先创建数据库
         container = create_container(init_resources=False)

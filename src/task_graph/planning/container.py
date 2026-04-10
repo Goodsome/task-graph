@@ -20,7 +20,6 @@ from task_graph.planning.domain.services.priority_analysis_service import Priori
 from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import SqlAlchemyTaskRepository
 from task_graph.planning.infrastructure.repositories.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork
 from task_graph.shared.infrastructure.database import Database
-from task_graph.shared.ports.event_bus import EventBus
 
 
 class Container(containers.DeclarativeContainer):

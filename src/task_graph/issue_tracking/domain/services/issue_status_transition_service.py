@@ -11,30 +11,21 @@ class IssueStatusTransitionService:
         IssueStatus.REPORTED: {
             IssueStatus.TRIAGED,
             IssueStatus.IN_PROGRESS,
+            IssueStatus.RESOLVED,
             IssueStatus.CLOSED
         },
         IssueStatus.TRIAGED: {
             IssueStatus.IN_PROGRESS,
-            IssueStatus.BLOCKED,
+            IssueStatus.RESOLVED,
             IssueStatus.CLOSED
         },
         IssueStatus.IN_PROGRESS: {
-            IssueStatus.IN_REVIEW,
-            IssueStatus.BLOCKED,
-            IssueStatus.CLOSED
-        },
-        IssueStatus.IN_REVIEW: {
             IssueStatus.RESOLVED,
-            IssueStatus.IN_PROGRESS,
             IssueStatus.CLOSED
         },
         IssueStatus.RESOLVED: {
             IssueStatus.CLOSED,
             IssueStatus.IN_PROGRESS  # Reopen
-        },
-        IssueStatus.BLOCKED: {
-            IssueStatus.IN_PROGRESS,
-            IssueStatus.CLOSED
         },
         IssueStatus.CLOSED: set()  # No transitions from closed
     }
