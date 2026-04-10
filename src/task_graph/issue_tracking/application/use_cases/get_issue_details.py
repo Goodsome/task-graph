@@ -19,7 +19,6 @@ class CommentDTO(BaseModel):
 
 class LabelDTO(BaseModel):
     name: str
-    color: str | None
 
 
 class TaskLinkDTO(BaseModel):
@@ -29,8 +28,6 @@ class TaskLinkDTO(BaseModel):
 
 class SubmitterDTO(BaseModel):
     name: str
-    email: str
-    external_id: str | None
 
 
 class IssueDetailsDTO(BaseModel):
@@ -84,11 +81,9 @@ class GetIssueDetails:
                 status=issue.status,
                 submitter=SubmitterDTO(
                     name=issue.submitter.name,
-                    email=issue.submitter.email,
-                    external_id=issue.submitter.external_id
                 ),
                 labels=[
-                    LabelDTO(name=l.name, color=l.color)
+                    LabelDTO(name=l.name)
                     for l in issue.labels
                 ],
                 comments=[

@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=./codegen.schema.json
 name: TaskGraph
 contexts:
+- name: Bootstrap
 - name: IssueTracking
   domain:
     aggregates:
@@ -178,6 +179,7 @@ contexts:
         name: value
       behaviors:
       - name: create
+        description: Create a new IssueTitle instance
         inputs:
         - type: Self
           container: type
@@ -192,6 +194,15 @@ contexts:
           name: self
         output:
           type: string
+      - name: validate_from_primitive
+        inputs:
+        - type: Self
+          container: type
+          name: cls
+        - type: any
+          name: data
+        output:
+          type: any
     - name: CommentId
       description: Unique identifier for a Comment
       attributes:
@@ -201,18 +212,20 @@ contexts:
       - name: create
         inputs:
         - type: Self
-          name: self
+          container: type
+          name: cls
         output:
-          type: CommentId
+          type: Self
       - name: reconstitute
         inputs:
         - type: Self
-          name: self
+          container: type
+          name: cls
         - type: Any
           custom_type_string: Union[UUID, str]
           name: value
         output:
-          type: CommentId
+          type: Self
       - name: __str__
         inputs:
         - type: Self
@@ -225,6 +238,15 @@ contexts:
           name: self
         output:
           type: string
+      - name: validate_from_primitive
+        inputs:
+        - type: Self
+          container: type
+          name: cls
+        - type: any
+          name: data
+        output:
+          type: any
     - name: IssueDescription
       description: Description of an issue, max 10000 characters
       attributes:
@@ -232,6 +254,7 @@ contexts:
         name: value
       behaviors:
       - name: create
+        description: Create a new IssueDescription instance
         inputs:
         - type: Self
           container: type
@@ -246,26 +269,40 @@ contexts:
           name: self
         output:
           type: string
+      - name: validate_from_primitive
+        inputs:
+        - type: Self
+          container: type
+          name: cls
+        - type: any
+          name: data
+        output:
+          type: any
     - name: Label
       description: Label for categorizing issues
       attributes:
       - type: string
         name: name
-      - type: string
-        optional: true
-        name: color
       behaviors:
       - name: create
+        description: Create a new Label instance
         inputs:
         - type: Self
-          name: self
+          container: type
+          name: cls
         - type: string
           name: name
-        - type: string
-          optional: true
-          name: color
         output:
           type: Label
+      - name: validate_from_primitive
+        inputs:
+        - type: Self
+          container: type
+          name: cls
+        - type: any
+          name: data
+        output:
+          type: any
     - name: IssueId
       description: Unique identifier for an Issue
       attributes:
@@ -273,6 +310,7 @@ contexts:
         name: value
       behaviors:
       - name: create
+        description: Create a new IssueId with a random UUID
         inputs:
         - type: Self
           container: type
@@ -280,11 +318,13 @@ contexts:
         output:
           type: IssueId
       - name: reconstitute
+        description: Reconstruct an IssueId from a UUID or string
         inputs:
         - type: Self
           container: type
           name: cls
-        - type: uuid
+        - type: Any
+          custom_type_string: Union[UUID, str]
           name: value
         output:
           type: IssueId
@@ -300,55 +340,70 @@ contexts:
           name: self
         output:
           type: string
+      - name: validate_from_primitive
+        inputs:
+        - type: Self
+          container: type
+          name: cls
+        - type: any
+          name: data
+        output:
+          type: any
     - name: TaskLink
       description: Link between an Issue and a Task from Planning context
       attributes:
-      - type: string
+      - type: TaskId
         name: task_id
       - type: datetime
         name: linked_at
       behaviors:
       - name: create
+        description: Create a new TaskLink instance
         inputs:
         - type: Self
           container: type
           name: cls
-        - type: string
+        - type: Any
+          custom_type_string: Union[TaskId, str]
           name: task_id
         output:
           type: TaskLink
+      - name: validate_from_orm
+        description: Support converting ORM models to TaskLink
+        inputs:
+        - type: Self
+          container: type
+          name: cls
+        - type: Any
+          custom_type_string: Union[dict, object]
+          name: data
+        output:
+          type: dict
     - name: Submitter
       description: Information about the issue submitter
       attributes:
       - type: string
         name: name
-      - type: string
-        name: email
-      - type: string
-        optional: true
-        name: external_id
       behaviors:
       - name: create
+        description: Create a new Submitter instance
         inputs:
         - type: Self
-          name: self
+          container: type
+          name: cls
         - type: string
           name: name
-        - type: string
-          name: email
-        - type: string
-          optional: true
-          name: external_id
         output:
           type: Self
-      - name: validate_email
+      - name: validate_from_primitive
         inputs:
         - type: Self
-          name: self
-        - type: string
-          name: email
+          container: type
+          name: cls
+        - type: any
+          name: data
         output:
-          type: string
+          type: any
     entities:
     - name: Comment
       description: Comment attached to an Issue, immutable after creation
@@ -363,6 +418,7 @@ contexts:
         name: created_at
       behaviors:
       - name: create
+        description: Create a new Comment instance
         inputs:
         - type: Self
           container: type
@@ -373,11 +429,23 @@ contexts:
           name: author
         output:
           type: Self
+      - name: validate_primitive_types
+        description: Convert primitive types to proper value objects when reconstructing
+        inputs:
+        - type: Self
+          container: type
+          name: cls
+        - type: Any
+          custom_type_string: Union[dict, object]
+          name: data
+        output:
+          type: dict
     services:
     - name: IssueStatusTransitionService
       description: Validates issue status transitions according to state machine rules
       operations:
       - name: can_transition
+        description: Check if transition from current_status to target_status is allowed
         inputs:
         - type: Self
           name: self
@@ -388,6 +456,7 @@ contexts:
         output:
           type: boolean
       - name: validate_transition
+        description: Validate transition, raise ValueError if invalid
         inputs:
         - type: Self
           name: self
@@ -412,14 +481,14 @@ contexts:
         output:
           type: None
         rules:
-          - name: save_new_issue
-            given: 传入一个未持久化的Issue聚合根实例
-            when: 调用save方法
-            then: Issue实例被持久化到数据库，没有返回值
-          - name: update_existing_issue
-            given: 传入一个已在数据库中存在的Issue聚合根实例
-            when: 调用save方法
-            then: 数据库中对应的Issue记录被更新，没有返回值
+        - name: save_new_issue
+          given: 传入一个未持久化的Issue聚合根实例
+          when: 调用save方法
+          then: Issue实例被持久化到数据库，没有返回值
+        - name: update_existing_issue
+          given: 传入一个已在数据库中存在的Issue聚合根实例
+          when: 调用save方法
+          then: 数据库中对应的Issue记录被更新，没有返回值
       - name: find_by_id
         inputs:
         - type: Self
@@ -430,14 +499,14 @@ contexts:
           type: Issue
           optional: true
         rules:
-          - name: find_existing_issue_by_id
-            given: 传入的issue_id对应的Issue在数据库中存在
-            when: 调用find_by_id方法
-            then: 返回对应的Issue聚合根实例
-          - name: find_non_existent_issue_by_id
-            given: 传入的issue_id对应的Issue在数据库中不存在
-            when: 调用find_by_id方法
-            then: 返回None
+        - name: find_existing_issue_by_id
+          given: 传入的issue_id对应的Issue在数据库中存在
+          when: 调用find_by_id方法
+          then: 返回对应的Issue聚合根实例
+        - name: find_non_existent_issue_by_id
+          given: 传入的issue_id对应的Issue在数据库中不存在
+          when: 调用find_by_id方法
+          then: 返回None
       - name: find_all
         inputs:
         - type: Self
@@ -463,22 +532,22 @@ contexts:
           type: Issue
           container: list
         rules:
-          - name: find_all_issues_with_pagination
-            given: 传入limit和offset参数，其他过滤参数为空
-            when: 调用find_all方法
-            then: 返回按分页参数查询到的Issue列表，不应用任何过滤条件
-          - name: find_issues_filtered_by_status
-            given: 传入status过滤参数
-            when: 调用find_all方法
-            then: 返回符合指定状态的Issue列表
-          - name: find_issues_with_multiple_filters
-            given: 传入多个过滤参数（如status、issue_type、severity、labels）
-            when: 调用find_all方法
-            then: 返回同时满足所有过滤条件的Issue列表
-          - name: find_issues_no_matches
-            given: 过滤条件没有匹配的Issue
-            when: 调用find_all方法
-            then: 返回空列表
+        - name: find_all_issues_with_pagination
+          given: 传入limit和offset参数，其他过滤参数为空
+          when: 调用find_all方法
+          then: 返回按分页参数查询到的Issue列表，不应用任何过滤条件
+        - name: find_issues_filtered_by_status
+          given: 传入status过滤参数
+          when: 调用find_all方法
+          then: 返回符合指定状态的Issue列表
+        - name: find_issues_with_multiple_filters
+          given: 传入多个过滤参数（如status、issue_type、severity、labels）
+          when: 调用find_all方法
+          then: 返回同时满足所有过滤条件的Issue列表
+        - name: find_issues_no_matches
+          given: 过滤条件没有匹配的Issue
+          when: 调用find_all方法
+          then: 返回空列表
       - name: delete
         inputs:
         - type: Self
@@ -488,14 +557,14 @@ contexts:
         output:
           type: boolean
         rules:
-          - name: delete_existing_issue
-            given: 传入的issue_id对应的Issue在数据库中存在
-            when: 调用delete方法
-            then: Issue被从数据库中删除，返回True
-          - name: delete_non_existent_issue
-            given: 传入的issue_id对应的Issue在数据库中不存在
-            when: 调用delete方法
-            then: 数据库没有变化，返回False
+        - name: delete_existing_issue
+          given: 传入的issue_id对应的Issue在数据库中存在
+          when: 调用delete方法
+          then: Issue被从数据库中删除，返回True
+        - name: delete_non_existent_issue
+          given: 传入的issue_id对应的Issue在数据库中不存在
+          when: 调用delete方法
+          then: 数据库没有变化，返回False
       - name: find_by_task_id
         inputs:
         - type: Self
@@ -506,14 +575,14 @@ contexts:
           type: Issue
           container: list
         rules:
-          - name: find_issues_linked_to_task
-            given: 传入有效的task_id
-            when: 调用find_by_task_id方法
-            then: 返回所有与该task_id关联的Issue列表
-          - name: find_issues_no_linked_to_task
-            given: 传入的task_id没有关联任何Issue
-            when: 调用find_by_task_id方法
-            then: 返回空列表
+        - name: find_issues_linked_to_task
+          given: 传入有效的task_id
+          when: 调用find_by_task_id方法
+          then: 返回所有与该task_id关联的Issue列表
+        - name: find_issues_no_linked_to_task
+          given: 传入的task_id没有关联任何Issue
+          when: 调用find_by_task_id方法
+          then: 返回空列表
       - name: count
         inputs:
         - type: Self
@@ -527,14 +596,14 @@ contexts:
         output:
           type: integer
         rules:
-          - name: count_all_issues
-            given: 不传入任何过滤参数
-            when: 调用count方法
-            then: 返回数据库中所有Issue的总数量
-          - name: count_issues_with_filters
-            given: 传入status或issue_type过滤参数
-            when: 调用count方法
-            then: 返回符合过滤条件的Issue数量
+        - name: count_all_issues
+          given: 不传入任何过滤参数
+          when: 调用count方法
+          then: 返回数据库中所有Issue的总数量
+        - name: count_issues_with_filters
+          given: 传入status或issue_type过滤参数
+          when: 调用count方法
+          then: 返回符合过滤条件的Issue数量
     - name: IssueEventPublisher
       description: Publisher for Issue domain events
       kind: adapter
@@ -628,12 +697,12 @@ contexts:
       outputs:
       - type: boolean
         name: success
-      - type: dict
+      - type: IssueDetailsDTO
         optional: true
         name: issue
       - type: string
-        optional: true
         name: error
+        default: ''
       description: Get full issue details including comments and labels
       dependencies:
       - type: IssueRepository
@@ -653,6 +722,9 @@ contexts:
         name: submitter_name
       - type: string
         name: submitter_email
+      - type: string
+        optional: true
+        name: submitter_external_id
       outputs:
       - type: boolean
         name: success
@@ -707,6 +779,9 @@ contexts:
       - type: IssueType
         optional: true
         name: type
+      - type: Severity
+        optional: true
+        name: severity
       - type: string
         container: list
         optional: true
@@ -718,14 +793,14 @@ contexts:
         name: offset
         default: 0
       outputs:
-      - type: dict
+      - type: IssueSummaryDTO
         container: list
         name: issues
       - type: integer
         name: total_count
       - type: string
-        optional: true
         name: error
+        default: ''
       description: Paginated list of issues with filtering
       dependencies:
       - type: IssueRepository
@@ -783,6 +858,7 @@ contexts:
         name: session
       private_methods:
       - name: _to_domain
+        description: Convert ORM model to domain aggregate
         inputs:
         - type: Self
           name: self
@@ -791,13 +867,12 @@ contexts:
         output:
           type: Issue
       - name: _to_model
+        description: Convert domain aggregate to ORM model
         inputs:
         - type: Self
           name: self
         - type: Issue
           name: issue
-        - type: Session
-          name: session
         output:
           type: IssueModel
     - name: PostgresNotifyEventPublisher
@@ -1725,8 +1800,57 @@ contexts:
       dependencies:
       - type: UnitOfWork
         name: uow
+    ports:
+    - name: UnitOfWork
+      kind: adapter
+      operations:
+      - name: tasks
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: TaskRepository
+      - name: event_bus
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: EventBus
+      - name: __enter__
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: UnitOfWork
+      - name: __exit__
+        inputs:
+        - type: Self
+          name: self
+        - type: any
+          name: exc_type
+        - type: any
+          name: exc_val
+        - type: any
+          name: exc_tb
+        output:
+          type: any
+      - name: commit
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: any
+      - name: rollback
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: any
   infrastructure:
     implementations:
+    - name: SqlAlchemyUnitOfWork
+      implements: UnitOfWork
+      technology: sql
     - name: SqlAlchemyTaskRepository
       implements: TaskRepository
       technology: sql
@@ -1751,6 +1875,10 @@ contexts:
           name: task
         output:
           type: TaskModel
+  interfaces:
+    cli_commands:
+    - name: list-tasks
+      use_case: ListTasks
 - name: Shared
   domain:
     core:

@@ -13,7 +13,6 @@ class Database:
         self._engine: Engine = create_engine(
             connection_string,
             pool_pre_ping=True,
-            echo=True,
         )
         self._session_factory: sessionmaker[Session] = sessionmaker(
             bind=self._engine,

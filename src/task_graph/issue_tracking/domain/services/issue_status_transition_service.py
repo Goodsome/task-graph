@@ -1,35 +1,33 @@
 from dataclasses import dataclass
-from typing import ClassVar
 from task_graph.issue_tracking.domain.enums import IssueStatus
 
+_VALID_TRANSITIONS: dict[IssueStatus, set[IssueStatus]] = {
+    IssueStatus.REPORTED: {
+        IssueStatus.TRIAGED,
+        IssueStatus.IN_PROGRESS,
+        IssueStatus.RESOLVED,
+        IssueStatus.CLOSED
+    },
+    IssueStatus.TRIAGED: {
+        IssueStatus.IN_PROGRESS,
+        IssueStatus.RESOLVED,
+        IssueStatus.CLOSED
+    },
+    IssueStatus.IN_PROGRESS: {
+        IssueStatus.RESOLVED,
+        IssueStatus.CLOSED
+    },
+    IssueStatus.RESOLVED: {
+        IssueStatus.CLOSED,
+        IssueStatus.IN_PROGRESS  # Reopen
+    },
+    IssueStatus.CLOSED: set()  # No transitions from closed
+}
 
 @dataclass
 class IssueStatusTransitionService:
     """Validates issue status transitions according to state machine rules"""
 
-    # Define valid status transitions - ClassVar means it's shared across all instances, not an instance field
-    _VALID_TRANSITIONS: ClassVar[dict[IssueStatus, set[IssueStatus]]] = {
-        IssueStatus.REPORTED: {
-            IssueStatus.TRIAGED,
-            IssueStatus.IN_PROGRESS,
-            IssueStatus.RESOLVED,
-            IssueStatus.CLOSED
-        },
-        IssueStatus.TRIAGED: {
-            IssueStatus.IN_PROGRESS,
-            IssueStatus.RESOLVED,
-            IssueStatus.CLOSED
-        },
-        IssueStatus.IN_PROGRESS: {
-            IssueStatus.RESOLVED,
-            IssueStatus.CLOSED
-        },
-        IssueStatus.RESOLVED: {
-            IssueStatus.CLOSED,
-            IssueStatus.IN_PROGRESS  # Reopen
-        },
-        IssueStatus.CLOSED: set()  # No transitions from closed
-    }
 
     def can_transition(
         self, current_status: IssueStatus, target_status: IssueStatus
@@ -37,7 +35,7 @@ class IssueStatusTransitionService:
         """Check if transition from current_status to target_status is allowed"""
         if current_status == target_status:
             return True
-        return target_status in self._VALID_TRANSITIONS.get(current_status, set())
+        return target_status in _VALID_TRANSITIONS.get(current_status, set())
 
     def validate_transition(
         self, current_status: IssueStatus, target_status: IssueStatus
