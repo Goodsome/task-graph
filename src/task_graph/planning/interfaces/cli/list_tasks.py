@@ -5,12 +5,19 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from task_graph.planning.container import Container
-from task_graph.planning.application.use_cases.list_tasks import ListTasksQuery
+from task_graph.planning.application.use_cases.list_tasks import ListTasksQuery, ListTasks, ListTasksResult
 from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
+from dependency_injector.wiring import Provide, inject
 
-container = Container()
 console = Console()
+
+
+@inject
+def _list_tasks(
+    query: ListTasksQuery,
+    use_case: ListTasks = Provide["planning.list_tasks"]
+) -> ListTasksResult:
+    return use_case.execute(query)
 
 
 def list_tasks(
@@ -51,8 +58,7 @@ def list_tasks(
         search=search or "",
     )
 
-    use_case = container.list_tasks()
-    result = use_case.execute(query)
+    result = _list_tasks(query)
 
     if result.error:
         console.print(f"[red]错误: {result.error}[/red]")

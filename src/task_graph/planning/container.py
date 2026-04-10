@@ -17,7 +17,6 @@ from task_graph.planning.application.use_cases.update_task_status import UpdateT
 from task_graph.planning.domain.services.cycle_detection_service import CycleDetectionService
 from task_graph.planning.domain.services.dependency_resolution_service import DependencyResolutionService
 from task_graph.planning.domain.services.priority_analysis_service import PriorityAnalysisService
-from dependency_injector.providers import Dependency
 from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import SqlAlchemyTaskRepository
 from task_graph.planning.infrastructure.repositories.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork
 from task_graph.shared.infrastructure.database import Database
@@ -32,7 +31,7 @@ class Container(containers.DeclarativeContainer):
     # --- Dependencies injected from parent container ---
     config = Configuration()
     database = Dependency(instance_of=Database)
-    event_bus_factory = Dependency(instance_of=EventBus)
+    event_bus_factory = Dependency()
 
     # --- Infrastructure Factories ---
     task_repository_factory = providers.Factory(SqlAlchemyTaskRepository)
@@ -41,20 +40,20 @@ class Container(containers.DeclarativeContainer):
         SqlAlchemyUnitOfWork,
         session_factory=database.provided.session_factory,
         event_bus_channel=config.event_bus_channel,
-        task_repository_factory=task_repository_factory,
-        event_bus_factory=event_bus_factory
+        task_repository_factory=task_repository_factory.provider,
+        event_bus_factory=event_bus_factory.provider
     )
     # --- Domain Service Layer ---
 
-    cycle_detection_service = providers.Factory(
+    cycle_detection_service = providers.Singleton(
         CycleDetectionService
     )
 
-    dependency_resolution_service = providers.Factory(
+    dependency_resolution_service = providers.Singleton(
         DependencyResolutionService
     )
 
-    priority_analysis_service = providers.Factory(
+    priority_analysis_service = providers.Singleton(
         PriorityAnalysisService
     )
 
