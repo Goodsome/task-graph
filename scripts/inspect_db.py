@@ -1,7 +1,7 @@
 import sys
 import argparse
 from sqlalchemy import create_engine, inspect
-from task_graph.shared.config import get_settings
+from task_graph.bootstrap import create_container
 
 def inspect_database(url: str):
     engine = create_engine(url)
@@ -41,18 +41,20 @@ def inspect_database(url: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Inspect database tables and columns")
-    parser.add_argument("--test", action="store_true", help="Use TEST_DATABASE_URL instead of DATABASE_URL")
     args = parser.parse_args()
 
-    settings = get_settings()
+    try:
+        container = create_container(init_resources=False)
+        db_url = container.config.shared.database_url()
 
-    db_url = settings.test_database_url if args.test else settings.database_url
-    if not db_url:
-        env_var = "TEST_DATABASE_URL" if args.test else "DATABASE_URL"
-        print(f"{env_var} is not set in environment variables or .env file.")
+        if not db_url:
+            print("DATABASE_URL is not set in environment variables or .env file.")
+            sys.exit(1)
+
+        inspect_database(str(db_url))
+    except Exception as e:
+        print(f"Inspection failed: {e}")
         sys.exit(1)
-
-    inspect_database(str(db_url))
 
 
 if __name__ == "__main__":

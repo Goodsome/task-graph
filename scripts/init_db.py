@@ -3,8 +3,7 @@ import sys
 import argparse
 import logging
 from sqlalchemy import text, create_engine
-from task_graph.shared.config import get_settings
-from task_graph.shared.infrastructure.database import Database
+from task_graph.bootstrap import create_container
 
 # Configure logging
 logging.basicConfig(
@@ -66,23 +65,24 @@ def wait_for_db(database: Database, max_retries: int = 10, delay: int = 3):
 
 def main():
     parser = argparse.ArgumentParser(description="Initialize database tables")
-    parser.add_argument("--test", action="store_true", help="Use TEST_DATABASE_URL instead of DATABASE_URL")
     args = parser.parse_args()
 
-    settings = get_settings()
-
-    db_url = settings.test_database_url if args.test else settings.database_url
-    if not db_url:
-        env_var = "TEST_DATABASE_URL" if args.test else "DATABASE_URL"
-        logger.error(f"{env_var} is not set in environment variables or .env file.")
-        sys.exit(1)
-
-    logger.info(f"Initializing database at {str(db_url).split('@')[-1]}")
-
     try:
+        # 先创建容器不初始化资源，因为我们需要先创建数据库
+        container = create_container(init_resources=False)
+        db_url = container.config.shared.database_url()
+
+        if not db_url:
+            logger.error("DATABASE_URL is not set in environment variables or .env file.")
+            sys.exit(1)
+
+        logger.info(f"Initializing database at {str(db_url).split('@')[-1]}")
+
         create_database_if_not_exists(str(db_url))
 
-        db = Database(str(db_url))
+        # 现在初始化资源（创建数据库连接池）
+        container.init_resources()
+        db = container.shared.database()
 
         if not wait_for_db(db):
             sys.exit(1)

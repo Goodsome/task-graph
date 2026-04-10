@@ -9,6 +9,7 @@ wheels/
 # Virtual environments
 .venv
 /.env
+/.env.test
 /project_context.txt
 
 *.log

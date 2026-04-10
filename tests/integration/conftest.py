@@ -1,30 +1,30 @@
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# 1. 获取项目根目录
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+# 2. 强制加载 .env.test 文件，并覆盖现有的环境变量
+# 注意：这一步必须放在所有 from task_graph... import 之前！
+test_env_path = PROJECT_ROOT / ".env.test"
+load_dotenv(dotenv_path=test_env_path, override=True)
+
 import pytest
 from typing import Generator
 from sqlalchemy.orm import Session
 
 # 导入容器和配置
-from task_graph.bootstrap import create_container, ApplicationContainer, AppConfig
+from task_graph.bootstrap import create_container, ApplicationContainer, AppConfig, load_all_configurations
 from task_graph.shared.config import get_settings
 from task_graph.shared.infrastructure.orm import Base
-
-# 导入ORM模型确保Base.metadata能扫描到所有表
-import task_graph.planning.infrastructure.orm_models
-
 
 # 1. 准备测试环境的配置
 @pytest.fixture(scope="session")
 def test_config() -> AppConfig:
     """测试专用配置，使用测试数据库连接。"""
-    shared_settings = get_settings()
-    test_db_url = shared_settings.test_database_url
-    assert test_db_url is not None, "TEST_DATABASE_URL is not set in environment variables"
-
-    # 覆盖共享配置中的database_url为测试数据库地址
-    return AppConfig(
-        shared={
-            "database_url": test_db_url
-        }
-    )
+    config = load_all_configurations()
+    return config
 
 # 2. 初始化应用容器（Session级别，整个测试过程只创建一次）
 @pytest.fixture(scope="session")
