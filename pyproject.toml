@@ -5,7 +5,6 @@ description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
     "dependency-injector>=4.48.3",
-    "mcp>=1.26.0",
     "psycopg[binary]>=3.3.3",
     "pydantic>=2.12.5",
     "pyyaml>=6.0.3",

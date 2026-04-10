@@ -882,6 +882,11 @@ contexts:
       attributes:
       - type: Connection
         name: connection
+  
+  interfaces:
+    mcp_tools:
+      - name: create_issue
+        use_case: CreateIssue
 - name: Planning
   domain:
     aggregates:
@@ -1802,7 +1807,7 @@ contexts:
         name: uow
     ports:
     - name: UnitOfWork
-      kind: adapter
+      kind: repository
       operations:
       - name: tasks
         inputs:

@@ -15,8 +15,6 @@ class CreateIssueCommand(BaseModel):
     type: IssueType
     severity: Severity
     submitter_name: str
-    submitter_email: str
-    submitter_external_id: str | None = None
 
 
 class CreateIssueResult(BaseModel):
