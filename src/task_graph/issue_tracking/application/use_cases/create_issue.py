@@ -37,8 +37,6 @@ class CreateIssue:
             # Create submitter value object
             submitter = Submitter.create(
                 name=cmd.submitter_name,
-                email=cmd.submitter_email,
-                external_id=cmd.submitter_external_id
             )
 
             # Create issue aggregate
@@ -47,7 +45,7 @@ class CreateIssue:
                 description=cmd.description,
                 issue_type=cmd.type,
                 severity=cmd.severity,
-                submitter=submitter
+                submitter=submitter,
             )
 
             # Persist issue
@@ -56,14 +54,6 @@ class CreateIssue:
             # Publish domain event
             # TODO: Create IssueCreated event and publish
 
-            return CreateIssueResult(
-                success=True,
-                issue_id=str(issue.id)
-            )
+            return CreateIssueResult(success=True, issue_id=str(issue.id))
         except Exception as e:
-            return CreateIssueResult(
-                success=False,
-                issue_id="",
-                error=str(e)
-            )
-
+            return CreateIssueResult(success=False, issue_id="", error=str(e))

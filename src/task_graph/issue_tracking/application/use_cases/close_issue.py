@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 from dataclasses import dataclass
 from task_graph.issue_tracking.domain.ports.issue_repository import IssueRepository
 from task_graph.issue_tracking.domain.value_objects.issue_id import IssueId
-from task_graph.issue_tracking.domain.enums import IssueStatus
 
 
 class CloseIssueCommand(BaseModel):
