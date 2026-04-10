@@ -31,8 +31,18 @@ class Comment(Entity):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_primitive_types(cls, data: dict) -> dict:
+    def validate_primitive_types(cls, data: dict | object) -> dict:
         """Convert primitive types to proper value objects when reconstructing"""
+        # 支持ORM对象
+        if not isinstance(data, dict):
+            # 转换ORM对象为字典
+            data = {
+                "id": getattr(data, "id", None),
+                "content": getattr(data, "content", None),
+                "author": getattr(data, "author", None),
+                "created_at": getattr(data, "created_at", None),
+            }
+
         if isinstance(data.get("id"), (str, UUID)):
             data["id"] = CommentId.reconstitute(data["id"])
         return data

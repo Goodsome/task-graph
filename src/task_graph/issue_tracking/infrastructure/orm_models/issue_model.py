@@ -21,9 +21,7 @@ class IssueModel(Base):
     status: Mapped[IssueStatus] = mapped_column(ENUM(IssueStatus, name='issue_status_enum'), nullable=False, default=IssueStatus.REPORTED)
 
     # Submitter information
-    submitter_id: Mapped[str] = mapped_column(String(64), nullable=False)
     submitter_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    submitter_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     # Array of labels (stored as JSONB for flexibility)
     labels: Mapped[List[str]] = mapped_column(JSONB, nullable=False, default=list)

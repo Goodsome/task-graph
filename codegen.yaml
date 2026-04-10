@@ -411,6 +411,15 @@ contexts:
           name: issue
         output:
           type: None
+        rules:
+          - name: save_new_issue
+            given: 传入一个未持久化的Issue聚合根实例
+            when: 调用save方法
+            then: Issue实例被持久化到数据库，没有返回值
+          - name: update_existing_issue
+            given: 传入一个已在数据库中存在的Issue聚合根实例
+            when: 调用save方法
+            then: 数据库中对应的Issue记录被更新，没有返回值
       - name: find_by_id
         inputs:
         - type: Self
@@ -420,6 +429,15 @@ contexts:
         output:
           type: Issue
           optional: true
+        rules:
+          - name: find_existing_issue_by_id
+            given: 传入的issue_id对应的Issue在数据库中存在
+            when: 调用find_by_id方法
+            then: 返回对应的Issue聚合根实例
+          - name: find_non_existent_issue_by_id
+            given: 传入的issue_id对应的Issue在数据库中不存在
+            when: 调用find_by_id方法
+            then: 返回None
       - name: find_all
         inputs:
         - type: Self
@@ -444,6 +462,23 @@ contexts:
         output:
           type: Issue
           container: list
+        rules:
+          - name: find_all_issues_with_pagination
+            given: 传入limit和offset参数，其他过滤参数为空
+            when: 调用find_all方法
+            then: 返回按分页参数查询到的Issue列表，不应用任何过滤条件
+          - name: find_issues_filtered_by_status
+            given: 传入status过滤参数
+            when: 调用find_all方法
+            then: 返回符合指定状态的Issue列表
+          - name: find_issues_with_multiple_filters
+            given: 传入多个过滤参数（如status、issue_type、severity、labels）
+            when: 调用find_all方法
+            then: 返回同时满足所有过滤条件的Issue列表
+          - name: find_issues_no_matches
+            given: 过滤条件没有匹配的Issue
+            when: 调用find_all方法
+            then: 返回空列表
       - name: delete
         inputs:
         - type: Self
@@ -452,6 +487,15 @@ contexts:
           name: issue_id
         output:
           type: boolean
+        rules:
+          - name: delete_existing_issue
+            given: 传入的issue_id对应的Issue在数据库中存在
+            when: 调用delete方法
+            then: Issue被从数据库中删除，返回True
+          - name: delete_non_existent_issue
+            given: 传入的issue_id对应的Issue在数据库中不存在
+            when: 调用delete方法
+            then: 数据库没有变化，返回False
       - name: find_by_task_id
         inputs:
         - type: Self
@@ -461,6 +505,15 @@ contexts:
         output:
           type: Issue
           container: list
+        rules:
+          - name: find_issues_linked_to_task
+            given: 传入有效的task_id
+            when: 调用find_by_task_id方法
+            then: 返回所有与该task_id关联的Issue列表
+          - name: find_issues_no_linked_to_task
+            given: 传入的task_id没有关联任何Issue
+            when: 调用find_by_task_id方法
+            then: 返回空列表
       - name: count
         inputs:
         - type: Self
@@ -473,6 +526,15 @@ contexts:
           name: issue_type
         output:
           type: integer
+        rules:
+          - name: count_all_issues
+            given: 不传入任何过滤参数
+            when: 调用count方法
+            then: 返回数据库中所有Issue的总数量
+          - name: count_issues_with_filters
+            given: 传入status或issue_type过滤参数
+            when: 调用count方法
+            then: 返回符合过滤条件的Issue数量
     - name: IssueEventPublisher
       description: Publisher for Issue domain events
       kind: adapter

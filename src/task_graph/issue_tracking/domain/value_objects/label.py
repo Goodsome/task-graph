@@ -13,19 +13,21 @@ class Label(ValueObject):
         min_length=1,
         description="Label name must be between 1 and 50 characters"
     )
-    color: str | None = Field(default=None, pattern=r'^#[0-9a-fA-F]{6}$')
 
     @classmethod
-    def create(cls, name: str, color: str | None = None) -> Label:
+    def create(cls, name: str) -> Label:
         """Create a new Label instance"""
         cleaned_name = name.strip().lower()
         if not cleaned_name:
             raise ValueError("Label name cannot be empty")
-        return cls(name=cleaned_name, color=color)
+        return cls(name=cleaned_name)
 
     @model_validator(mode="before")
     @classmethod
     def validate_from_primitive(cls, data: Any) -> Any:
         if isinstance(data, str):
             return {"name": data}
+        # 支持ORM对象
+        if not isinstance(data, dict) and hasattr(data, "name"):
+            return {"name": data.name}
         return data

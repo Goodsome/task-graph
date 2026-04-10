@@ -33,7 +33,7 @@ class SqlAlchemyIssueRepository(IssueRepository):
             joinedload(IssueModel.task_links)
         ).where(IssueModel.id == issue_id.value)
 
-        model = self.session.execute(stmt).scalar_one_or_none()
+        model = self.session.execute(stmt).unique().scalar_one_or_none()
         return self._to_domain(model) if model else None
 
     def find_all(
@@ -61,7 +61,7 @@ class SqlAlchemyIssueRepository(IssueRepository):
             stmt = stmt.where(IssueModel.labels.contains(labels))
 
         stmt = stmt.limit(limit).offset(offset)
-        models = self.session.execute(stmt).scalars().unique().all()
+        models = self.session.execute(stmt).unique().scalars().all()
 
         return [self._to_domain(model) for model in models]
 
@@ -83,7 +83,7 @@ class SqlAlchemyIssueRepository(IssueRepository):
             joinedload(IssueModel.task_links)
         )
 
-        models = self.session.execute(stmt).scalars().unique().all()
+        models = self.session.execute(stmt).unique().scalars().all()
         return [self._to_domain(model) for model in models]
 
     def count(
@@ -102,8 +102,25 @@ class SqlAlchemyIssueRepository(IssueRepository):
         return cast(int, self.session.scalar(stmt))
 
     def _to_domain(self: Self, model: IssueModel) -> Issue:
-        """Convert ORM model to domain aggregate using Pydantic model_validate"""
-        return Issue.model_validate(model)
+        """Convert ORM model to domain aggregate"""
+        # 构建 labels: IssueModel.labels 是 List[str]，直接映射
+        labels = [label for label in model.labels]
+
+        data = {
+            "id": model.id,
+            "title": model.title,
+            "description": model.description,
+            "type": model.type,
+            "severity": model.severity,
+            "status": model.status,
+            "submitter": {"name": model.submitter_name},
+            "labels": labels,
+            "comments": model.comments,
+            "task_links": model.task_links,
+            "created_at": model.created_at,
+            "updated_at": model.updated_at,
+        }
+        return Issue.model_validate(data)
 
     def _to_model(self: Self, issue: Issue) -> IssueModel:
         """Convert domain aggregate to ORM model"""
@@ -117,10 +134,9 @@ class SqlAlchemyIssueRepository(IssueRepository):
         model.type = issue.type
         model.severity = issue.severity
         model.status = issue.status
-        model.submitter_id = issue.submitter.id
         model.submitter_name = issue.submitter.name
-        model.submitter_email = issue.submitter.email
         model.labels = [label.name for label in issue.labels]
+        model.created_at = issue.created_at
         model.updated_at = issue.updated_at
 
         # Update comments
@@ -137,15 +153,15 @@ class SqlAlchemyIssueRepository(IssueRepository):
         # Update task links
         existing_task_ids = {tl.task_id for tl in model.task_links}
         for task_link in issue.task_links:
-            if task_link.task_id not in existing_task_ids:
+            task_id_str = str(task_link.task_id)
+            if task_id_str not in existing_task_ids:
                 model.task_links.append(IssueTaskLinkModel(
-                    id=task_link.id.value,
-                    task_id=task_link.task_id,
+                    task_id=task_id_str,
                     linked_at=task_link.linked_at
                 ))
 
         # Remove deleted task links
-        current_task_ids = {tl.task_id for tl in issue.task_links}
+        current_task_ids = {str(tl.task_id) for tl in issue.task_links}
         model.task_links = [tl for tl in model.task_links if tl.task_id in current_task_ids]
 
         return model
