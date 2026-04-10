@@ -17,7 +17,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         packages=[
             "task_graph.planning.interfaces.cli",
-            "task_graph.issue_tracking.interfaces.cli",
+            "task_graph.issue_tracking.interfaces",
         ]
     )
 

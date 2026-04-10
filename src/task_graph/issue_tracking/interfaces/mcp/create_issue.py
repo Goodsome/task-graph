@@ -14,4 +14,5 @@ def _create_issue(
     return use_case.execute(cmd)
 
 
-def create_issue(cmd: CreateIssueCommand) -> CreateIssueResult: ...
+def create_issue(cmd: CreateIssueCommand) -> CreateIssueResult:
+    return _create_issue(cmd)

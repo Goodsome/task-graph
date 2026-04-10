@@ -5,6 +5,8 @@ description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
     "dependency-injector>=4.48.3",
+    "fastmcp>=3.2.3",
+    "httpx[socks]>=0.28.1",
     "psycopg[binary]>=3.3.3",
     "pydantic>=2.12.5",
     "pyyaml>=6.0.3",
@@ -14,8 +16,8 @@ dependencies = [
 ]
 
 [project.scripts]
-task-graph-mcp = "task_graph.planning.interfaces.mcp_server:main"
 task-graph = "task_graph.entrypoints.cli_main:app"
+task-graph-mcp = "task_graph.entrypoints.mcp:main"
 
 [build-system]
 requires = ["hatchling"]
