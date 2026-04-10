@@ -9,6 +9,3 @@ class IssueEventPublisher(ABC):
 
     @abstractmethod
     def publish(self, event: DomainEvent) -> None: ...
-
-    @abstractmethod
-    def publish_all(self, events: list[DomainEvent]) -> None: ...

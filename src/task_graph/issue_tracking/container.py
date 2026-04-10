@@ -39,7 +39,11 @@ class Container(DeclarativeContainer):
         SqlAlchemyIssueRepository,
         session=database.provided.session_factory,
     )
-    postgres_notify_event_publisher = Factory(PostgresNotifyEventPublisher)
+    postgres_notify_event_publisher = Factory(
+        PostgresNotifyEventPublisher,
+        session=database.provided.session_factory,
+        channel="issue_events",
+    )
     create_issue = Factory(
         CreateIssue,
         issue_repository=sql_alchemy_issue_repository,

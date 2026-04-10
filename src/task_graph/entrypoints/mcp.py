@@ -2,7 +2,7 @@ from fastmcp import FastMCP
 
 from task_graph.bootstrap import create_container
 # 导入各个独立的文件
-from ..issue_tracking.interfaces.mcp.create_issue import create_issue
+from task_graph.issue_tracking.interfaces.mcp.create_issue import create_issue
 
 def create_app():
     # 1. DI 容器初始化

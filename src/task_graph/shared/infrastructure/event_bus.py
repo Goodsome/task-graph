@@ -1,4 +1,3 @@
-import json
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from task_graph.shared.ports.event_bus import EventBus
