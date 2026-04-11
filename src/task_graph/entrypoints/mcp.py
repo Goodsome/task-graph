@@ -4,6 +4,7 @@ from fastmcp import FastMCP
 from task_graph.bootstrap import create_container, setup_mcp_logging
 # 导入各个独立的文件
 from task_graph.issue_tracking.interfaces.mcp.create_issue import create_issue
+from task_graph.issue_tracking.interfaces.mcp.list_issues import list_issues
 
 def create_app():
     # 初始化日志
@@ -20,6 +21,8 @@ def create_app():
     # FastMCP 支持显式注册，这样你不需要在子文件中写 @mcp.tool
     logger.info("Registering MCP tools: create_issue")
     _ = mcp.add_tool(create_issue)
+    logger.info("Registering MCP tools: list_issues")
+    _ = mcp.add_tool(list_issues)
 
     logger.info("MCP server initialized successfully")
     return mcp

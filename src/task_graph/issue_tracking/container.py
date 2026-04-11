@@ -1,5 +1,3 @@
-from typing import Callable, cast
-from sqlalchemy.orm import Session
 from dependency_injector.providers import Dependency, Configuration, Singleton
 from task_graph.shared.ports.event_bus import EventBus
 from task_graph.issue_tracking.domain.services.issue_status_transition_service import (
@@ -30,7 +28,6 @@ from task_graph.issue_tracking.application.use_cases.unlink_issue_from_task impo
 from dependency_injector.providers import Factory
 from task_graph.issue_tracking.application.use_cases.create_issue import CreateIssue
 from dependency_injector.containers import DeclarativeContainer
-from task_graph.shared.infrastructure.event_bus import PgNotifyEventBus
 from task_graph.issue_tracking.infrastructure.repositories.sql_alchemy_unit_of_work import (
     SqlAlchemyUnitOfWork,
 )
@@ -43,16 +40,6 @@ class Container(DeclarativeContainer):
     database: Dependency[Database] = Dependency(instance_of=Database)
     event_bus_factory: Dependency[EventBus] = Dependency(
         instance_of=EventBus
-    )
-
-    sql_alchemy_issue_repository: Factory[SqlAlchemyIssueRepository] = Factory(
-        SqlAlchemyIssueRepository,
-        session=Factory(database.provided.session_factory),
-    )
-    pg_notify_event_bus: Factory[PgNotifyEventBus] = Factory(
-        PgNotifyEventBus,
-        session=Factory(database.provided.session_factory),
-        channel="issue_events",
     )
 
     # Unit of Work

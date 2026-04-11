@@ -604,27 +604,6 @@ contexts:
           given: 传入status或issue_type过滤参数
           when: 调用count方法
           then: 返回符合过滤条件的Issue数量
-    - name: IssueEventPublisher
-      description: Publisher for Issue domain events
-      kind: adapter
-      operations:
-      - name: publish
-        inputs:
-        - type: Self
-          name: self
-        - type: DomainEvent
-          name: event
-        output:
-          type: None
-      - name: publish_all
-        inputs:
-        - type: Self
-          name: self
-        - type: DomainEvent
-          container: list
-          name: events
-        output:
-          type: None
   application:
     use_cases:
     - name: LinkIssueToTask
@@ -642,10 +621,8 @@ contexts:
         default: ''
       description: Link an issue to a task from Planning context
       dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
+      - type: UnitOfWork
+        name: uow
     - name: CloseIssue
       kind: command
       inputs:
@@ -662,10 +639,8 @@ contexts:
         default: ''
       description: Close an issue that is in RESOLVED status
       dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
+      - type: UnitOfWork
+        name: uow
     - name: UpdateIssueStatus
       kind: command
       inputs:
@@ -683,10 +658,8 @@ contexts:
         default: ''
       description: Update issue status with state machine validation
       dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
+      - type: UnitOfWork
+        name: uow
       - type: IssueStatusTransitionService
         name: status_transition_service
     - name: GetIssueDetails
@@ -705,8 +678,8 @@ contexts:
         default: ''
       description: Get full issue details including comments and labels
       dependencies:
-      - type: IssueRepository
-        name: issue_repository
+      - type: UnitOfWork
+        name: uow
     - name: CreateIssue
       kind: command
       inputs:
@@ -720,11 +693,6 @@ contexts:
         name: severity
       - type: string
         name: submitter_name
-      - type: string
-        name: submitter_email
-      - type: string
-        optional: true
-        name: submitter_external_id
       outputs:
       - type: boolean
         name: success
@@ -735,10 +703,8 @@ contexts:
         default: ''
       description: Create a new issue with initial status NEW
       dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
+      - type: UnitOfWork
+        name: uow
     - name: UpdateIssueMetadata
       kind: command
       inputs:
@@ -766,10 +732,8 @@ contexts:
         default: ''
       description: Update issue metadata like type, severity, and labels
       dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
+      - type: UnitOfWork
+        name: uow
     - name: ListIssues
       kind: query
       inputs:
@@ -803,8 +767,8 @@ contexts:
         default: ''
       description: Paginated list of issues with filtering
       dependencies:
-      - type: IssueRepository
-        name: issue_repository
+      - type: UnitOfWork
+        name: uow
     - name: UnlinkIssueFromTask
       kind: command
       inputs:
@@ -820,10 +784,8 @@ contexts:
         default: ''
       description: Unlink an issue from a task
       dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
+      - type: UnitOfWork
+        name: uow
     - name: AddComment
       kind: command
       inputs:
@@ -843,10 +805,58 @@ contexts:
         default: ''
       description: Add a comment to an issue
       dependencies:
-      - type: IssueRepository
-        name: issue_repository
-      - type: IssueEventPublisher
-        name: event_publisher
+      - type: UnitOfWork
+        name: uow
+    ports:
+    - name: UnitOfWork
+      kind: adapter
+      operations:
+      - name: issues
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: IssueRepository
+      - name: event_bus
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: EventBus
+      - name: __enter__
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: UnitOfWork
+      - name: __exit__
+        inputs:
+        - type: Self
+          name: self
+        - type: BaseException
+          container: type
+          optional: true
+          name: exc_type
+        - type: BaseException
+          optional: true
+          name: exc_val
+        - type: TracebackType
+          optional: true
+          name: exc_tb
+        output:
+          type: None
+      - name: commit
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: any
+      - name: rollback
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: any
   infrastructure:
     implementations:
     - name: SqlAlchemyIssueRepository
@@ -875,18 +885,36 @@ contexts:
           name: issue
         output:
           type: IssueModel
-    - name: PostgresNotifyEventPublisher
-      implements: IssueEventPublisher
-      technology: postgres
-      description: PostgreSQL NOTIFY implementation of IssueEventPublisher
+    - name: SqlAlchemyUnitOfWork
+      implements: UnitOfWork
+      technology: sql
       attributes:
-      - type: Connection
-        name: connection
-  
+      - type: Any
+        custom_type_string: sessionmaker[Session]
+        name: session_factory
+      - type: string
+        name: event_bus_channel
+      - type: IssueRepository
+        container: callable
+        name: issue_repository_factory
+      - type: EventBus
+        container: callable
+        name: event_bus_factory
+      - type: Session
+        optional: true
+        name: session
+      - type: IssueRepository
+        optional: true
+        name: _issues
+      - type: EventBus
+        optional: true
+        name: _event_bus
   interfaces:
     mcp_tools:
-      - name: create_issue
-        use_case: CreateIssue
+    - name: create_issue
+      use_case: CreateIssue
+    - name: list_issues
+      use_case: ListIssues
 - name: Planning
   domain:
     aggregates:
@@ -1807,7 +1835,7 @@ contexts:
         name: uow
     ports:
     - name: UnitOfWork
-      kind: repository
+      kind: adapter
       operations:
       - name: tasks
         inputs:
@@ -1856,6 +1884,27 @@ contexts:
     - name: SqlAlchemyUnitOfWork
       implements: UnitOfWork
       technology: sql
+      attributes:
+      - type: Any
+        custom_type_string: sessionmaker[Session]
+        name: session_factory
+      - type: string
+        name: event_bus_channel
+      - type: TaskRepository
+        container: callable
+        name: task_repository_factory
+      - type: EventBus
+        container: callable
+        name: event_bus_factory
+      - type: Session
+        optional: true
+        name: session
+      - type: TaskRepository
+        optional: true
+        name: _tasks
+      - type: EventBus
+        optional: true
+        name: _event_bus
     - name: SqlAlchemyTaskRepository
       implements: TaskRepository
       technology: sql
