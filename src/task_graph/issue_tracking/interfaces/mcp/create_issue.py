@@ -15,4 +15,5 @@ def _create_issue(
 
 
 def create_issue(cmd: CreateIssueCommand) -> CreateIssueResult:
+    """Create a new issue with initial status NEW"""
     return _create_issue(cmd)

@@ -809,7 +809,7 @@ contexts:
         name: uow
     ports:
     - name: UnitOfWork
-      kind: adapter
+      kind: repository
       operations:
       - name: issues
         inputs:
@@ -915,6 +915,20 @@ contexts:
       use_case: CreateIssue
     - name: list_issues
       use_case: ListIssues
+    - name: add_comment
+      use_case: AddComment
+    - name: close_issue
+      use_case: CloseIssue
+    - name: get_issue_details
+      use_case: GetIssueDetails
+    - name: link_issue_to_task
+      use_case: LinkIssueToTask
+    - name: unlink_issue_from_task
+      use_case: UnlinkIssueFromTask
+    - name: update_issue_metadata
+      use_case: UpdateIssueMetadata
+    - name: update_issue_status
+      use_case: UpdateIssueStatus
 - name: Planning
   domain:
     aggregates:
@@ -1835,7 +1849,7 @@ contexts:
         name: uow
     ports:
     - name: UnitOfWork
-      kind: adapter
+      kind: repository
       operations:
       - name: tasks
         inputs:
@@ -1930,6 +1944,27 @@ contexts:
         output:
           type: TaskModel
   interfaces:
+    mcp_tools:
+      - name: create_task
+        use_case: CreateTask
+      - name: list_tasks
+        use_case: ListTasks
+      - name: claim_task
+        use_case: ClaimTask
+      - name: update_task_status
+        use_case: UpdateTaskStatus
+      - name: delete_task
+        use_case: DeleteTask
+      - name: get_task_details
+        use_case: GetTaskDetails
+      - name: modify_task_dependencies
+        use_case: ModifyTaskDependencies
+      - name: review_task
+        use_case: ReviewTask
+      - name: submit_task_result
+        use_case: SubmitTaskResult
+      - name: suggest_next_action
+        use_case: SuggestNextAction
     cli_commands:
     - name: list-tasks
       use_case: ListTasks
