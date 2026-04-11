@@ -7,6 +7,7 @@ from task_graph.issue_tracking.application.ports.unit_of_work import UnitOfWork
 
 class IssueSummaryDTO(BaseModel):
     id: str
+    project_id: str
     title: str
     type: IssueType
     severity: Severity
@@ -24,6 +25,7 @@ class ListIssuesQuery(BaseModel):
     type: IssueType | None = Field(default=None)
     severity: Severity | None = Field(default=None)
     labels: list[str] | None = Field(default=None)
+    project_id: str | None = Field(default=None)
     limit: int = Field(default=10, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
 
@@ -50,7 +52,8 @@ class ListIssues:
                     status=query.status,
                     issue_type=query.type,
                     severity=query.severity,
-                    labels=query.labels
+                    labels=query.labels,
+                    project_id=query.project_id
                 )
 
                 # Get total count
@@ -63,6 +66,7 @@ class ListIssues:
             issue_dtos = [
                 IssueSummaryDTO(
                     id=str(issue.id),
+                    project_id=issue.project_id,
                     title=issue.title.value,
                     type=issue.type,
                     severity=issue.severity,

@@ -32,6 +32,7 @@ class SubmitterDTO(BaseModel):
 
 class IssueDetailsDTO(BaseModel):
     id: str
+    project_id: str
     title: str
     description: str
     type: IssueType
@@ -75,6 +76,7 @@ class GetIssueDetails:
             # Convert to DTO
             issue_dto = IssueDetailsDTO(
                 id=str(issue.id),
+                project_id=issue.project_id,
                 title=issue.title.value,
                 description=issue.description.value,
                 type=issue.type,

@@ -77,6 +77,7 @@ class IssueFactory(ModelFactory[Issue]):
     __model__ = Issue
 
     # 定制化生成逻辑
+    project_id = Use(lambda: str(uuid4()))
     title = Use(IssueTitleFactory.build)
     description = Use(IssueDescriptionFactory.build)
     type = Use(lambda: fake.random_element(list(IssueType)))
@@ -92,6 +93,7 @@ class IssueFactory(ModelFactory[Issue]):
     @classmethod
     def create(
         cls,
+        project_id: str | None = None,
         title: str | None = None,
         description: str | None = None,
         issue_type: IssueType | None = None,
@@ -101,6 +103,7 @@ class IssueFactory(ModelFactory[Issue]):
     ) -> Issue:
         """Create a new Issue aggregate using the domain factory method"""
         return Issue.create(
+            project_id=project_id or str(uuid4()),
             title=title or IssueTitleFactory.build().value,
             description=description or IssueDescriptionFactory.build().value,
             issue_type=issue_type or fake.random_element(list(IssueType)),

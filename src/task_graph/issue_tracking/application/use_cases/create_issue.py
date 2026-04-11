@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class CreateIssueCommand(BaseModel):
+    project_id: str
     title: str
     description: str
     type: IssueType
@@ -40,6 +41,7 @@ class CreateIssue:
 
                 # Create issue aggregate (automatically adds IssueCreatedEvent)
                 issue = Issue.create(
+                    project_id=cmd.project_id,
                     title=cmd.title,
                     description=cmd.description,
                     issue_type=cmd.type,

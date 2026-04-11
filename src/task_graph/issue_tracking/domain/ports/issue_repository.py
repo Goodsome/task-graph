@@ -22,6 +22,7 @@ class IssueRepository(ABC):
         issue_type: IssueType | None,
         severity: Severity | None = None,
         labels: list[str] | None = None,
+        project_id: str | None = None,
     ) -> list[Issue]: ...
 
     @abstractmethod

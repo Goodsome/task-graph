@@ -44,6 +44,7 @@ class SqlAlchemyIssueRepository(IssueRepository):
         issue_type: IssueType | None = None,
         severity: Severity | None = None,
         labels: list[str] | None = None,
+        project_id: str | None = None,
     ) -> list[Issue]:
         """Find all issues with optional filters"""
         stmt = select(IssueModel).options(
@@ -59,6 +60,8 @@ class SqlAlchemyIssueRepository(IssueRepository):
             stmt = stmt.where(IssueModel.severity == severity)
         if labels is not None and len(labels) > 0:
             stmt = stmt.where(IssueModel.labels.contains(labels))
+        if project_id is not None:
+            stmt = stmt.where(IssueModel.project_id == project_id)
 
         stmt = stmt.limit(limit).offset(offset)
         models = self.session.execute(stmt).unique().scalars().all()
@@ -108,6 +111,7 @@ class SqlAlchemyIssueRepository(IssueRepository):
 
         data = {
             "id": model.id,
+            "project_id": model.project_id,
             "title": model.title,
             "description": model.description,
             "type": model.type,
@@ -129,6 +133,7 @@ class SqlAlchemyIssueRepository(IssueRepository):
         if not model:
             model = IssueModel(id=issue.id.value)
 
+        model.project_id = issue.project_id
         model.title = issue.title.value
         model.description = issue.description.value
         model.type = issue.type

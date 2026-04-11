@@ -25,6 +25,7 @@ class Issue(AggregateRoot):
     """Issue aggregate root managing the complete issue lifecycle"""
 
     id: IssueId
+    project_id: str
     title: IssueTitle
     description: IssueDescription
     type: IssueType
@@ -40,6 +41,7 @@ class Issue(AggregateRoot):
     @classmethod
     def create(
         cls: type[Self],
+        project_id: str,
         title: str,
         description: str,
         issue_type: IssueType,
@@ -51,6 +53,7 @@ class Issue(AggregateRoot):
         issue_id = IssueId.create()
         issue = cls(
             id=issue_id,
+            project_id=project_id,
             title=IssueTitle.create(title),
             description=IssueDescription.create(description),
             type=issue_type,
@@ -66,6 +69,7 @@ class Issue(AggregateRoot):
         # Add created event
         issue.add_domain_event(IssueCreatedEvent(
             issue_id=str(issue_id),
+            project_id=project_id,
             title=title,
             type=issue_type,
             severity=severity,
