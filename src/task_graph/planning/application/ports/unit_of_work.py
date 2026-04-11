@@ -1,6 +1,5 @@
-import uuid
+from types import TracebackType
 import logging
-from typing import Optional
 
 from abc import ABC, abstractmethod
 from task_graph.planning.domain.ports.task_repository import TaskRepository
@@ -25,7 +24,12 @@ class UnitOfWork(ABC):
         pass
 
     @abstractmethod
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ):
         pass
 
     @abstractmethod
