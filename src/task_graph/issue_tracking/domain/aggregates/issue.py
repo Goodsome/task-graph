@@ -13,6 +13,12 @@ from task_graph.issue_tracking.domain.value_objects.issue_title import IssueTitl
 from task_graph.issue_tracking.domain.value_objects.task_link import TaskLink
 from task_graph.issue_tracking.domain.value_objects.label import Label
 from task_graph.shared.domain.core.aggregate_root import AggregateRoot
+from task_graph.issue_tracking.domain.events import (
+    IssueCreatedEvent,
+    IssueStatusChangedEvent,
+    IssueClosedEvent,
+    IssueCommentAddedEvent,
+)
 
 
 class Issue(AggregateRoot):
@@ -42,8 +48,9 @@ class Issue(AggregateRoot):
     ) -> Self:
         """Create a new Issue aggregate"""
         now = datetime.now(timezone.utc)
-        return cls(
-            id=IssueId.create(),
+        issue_id = IssueId.create()
+        issue = cls(
+            id=issue_id,
             title=IssueTitle.create(title),
             description=IssueDescription.create(description),
             type=issue_type,
@@ -56,16 +63,32 @@ class Issue(AggregateRoot):
             created_at=now,
             updated_at=now,
         )
+        # Add created event
+        issue.add_domain_event(IssueCreatedEvent(
+            issue_id=str(issue_id),
+            title=title,
+            type=issue_type,
+            severity=severity,
+            submitter_name=submitter.name,
+        ))
+        return issue
 
     def change_status(self: Self, new_status: IssueStatus, changed_by: str) -> None:
         """Change issue status with audit trail"""
         if self.status == new_status:
             return
+        old_status = self.status
         # Add status change comment
         self.add_comment(f"Status changed from {self.status.value} to {new_status.value}", author=changed_by)
-        # TODO: Emit IssueStatusChanged domain event
         self.status = new_status
         self.updated_at = datetime.now(timezone.utc)
+        # Add status changed event
+        self.add_domain_event(IssueStatusChangedEvent(
+            issue_id=str(self.id),
+            old_status=old_status,
+            new_status=new_status,
+            changed_by=changed_by,
+        ))
 
     def close(self: Self, resolution: str | None = None) -> None:
         """Close the issue with optional resolution note"""
@@ -76,12 +99,24 @@ class Issue(AggregateRoot):
             # Add resolution as a system comment
             self.add_comment(f"Resolution: {resolution}", author="system")
         self.updated_at = datetime.now(timezone.utc)
+        # Add closed event
+        self.add_domain_event(IssueClosedEvent(
+            issue_id=str(self.id),
+            resolution=resolution,
+        ))
 
     def add_comment(self: Self, content: str, author: str) -> Comment:
         """Add a comment to the issue"""
         comment = Comment.create(content=content, author=author)
         self.comments.append(comment)
         self.updated_at = datetime.now(timezone.utc)
+        # Add comment added event
+        self.add_domain_event(IssueCommentAddedEvent(
+            issue_id=str(self.id),
+            comment_id=str(comment.id),
+            author=author,
+            content=content,
+        ))
         return comment
 
     def add_label(self: Self, label: Label) -> None:

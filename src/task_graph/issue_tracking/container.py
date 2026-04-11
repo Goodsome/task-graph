@@ -21,11 +21,12 @@ from task_graph.issue_tracking.application.use_cases.get_issue_details import (
 from task_graph.issue_tracking.application.use_cases.unlink_issue_from_task import (
     UnlinkIssueFromTask,
 )
-from dependency_injector.providers import Factory
+from dependency_injector.providers import Factory, Callable
 from task_graph.issue_tracking.application.use_cases.create_issue import CreateIssue
 from dependency_injector.containers import DeclarativeContainer
-from task_graph.issue_tracking.infrastructure.adapters.postgres_notify_event_publisher import (
-    PostgresNotifyEventPublisher,
+from task_graph.shared.infrastructure.event_bus import PgNotifyEventBus
+from task_graph.issue_tracking.infrastructure.repositories.sql_alchemy_unit_of_work import (
+    SqlAlchemyUnitOfWork,
 )
 
 from task_graph.shared.infrastructure.database import Database
@@ -37,47 +38,61 @@ class Container(DeclarativeContainer):
     
     sql_alchemy_issue_repository = Factory(
         SqlAlchemyIssueRepository,
-        session=database.provided.session_factory,
+        session=Factory(database.provided.session_factory),
     )
-    postgres_notify_event_publisher = Factory(
-        PostgresNotifyEventPublisher,
-        session=database.provided.session_factory,
+    pg_notify_event_bus = Factory(
+        PgNotifyEventBus,
+        session=Factory(database.provided.session_factory),
         channel="issue_events",
+    )
+
+    # Unit of Work
+    issue_repository_factory = Callable(
+        lambda session: SqlAlchemyIssueRepository(session=session)
+    )
+    event_bus_factory = Callable(
+        lambda session, channel: PgNotifyEventBus(session=session, channel=channel)
+    )
+    unit_of_work = Factory(
+        SqlAlchemyUnitOfWork,
+        session_factory=database.provided.session_factory,
+        event_bus_channel="issue_events",
+        issue_repository_factory=issue_repository_factory,
+        event_bus_factory=event_bus_factory,
     )
     create_issue = Factory(
         CreateIssue,
-        issue_repository=sql_alchemy_issue_repository,
-        event_publisher=postgres_notify_event_publisher,
+        uow=unit_of_work,
     )
     update_issue_status = Factory(
         UpdateIssueStatus,
         issue_repository=sql_alchemy_issue_repository,
-        event_publisher=postgres_notify_event_publisher,
+        event_publisher=pg_notify_event_bus,
     )
     update_issue_metadata = Factory(
         UpdateIssueMetadata,
         issue_repository=sql_alchemy_issue_repository,
-        event_publisher=postgres_notify_event_publisher,
+        event_publisher=pg_notify_event_bus,
     )
     add_comment = Factory(
         AddComment,
         issue_repository=sql_alchemy_issue_repository,
-        event_publisher=postgres_notify_event_publisher,
+        event_publisher=pg_notify_event_bus,
     )
     link_issue_to_task = Factory(
         LinkIssueToTask,
         issue_repository=sql_alchemy_issue_repository,
-        event_publisher=postgres_notify_event_publisher,
+        event_publisher=pg_notify_event_bus,
     )
     unlink_issue_from_task = Factory(
         UnlinkIssueFromTask,
         issue_repository=sql_alchemy_issue_repository,
-        event_publisher=postgres_notify_event_publisher,
+        event_publisher=pg_notify_event_bus,
     )
     close_issue = Factory(
         CloseIssue,
         issue_repository=sql_alchemy_issue_repository,
-        event_publisher=postgres_notify_event_publisher,
+        event_publisher=pg_notify_event_bus,
     )
     get_issue_details = Factory(
         GetIssueDetails, issue_repository=sql_alchemy_issue_repository
