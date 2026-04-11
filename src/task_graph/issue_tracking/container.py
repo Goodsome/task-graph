@@ -35,6 +35,7 @@ class Container(DeclarativeContainer):
     
     config = Configuration()
     database = Dependency(instance_of=Database)
+    event_bus_factory = Dependency()
     
     sql_alchemy_issue_repository = Factory(
         SqlAlchemyIssueRepository,
@@ -47,18 +48,16 @@ class Container(DeclarativeContainer):
     )
 
     # Unit of Work
-    issue_repository_factory = Callable(
-        lambda session: SqlAlchemyIssueRepository(session=session)
+    issue_repository_factory = Factory(
+        SqlAlchemyIssueRepository
     )
-    event_bus_factory = Callable(
-        lambda session, channel: PgNotifyEventBus(session=session, channel=channel)
-    )
+    
     unit_of_work = Factory(
         SqlAlchemyUnitOfWork,
         session_factory=database.provided.session_factory,
         event_bus_channel="issue_events",
-        issue_repository_factory=issue_repository_factory,
-        event_bus_factory=event_bus_factory,
+        issue_repository_factory=issue_repository_factory.provider,
+        event_bus_factory=event_bus_factory.provider,
     )
     create_issue = Factory(
         CreateIssue,

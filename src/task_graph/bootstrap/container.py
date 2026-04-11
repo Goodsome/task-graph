@@ -43,6 +43,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         IssueTrackingContainer,
         config=config.issue_tracking,
         database=shared.database,
+        event_bus_factory=shared.event_bus_factory,
     )
 
 
