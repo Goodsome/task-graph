@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from dataclasses import dataclass
 from datetime import datetime
-from task_graph.issue_tracking.domain.ports.issue_repository import IssueRepository
+from task_graph.issue_tracking.application.ports.unit_of_work import UnitOfWork
 from task_graph.issue_tracking.domain.value_objects.issue_id import IssueId
 from task_graph.issue_tracking.domain.enums import IssueStatus, IssueType, Severity
 
@@ -55,15 +55,16 @@ class GetIssueDetailsResult(BaseModel):
 class GetIssueDetails:
     """Get full issue details including comments and labels"""
 
-    issue_repository: IssueRepository
+    uow: UnitOfWork
 
     def execute(self, query: GetIssueDetailsQuery) -> GetIssueDetailsResult:
         try:
-            # Parse issue ID
-            issue_id = IssueId.reconstitute(query.issue_id)
+            with self.uow:
+                # Parse issue ID
+                issue_id = IssueId.reconstitute(query.issue_id)
 
-            # Find issue
-            issue = self.issue_repository.find_by_id(issue_id)
+                # Find issue
+                issue = self.uow.issues.find_by_id(issue_id)
             if not issue:
                 return GetIssueDetailsResult(
                     success=False,

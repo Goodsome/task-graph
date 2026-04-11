@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from task_graph.issue_tracking.domain.enums import IssueStatus, IssueType, Severity
 from dataclasses import dataclass
-from task_graph.issue_tracking.domain.ports.issue_repository import IssueRepository
+from task_graph.issue_tracking.application.ports.unit_of_work import UnitOfWork
 
 
 class IssueSummaryDTO(BaseModel):
@@ -38,25 +38,26 @@ class ListIssuesResult(BaseModel):
 class ListIssues:
     """Paginated list of issues with filtering"""
 
-    issue_repository: IssueRepository
+    uow: UnitOfWork
 
     def execute(self, query: ListIssuesQuery) -> ListIssuesResult:
         try:
-            # Get issues from repository
-            issues = self.issue_repository.find_all(
-                limit=query.limit,
-                offset=query.offset,
-                status=query.status,
-                issue_type=query.type,
-                severity=query.severity,
-                labels=query.labels
-            )
+            with self.uow:
+                # Get issues from repository
+                issues = self.uow.issues.find_all(
+                    limit=query.limit,
+                    offset=query.offset,
+                    status=query.status,
+                    issue_type=query.type,
+                    severity=query.severity,
+                    labels=query.labels
+                )
 
-            # Get total count
-            total_count = self.issue_repository.count(
-                status=query.status,
-                issue_type=query.type
-            )
+                # Get total count
+                total_count = self.uow.issues.count(
+                    status=query.status,
+                    issue_type=query.type
+                )
 
             # Convert to DTOs
             issue_dtos = [

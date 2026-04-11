@@ -1,4 +1,10 @@
-from dependency_injector.providers import Dependency, Configuration
+from typing import Callable, cast
+from sqlalchemy.orm import Session
+from dependency_injector.providers import Dependency, Configuration, Singleton
+from task_graph.shared.ports.event_bus import EventBus
+from task_graph.issue_tracking.domain.services.issue_status_transition_service import (
+    IssueStatusTransitionService,
+)
 
 from task_graph.issue_tracking.infrastructure.repositories.sql_alchemy_issue_repository import (
     SqlAlchemyIssueRepository,
@@ -21,7 +27,7 @@ from task_graph.issue_tracking.application.use_cases.get_issue_details import (
 from task_graph.issue_tracking.application.use_cases.unlink_issue_from_task import (
     UnlinkIssueFromTask,
 )
-from dependency_injector.providers import Factory, Callable
+from dependency_injector.providers import Factory
 from task_graph.issue_tracking.application.use_cases.create_issue import CreateIssue
 from dependency_injector.containers import DeclarativeContainer
 from task_graph.shared.infrastructure.event_bus import PgNotifyEventBus
@@ -31,69 +37,71 @@ from task_graph.issue_tracking.infrastructure.repositories.sql_alchemy_unit_of_w
 
 from task_graph.shared.infrastructure.database import Database
 
+
 class Container(DeclarativeContainer):
-    
-    config = Configuration()
-    database = Dependency(instance_of=Database)
-    event_bus_factory = Dependency()
-    
-    sql_alchemy_issue_repository = Factory(
+    config: Configuration = Configuration()
+    database: Dependency[Database] = Dependency(instance_of=Database)
+    event_bus_factory: Dependency[EventBus] = Dependency(
+        instance_of=EventBus
+    )
+
+    sql_alchemy_issue_repository: Factory[SqlAlchemyIssueRepository] = Factory(
         SqlAlchemyIssueRepository,
         session=Factory(database.provided.session_factory),
     )
-    pg_notify_event_bus = Factory(
+    pg_notify_event_bus: Factory[PgNotifyEventBus] = Factory(
         PgNotifyEventBus,
         session=Factory(database.provided.session_factory),
         channel="issue_events",
     )
 
     # Unit of Work
-    issue_repository_factory = Factory(
+    issue_repository_factory: Factory[SqlAlchemyIssueRepository] = Factory(
         SqlAlchemyIssueRepository
     )
-    
-    unit_of_work = Factory(
+
+    unit_of_work: Factory[SqlAlchemyUnitOfWork] = Factory(
         SqlAlchemyUnitOfWork,
         session_factory=database.provided.session_factory,
         event_bus_channel="issue_events",
         issue_repository_factory=issue_repository_factory.provider,
         event_bus_factory=event_bus_factory.provider,
     )
-    create_issue = Factory(
+    create_issue: Factory[CreateIssue] = Factory(
         CreateIssue,
         uow=unit_of_work,
     )
-    update_issue_status = Factory(
+    # Status transition service
+    issue_status_transition_service: Singleton[IssueStatusTransitionService] = Singleton(
+        IssueStatusTransitionService
+    )
+
+    update_issue_status: Factory[UpdateIssueStatus] = Factory(
         UpdateIssueStatus,
-        issue_repository=sql_alchemy_issue_repository,
-        event_publisher=pg_notify_event_bus,
+        uow=unit_of_work,
+        status_transition_service=issue_status_transition_service,
     )
-    update_issue_metadata = Factory(
+    update_issue_metadata: Factory[UpdateIssueMetadata] = Factory(
         UpdateIssueMetadata,
-        issue_repository=sql_alchemy_issue_repository,
-        event_publisher=pg_notify_event_bus,
+        uow=unit_of_work,
     )
-    add_comment = Factory(
+    add_comment: Factory[AddComment] = Factory(
         AddComment,
-        issue_repository=sql_alchemy_issue_repository,
-        event_publisher=pg_notify_event_bus,
+        uow=unit_of_work,
     )
-    link_issue_to_task = Factory(
+    link_issue_to_task: Factory[LinkIssueToTask] = Factory(
         LinkIssueToTask,
-        issue_repository=sql_alchemy_issue_repository,
-        event_publisher=pg_notify_event_bus,
+        uow=unit_of_work,
     )
-    unlink_issue_from_task = Factory(
+    unlink_issue_from_task: Factory[UnlinkIssueFromTask] = Factory(
         UnlinkIssueFromTask,
-        issue_repository=sql_alchemy_issue_repository,
-        event_publisher=pg_notify_event_bus,
+        uow=unit_of_work,
     )
-    close_issue = Factory(
+    close_issue: Factory[CloseIssue] = Factory(
         CloseIssue,
-        issue_repository=sql_alchemy_issue_repository,
-        event_publisher=pg_notify_event_bus,
+        uow=unit_of_work,
     )
-    get_issue_details = Factory(
-        GetIssueDetails, issue_repository=sql_alchemy_issue_repository
+    get_issue_details: Factory[GetIssueDetails] = Factory(
+        GetIssueDetails, uow=unit_of_work
     )
-    list_issues = Factory(ListIssues, issue_repository=sql_alchemy_issue_repository)
+    list_issues: Factory[ListIssues] = Factory(ListIssues, uow=unit_of_work)
