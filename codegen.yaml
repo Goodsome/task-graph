@@ -1035,13 +1035,6 @@ contexts:
           name: scope_context
         output:
           type: Self
-      - name: to_summary_dict
-        description: Returns a simplified dictionary representation for listing.
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: dict
       - name: mark_ready
         description: "将任务标记为 READY（依赖已满足，可被领取）。\n\nRaises:\n    IllegalStateTransitionError:\
           \ 当前状态不是 PENDING 或 BLOCKED"
@@ -1691,8 +1684,7 @@ contexts:
       outputs:
       - type: boolean
         name: success
-      - type: any
-        container: map
+      - type: Task
         optional: true
         name: task
       - type: string
@@ -1961,6 +1953,12 @@ contexts:
           type: TaskModel
   interfaces:
     cli_commands:
+    - name: create-task
+      use_case: CreateTask
+    - name: delete-task
+      use_case: DeleteTask
+    - name: get-task
+      use_case: GetTaskDetails
     - name: list-tasks
       use_case: ListTasks
     mcp_tools:
