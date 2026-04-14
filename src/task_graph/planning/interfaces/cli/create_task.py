@@ -11,7 +11,12 @@ from task_graph.planning.application.use_cases.create_task import (
     CreateTask,
     CreateTaskResult,
 )
-from task_graph.planning.domain.enums import CompletionLogic, ScopeLevel
+from task_graph.planning.domain.enums import (
+    CompletionLogic,
+    ScopeLevel,
+    ArchitectureLayer,
+)
+from task_graph.planning.interfaces.cli.app import planning_app
 
 console = Console()
 
@@ -23,19 +28,15 @@ def _create_task(
     return use_case.execute(cmd)
 
 
+@planning_app.command(name="create-task")
 def create_task(
-    project_id: Annotated[str, typer.Option("--project", "-p", help="项目标识符")],
-    name: Annotated[str, typer.Option("--name", "-n", help="任务名称")],
-    description: Annotated[str, typer.Option("--desc", "-d", help="任务描述")],
+    project_id: Annotated[str, typer.Argument(help="项目标识符")],
+    name: Annotated[str, typer.Argument(help="任务名称")],
+    description: Annotated[str, typer.Argument(help="任务描述")],
     effort: Annotated[
-        int,
-        typer.Option(
-            "--effort", "-e", help="工作量估算 (斐波那契数列: 1, 2, 3, 5, 8, 13...)"
-        ),
+        int, typer.Argument(help="工作量估算 (斐波那契数列: 1, 2, 3, 5, 8, 13...)")
     ],
-    base_value: Annotated[
-        float, typer.Option("--value", "-v", help="业务价值评分 (1.0-10.0)")
-    ],
+    base_value: Annotated[float, typer.Argument(help="业务价值评分 (1.0-10.0)")],
     scope_level: Annotated[
         str,
         typer.Option(
@@ -54,6 +55,12 @@ def create_task(
         list[str] | None, typer.Option("--dep", help="前置任务ID (可多次指定)")
     ] = None,
     parent_id: Annotated[str | None, typer.Option("--parent", help="父任务ID")] = None,
+    bounded_context: Annotated[
+        str | None, typer.Option("--bounded-context", "-b", help="所属限界上下文")
+    ] = None,
+    architecture_layer: Annotated[
+        str | None, typer.Option("--architecture-layer", "-a", help="所属架构层")
+    ] = None,
 ) -> None:
     """
     创建一个新的规划任务。
@@ -72,6 +79,19 @@ def create_task(
         console.print("可选值: all, any")
         raise typer.Exit(1)
 
+    arch_layer = None
+    if architecture_layer:
+        try:
+            arch_layer = ArchitectureLayer(architecture_layer.lower())
+        except ValueError:
+            console.print(
+                f"[red]错误: 无效的 architecture_layer: {architecture_layer}[/red]"
+            )
+            console.print(
+                "可选值: domain, application, infrastructure, interfaces, cross_cutting, none"
+            )
+            raise typer.Exit(1)
+
     cmd = CreateTaskCommand(
         project_id=project_id,
         name=name,
@@ -82,6 +102,8 @@ def create_task(
         completion_logic=logic,
         dependencies=dependencies or [],
         parent_id=parent_id,
+        bounded_context=bounded_context,
+        architecture_layer=arch_layer,
     )
 
     result = _create_task(cmd)

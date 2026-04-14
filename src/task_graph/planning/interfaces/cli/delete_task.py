@@ -11,6 +11,7 @@ from task_graph.planning.application.use_cases.delete_task import (
     DeleteTask,
     DeleteTaskResult,
 )
+from task_graph.planning.interfaces.cli.app import planning_app
 
 console = Console()
 
@@ -22,6 +23,7 @@ def _delete_task(
     return use_case.execute(cmd)
 
 
+@planning_app.command(name="delete-task")
 def delete_task(
     task_id: Annotated[str, typer.Argument(..., help="要删除的任务ID")],
 ) -> None:

@@ -14,6 +14,8 @@ from task_graph.planning.application.use_cases.list_tasks import (
 from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
 from dependency_injector.wiring import Provide, inject
 
+from task_graph.planning.interfaces.cli.app import planning_app
+
 console = Console()
 
 
@@ -24,6 +26,7 @@ def _list_tasks(
     return use_case.execute(query)
 
 
+@planning_app.command(name="list-tasks")
 def list_tasks(
     page: Annotated[int, typer.Option("--page", "-p", help="页码")] = 1,
     page_size: Annotated[int, typer.Option("--size", "-s", help="每页数量")] = 10,

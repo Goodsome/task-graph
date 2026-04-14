@@ -13,6 +13,8 @@ from task_graph.planning.application.use_cases.get_task_details import (
     GetTaskDetailsResult,
 )
 
+from task_graph.planning.interfaces.cli.app import planning_app
+
 console = Console()
 
 
@@ -24,6 +26,7 @@ def _get_task(
     return use_case.execute(query)
 
 
+@planning_app.command(name="get-task")
 def get_task(
     task_id: Annotated[str, typer.Argument(..., help="任务ID")],
 ) -> None:
