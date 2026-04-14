@@ -7,7 +7,6 @@ from dependency_injector import containers, providers
 from task_graph.shared.container import Container as SharedContainer
 from task_graph.planning.container import Container as PlanningContainer
 from task_graph.issue_tracking.container import Container as IssueTrackingContainer
-# Add other context container imports here as they are created
 
 
 class ApplicationContainer(containers.DeclarativeContainer):

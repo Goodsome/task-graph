@@ -1,6 +1,6 @@
 import typer
 from task_graph.bootstrap import create_container
-from task_graph.planning.interfaces.cli import planning_app
+from task_graph.planning.interfaces.cli.app import planning_app
 
 _ = create_container()
 
