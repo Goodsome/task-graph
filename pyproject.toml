@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-task-graph = "task_graph.entrypoints.cli_main:app"
+task-graph = "task_graph.entrypoints.cli:main"
 task-graph-mcp = "task_graph.entrypoints.mcp:main"
 
 [build-system]

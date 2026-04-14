@@ -81,14 +81,8 @@ def setup_logging(
 # 预定义常用的日志配置
 def setup_mcp_logging() -> logging.Logger:
     """为MCP服务配置日志"""
-    return setup_logging(logger_name="task_graph.mcp", log_file="mcp.log")
+    return setup_logging(logger_name="task_graph", log_file="mcp.log")
 
-
-def setup_api_logging() -> logging.Logger:
-    """为API服务配置日志"""
-    return setup_logging(logger_name="task_graph.api", log_file="api.log")
-
-
-def setup_worker_logging() -> logging.Logger:
-    """为Worker服务配置日志"""
-    return setup_logging(logger_name="task_graph.worker", log_file="worker.log")
+def setup_cli_logging() -> logging.Logger:
+    """为CLI服务配置日志"""
+    return setup_logging(logger_name="task_graph", log_file="cli.log")
