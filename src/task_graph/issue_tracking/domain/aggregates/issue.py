@@ -109,7 +109,7 @@ class Issue(AggregateRoot):
             resolution=resolution,
         ))
 
-    def add_comment(self: Self, content: str, author: str) -> Comment:
+    def add_comment(self: Self, content: str, author: str) -> None:
         """Add a comment to the issue"""
         comment = Comment.create(content=content, author=author)
         self.comments.append(comment)
@@ -121,7 +121,6 @@ class Issue(AggregateRoot):
             author=author,
             content=content,
         ))
-        return comment
 
     def add_label(self: Self, label: Label) -> None:
         """Add a label to the issue (duplicates ignored)"""

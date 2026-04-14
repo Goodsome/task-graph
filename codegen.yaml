@@ -10,6 +10,8 @@ contexts:
       attributes:
       - type: IssueId
         name: id
+      - type: string
+        name: project_id
       - type: IssueTitle
         name: title
       - type: IssueDescription
@@ -42,6 +44,8 @@ contexts:
         - type: Self
           container: type
           name: cls
+        - type: string
+          name: project_id
         - type: string
           name: title
         - type: string
@@ -85,7 +89,7 @@ contexts:
         - type: string
           name: author
         output:
-          type: Comment
+          type: None
       - name: add_label
         description: Add a label to the issue (duplicates ignored)
         inputs:
@@ -528,6 +532,9 @@ contexts:
           container: list
           optional: true
           name: labels
+        - type: string
+          optional: true
+          name: project_id
         output:
           type: Issue
           container: list
@@ -684,6 +691,8 @@ contexts:
       kind: command
       inputs:
       - type: string
+        name: project_id
+      - type: string
         name: title
       - type: string
         name: description
@@ -750,6 +759,9 @@ contexts:
         container: list
         optional: true
         name: labels
+      - type: string
+        optional: true
+        name: project_id
       - type: integer
         name: limit
         default: 10
@@ -809,7 +821,7 @@ contexts:
         name: uow
     ports:
     - name: UnitOfWork
-      kind: repository
+      kind: adapter
       operations:
       - name: issues
         inputs:
@@ -911,24 +923,24 @@ contexts:
         name: _event_bus
   interfaces:
     mcp_tools:
-    - name: create_issue
-      use_case: CreateIssue
-    - name: list_issues
-      use_case: ListIssues
-    - name: add_comment
-      use_case: AddComment
-    - name: close_issue
-      use_case: CloseIssue
-    - name: get_issue_details
-      use_case: GetIssueDetails
     - name: link_issue_to_task
       use_case: LinkIssueToTask
-    - name: unlink_issue_from_task
-      use_case: UnlinkIssueFromTask
-    - name: update_issue_metadata
-      use_case: UpdateIssueMetadata
+    - name: close_issue
+      use_case: CloseIssue
     - name: update_issue_status
       use_case: UpdateIssueStatus
+    - name: get_issue_details
+      use_case: GetIssueDetails
+    - name: create_issue
+      use_case: CreateIssue
+    - name: update_issue_metadata
+      use_case: UpdateIssueMetadata
+    - name: list_issues
+      use_case: ListIssues
+    - name: unlink_issue_from_task
+      use_case: UnlinkIssueFromTask
+    - name: add_comment
+      use_case: AddComment
 - name: Planning
   domain:
     aggregates:
@@ -1849,7 +1861,7 @@ contexts:
         name: uow
     ports:
     - name: UnitOfWork
-      kind: repository
+      kind: adapter
       operations:
       - name: tasks
         inputs:
@@ -1873,11 +1885,15 @@ contexts:
         inputs:
         - type: Self
           name: self
-        - type: any
+        - type: BaseException
+          container: type
+          optional: true
           name: exc_type
-        - type: any
+        - type: BaseException
+          optional: true
           name: exc_val
-        - type: any
+        - type: TracebackType
+          optional: true
           name: exc_tb
         output:
           type: any
@@ -1944,29 +1960,29 @@ contexts:
         output:
           type: TaskModel
   interfaces:
-    mcp_tools:
-      - name: create_task
-        use_case: CreateTask
-      - name: list_tasks
-        use_case: ListTasks
-      - name: claim_task
-        use_case: ClaimTask
-      - name: update_task_status
-        use_case: UpdateTaskStatus
-      - name: delete_task
-        use_case: DeleteTask
-      - name: get_task_details
-        use_case: GetTaskDetails
-      - name: modify_task_dependencies
-        use_case: ModifyTaskDependencies
-      - name: review_task
-        use_case: ReviewTask
-      - name: submit_task_result
-        use_case: SubmitTaskResult
-      - name: suggest_next_action
-        use_case: SuggestNextAction
     cli_commands:
     - name: list-tasks
+      use_case: ListTasks
+    mcp_tools:
+    - name: submit_task_result
+      use_case: SubmitTaskResult
+    - name: create_task
+      use_case: CreateTask
+    - name: update_task_status
+      use_case: UpdateTaskStatus
+    - name: suggest_next_action
+      use_case: SuggestNextAction
+    - name: get_task_details
+      use_case: GetTaskDetails
+    - name: review_task
+      use_case: ReviewTask
+    - name: delete_task
+      use_case: DeleteTask
+    - name: modify_task_dependencies
+      use_case: ModifyTaskDependencies
+    - name: claim_task
+      use_case: ClaimTask
+    - name: list_tasks
       use_case: ListTasks
 - name: Shared
   domain:
