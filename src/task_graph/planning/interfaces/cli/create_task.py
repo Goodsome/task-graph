@@ -1,46 +1,60 @@
 """创建一个新的规划任务"""
-from typing import Optional
+
+from typing import Annotated
 
 import typer
 from rich.console import Console
-from rich.table import Table
+from dependency_injector.wiring import Provide, inject
 
-from task_graph.planning.container import Container
-from task_graph.planning.application.use_cases.create_task import CreateTaskCommand
+from task_graph.planning.application.use_cases.create_task import (
+    CreateTaskCommand,
+    CreateTask,
+    CreateTaskResult,
+)
 from task_graph.planning.domain.enums import CompletionLogic, ScopeLevel
 
-container = Container()
 console = Console()
 
 
+@inject
+def _create_task(
+    cmd: CreateTaskCommand, use_case: CreateTask = Provide["planning.create_task"]
+) -> CreateTaskResult:
+    return use_case.execute(cmd)
+
+
 def create_task(
-    project_id: str = typer.Option(..., "--project", "-p", help="项目标识符"),
-    name: str = typer.Option(..., "--name", "-n", help="任务名称"),
-    description: str = typer.Option(..., "--desc", "-d", help="任务描述"),
-    effort: int = typer.Option(..., "--effort", "-e", help="工作量估算 (斐波那契数列: 1, 2, 3, 5, 8, 13...)"),
-    base_value: float = typer.Option(..., "--value", "-v", help="业务价值评分 (1.0-10.0)"),
-    scope_level: str = typer.Option(
-        "atomic",
-        "--level",
-        "-l",
-        help="任务范围层级: project, context, architectural, atomic",
-    ),
-    completion_logic: str = typer.Option(
-        "all",
-        "--logic",
-        help="依赖完成逻辑: all (所有依赖完成), any (任一依赖完成)",
-    ),
-    dependencies: Optional[list[str]] = typer.Option(
-        None,
-        "--dep",
-        help="前置任务ID (可多次指定)",
-    ),
-    parent_id: Optional[str] = typer.Option(
-        None,
-        "--parent",
-        help="父任务ID",
-    ),
-):
+    project_id: Annotated[str, typer.Option("--project", "-p", help="项目标识符")],
+    name: Annotated[str, typer.Option("--name", "-n", help="任务名称")],
+    description: Annotated[str, typer.Option("--desc", "-d", help="任务描述")],
+    effort: Annotated[
+        int,
+        typer.Option(
+            "--effort", "-e", help="工作量估算 (斐波那契数列: 1, 2, 3, 5, 8, 13...)"
+        ),
+    ],
+    base_value: Annotated[
+        float, typer.Option("--value", "-v", help="业务价值评分 (1.0-10.0)")
+    ],
+    scope_level: Annotated[
+        str,
+        typer.Option(
+            "--level",
+            "-l",
+            help="任务范围层级: project, context, architectural, atomic",
+        ),
+    ] = "atomic",
+    completion_logic: Annotated[
+        str,
+        typer.Option(
+            "--logic", help="依赖完成逻辑: all (所有依赖完成), any (任一依赖完成)"
+        ),
+    ] = "all",
+    dependencies: Annotated[
+        list[str] | None, typer.Option("--dep", help="前置任务ID (可多次指定)")
+    ] = None,
+    parent_id: Annotated[str | None, typer.Option("--parent", help="父任务ID")] = None,
+) -> None:
     """
     创建一个新的规划任务。
     """
@@ -70,11 +84,10 @@ def create_task(
         parent_id=parent_id,
     )
 
-    use_case = container.create_task()
-    result = use_case.execute(cmd)
+    result = _create_task(cmd)
 
     if result.success:
-        console.print(f"[green]✓ 任务创建成功[/green]")
+        console.print("[green]✓ 任务创建成功[/green]")
         console.print(f"  Task ID: {result.task_id}")
     else:
         console.print(f"[red]✗ 任务创建失败: {result.error}[/red]")

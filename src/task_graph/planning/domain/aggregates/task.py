@@ -9,7 +9,7 @@ from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.value_score import ValueScore
 from task_graph.planning.domain.value_objects.scope_context import ScopeContext
 from task_graph.shared.domain.core.aggregate_root import AggregateRoot
-from typing import Any, Self, Union
+from typing import Any, Self
 from task_graph.planning.domain.value_objects.recurrence_policy import RecurrencePolicy
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
@@ -97,23 +97,6 @@ class Task(AggregateRoot):
             scope_context=scope_context,
             parent_id=parent_id,
         )
-
-    def to_summary_dict(self: Self) -> dict:
-        """Returns a simplified dictionary representation for listing."""
-        return {
-            "id": str(self.id),
-            "project_id": self.project_id,
-            "name": self.name,
-            "status": self.status.value,
-            "scope_level": self.scope_level.value,
-            "scope_context": {
-                "bounded_context": self.scope_context.bounded_context,
-                "architecture_layer": self.scope_context.architecture_layer.value if self.scope_context and self.scope_context.architecture_layer else None,
-            } if self.scope_context else None,
-            "parent_id": str(self.parent_id.value) if self.parent_id else None,
-            "effort": self.effort.value,
-            "base_value": self.base_value.value,
-        }
 
     def mark_ready(self: Self) -> None:
         """将任务标记为 READY（依赖已满足，可被领取）。

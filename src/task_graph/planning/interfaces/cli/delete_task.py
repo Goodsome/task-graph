@@ -1,27 +1,38 @@
 """删除指定的任务"""
+
+from typing import Annotated
+
 import typer
 from rich.console import Console
+from dependency_injector.wiring import Provide, inject
 
-from task_graph.planning.container import Container
-from task_graph.planning.application.use_cases.delete_task import DeleteTaskCommand
+from task_graph.planning.application.use_cases.delete_task import (
+    DeleteTaskCommand,
+    DeleteTask,
+    DeleteTaskResult,
+)
 
-container = Container()
 console = Console()
 
 
+@inject
+def _delete_task(
+    cmd: DeleteTaskCommand, use_case: DeleteTask = Provide["planning.delete_task"]
+) -> DeleteTaskResult:
+    return use_case.execute(cmd)
+
+
 def delete_task(
-    task_id: str = typer.Argument(..., help="要删除的任务ID"),
-):
+    task_id: Annotated[str, typer.Argument(..., help="要删除的任务ID")],
+) -> None:
     """
     删除指定的任务。
     """
     cmd = DeleteTaskCommand(task_id=task_id)
-
-    use_case = container.delete_task()
-    result = use_case.execute(cmd)
+    result = _delete_task(cmd)
 
     if result.success:
-        console.print(f"[green]✓ 任务已删除[/green]")
+        console.print("[green]✓ 任务已删除[/green]")
     else:
         console.print(f"[red]✗ 删除失败: {result.error}[/red]")
         raise typer.Exit(1)
