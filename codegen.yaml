@@ -1844,7 +1844,7 @@ contexts:
         name: search
         default: ''
       outputs:
-      - type: dict
+      - type: SummaryTask
         container: list
         name: tasks
       - type: integer
