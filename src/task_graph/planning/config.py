@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     # Event Bus Configuration
     event_bus_channel: str = Field(
-        default="planning_events",
+        default="domain_events",
         description="PostgreSQL NOTIFY channel for planning domain events"
     )
 
