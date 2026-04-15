@@ -82,6 +82,7 @@ def list_tasks(
         title=f"任务列表 (第 {result.current_page}/{result.total_pages} 页, 共 {result.total_count} 条)"
     )
     table.add_column("ID", style="cyan", no_wrap=True)
+    table.add_column("项目ID", style="cyan", no_wrap=True)
     table.add_column("名称", style="green")
     table.add_column("状态", style="yellow")
     table.add_column("层级", style="blue")
@@ -92,6 +93,7 @@ def list_tasks(
     for task in result.tasks:
         table.add_row(
             task.id,
+            task.project_id,
             task.name,
             task.status,
             task.scope_level,
