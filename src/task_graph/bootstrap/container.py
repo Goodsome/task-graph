@@ -15,7 +15,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     # Wiring configuration - add packages where dependencies need to be injected
     wiring_config = containers.WiringConfiguration(
         packages=[
-            "task_graph.planning.interfaces.cli",
+            "task_graph.planning.interfaces",
             "task_graph.issue_tracking.interfaces",
         ]
     )
