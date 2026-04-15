@@ -45,8 +45,8 @@ class ListIssues:
     def execute(self, query: ListIssuesQuery) -> ListIssuesResult:
         try:
             with self.uow:
-                # Get issues from repository
-                issues = self.uow.issues.find_all(
+                # Get paginated issues and total count with the same filters
+                issues, total_count = self.uow.issues.find_paged(
                     limit=query.limit,
                     offset=query.offset,
                     status=query.status,
@@ -54,12 +54,6 @@ class ListIssues:
                     severity=query.severity,
                     labels=query.labels,
                     project_id=query.project_id
-                )
-
-                # Get total count
-                total_count = self.uow.issues.count(
-                    status=query.status,
-                    issue_type=query.type
                 )
 
             # Convert to DTOs

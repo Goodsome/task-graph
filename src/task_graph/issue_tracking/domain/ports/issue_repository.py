@@ -35,3 +35,20 @@ class IssueRepository(ABC):
     def count(
         self, status: IssueStatus | None = None, issue_type: IssueType | None = None
     ) -> int: ...
+
+    @abstractmethod
+    def find_paged(
+        self,
+        limit: int,
+        offset: int,
+        status: IssueStatus | None,
+        issue_type: IssueType | None,
+        severity: Severity | None = None,
+        labels: list[str] | None = None,
+        project_id: str | None = None,
+    ) -> tuple[list[Issue], int]:
+        """
+        Find paginated issues with filtering and return both the list and total count.
+        This ensures consistency between the returned list and count by using the same filters.
+        """
+        ...

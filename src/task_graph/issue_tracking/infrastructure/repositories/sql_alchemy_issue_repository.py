@@ -93,6 +93,9 @@ class SqlAlchemyIssueRepository(IssueRepository):
         self: Self,
         status: IssueStatus | None = None,
         issue_type: IssueType | None = None,
+        severity: Severity | None = None,
+        labels: list[str] | None = None,
+        project_id: str | None = None,
     ) -> int:
         """Count issues with optional filters"""
         stmt = select(func.count(IssueModel.id))
@@ -101,8 +104,50 @@ class SqlAlchemyIssueRepository(IssueRepository):
             stmt = stmt.where(IssueModel.status == status)
         if issue_type is not None:
             stmt = stmt.where(IssueModel.type == issue_type)
+        if severity is not None:
+            stmt = stmt.where(IssueModel.severity == severity)
+        if labels is not None and len(labels) > 0:
+            stmt = stmt.where(IssueModel.labels.contains(labels))
+        if project_id is not None:
+            stmt = stmt.where(IssueModel.project_id == project_id)
 
         return cast(int, self.session.scalar(stmt))
+
+    def find_paged(
+        self: Self,
+        limit: int,
+        offset: int,
+        status: IssueStatus | None = None,
+        issue_type: IssueType | None = None,
+        severity: Severity | None = None,
+        labels: list[str] | None = None,
+        project_id: str | None = None,
+    ) -> tuple[list[Issue], int]:
+        """
+        Find paginated issues with filtering and return both the list and total count.
+        This ensures consistency between the returned list and count by using the same filters.
+        """
+        # First get the total count with all filters
+        total_count = self.count(
+            status=status,
+            issue_type=issue_type,
+            severity=severity,
+            labels=labels,
+            project_id=project_id
+        )
+
+        # Then get the paginated list
+        issues = self.find_all(
+            limit=limit,
+            offset=offset,
+            status=status,
+            issue_type=issue_type,
+            severity=severity,
+            labels=labels,
+            project_id=project_id
+        )
+
+        return issues, total_count
 
     def _to_domain(self: Self, model: IssueModel) -> Issue:
         """Convert ORM model to domain aggregate"""
