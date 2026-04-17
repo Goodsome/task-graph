@@ -14,6 +14,7 @@ from task_graph.planning.domain.value_objects.recurrence_policy import Recurrenc
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
 from task_graph.planning.domain.events import (
+    BaseTaskEvent,
     TaskBlockedEvent,
     TaskChangesRequestedEvent,
     TaskCompletedEvent,
@@ -110,13 +111,7 @@ class Task(AggregateRoot):
             )
         self.status = TaskStatus.READY
         self.add_domain_event(
-            TaskReadyEvent(
-                task_id=str(self.id),
-                project_id=self.project_id,
-                scope_level=self.scope_level,
-                bounded_context=self.scope_context.bounded_context if self.scope_context else None,
-                architecture_layer=self.scope_context.architecture_layer if self.scope_context else None,
-            )
+            self._build_task_event(TaskReadyEvent)
         )
 
     def mark_pending(self: Self) -> None:
@@ -141,11 +136,7 @@ class Task(AggregateRoot):
             )
         self.status = TaskStatus.IN_PROGRESS
         self.add_domain_event(
-            TaskInProgressEvent(
-                task_id=str(self.id),
-                project_id=self.project_id,
-                scope_level=self.scope_level,
-            )
+            self._build_task_event(TaskInProgressEvent)
         )
 
     def set_output(self: Self, output: TaskOutput) -> None:
@@ -176,12 +167,7 @@ class Task(AggregateRoot):
             )
         self.status = TaskStatus.BLOCKED
         self.add_domain_event(
-            TaskBlockedEvent(
-                task_id=str(self.id),
-                project_id=self.project_id,
-                scope_level=self.scope_level,
-                reason=reason,
-            )
+            self._build_task_event(TaskBlockedEvent, reason=reason)
         )
 
     def mark_reviewing(self: Self) -> None:
@@ -195,11 +181,7 @@ class Task(AggregateRoot):
             )
         self.status = TaskStatus.REVIEWING
         self.add_domain_event(
-            TaskReviewRequestedEvent(
-                task_id=str(self.id),
-                project_id=self.project_id,
-                scope_level=self.scope_level,
-            )
+            self._build_task_event(TaskReviewRequestedEvent)
         )
 
     def mark_completed(self: Self) -> None:
@@ -214,11 +196,7 @@ class Task(AggregateRoot):
             )
         self.status = TaskStatus.DONE
         self.add_domain_event(
-            TaskCompletedEvent(
-                task_id=str(self.id),
-                project_id=self.project_id,
-                scope_level=self.scope_level,
-            )
+            self._build_task_event(TaskCompletedEvent)
         )
 
     def review(self: Self, approved: bool, feedback: str, requires_decomposition: bool = False) -> None:
@@ -269,12 +247,7 @@ class Task(AggregateRoot):
             )
         self.status = TaskStatus.CHANGES_REQUESTED
         self.add_domain_event(
-            TaskChangesRequestedEvent(
-                task_id=str(self.id),
-                project_id=self.project_id,
-                scope_level=self.scope_level,
-                feedback=feedback,
-            )
+            self._build_task_event(TaskChangesRequestedEvent, feedback=feedback)
         )
 
     def mark_decomposing(self: Self) -> None:
@@ -288,15 +261,29 @@ class Task(AggregateRoot):
             )
         self.status = TaskStatus.DECOMPOSING
         self.add_domain_event(
-            TaskDecomposingEvent(
-                task_id=str(self.id),
-                project_id=self.project_id,
-                scope_level=self.scope_level,
-            )
+            self._build_task_event(TaskDecomposingEvent)
         )
 
     def is_done(self: Self) -> bool:
         return self.status is TaskStatus.DONE
+
+    def _build_task_event(self, event_class: type[BaseTaskEvent], **kwargs: Any) -> BaseTaskEvent:
+        """
+        内部辅助方法：统一构造 Task 相关的领域事件，处理基础属性的映射和展平。
+        """
+        # 统一展平字段
+        bounded_context = self.scope_context.bounded_context if self.scope_context else None
+        architecture_layer = self.scope_context.architecture_layer if self.scope_context else None
+
+        # 显式构造事件，避免关键字参数解包的类型推断问题
+        return event_class(
+            task_id=str(self.id),
+            project_id=self.project_id,
+            scope_level=self.scope_level,
+            bounded_context=bounded_context,
+            architecture_layer=architecture_layer,
+            **kwargs
+        )
 
     def is_claimable(self: Self) -> bool:
         return self.status in (TaskStatus.READY, TaskStatus.CHANGES_REQUESTED)
