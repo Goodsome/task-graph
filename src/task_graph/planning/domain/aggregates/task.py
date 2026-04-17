@@ -114,6 +114,8 @@ class Task(AggregateRoot):
                 task_id=str(self.id),
                 project_id=self.project_id,
                 scope_level=self.scope_level,
+                bounded_context=self.scope_context.bounded_context if self.scope_context else None,
+                architecture_layer=self.scope_context.architecture_layer if self.scope_context else None,
             )
         )
 
