@@ -37,24 +37,15 @@ class TaskStatus(Enum):
     """The lifecycle state of a task."""
 
     PENDING = "pending"
-
     BLOCKED = "blocked"
-
     READY = "ready"
-
     IN_PROGRESS = "in_progress"
-
-    REVIEW = "review"
-
+    REVIEWING = "reviewing"
+    DECOMPOSING = "decomposing"
     DONE = "done"
-
     CHANGES_REQUESTED = "changes_requested"
-
     SKIPPED = "skipped"
-
     DISCARDED = "discarded"
-
-
 
 
 class RecurrenceType(Enum):

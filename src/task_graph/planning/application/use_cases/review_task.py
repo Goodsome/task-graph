@@ -13,6 +13,7 @@ class ReviewTaskCommand:
     task_id: str
     approved: bool
     feedback: str
+    requires_decomposition: bool = False
 
 
 @dataclass(frozen=True)
@@ -44,7 +45,7 @@ class ReviewTask:
                         error=f"Task {cmd.task_id} not found"
                     )
 
-                task.review(approved=cmd.approved, feedback=cmd.feedback)
+                task.review(approved=cmd.approved, feedback=cmd.feedback, requires_decomposition=cmd.requires_decomposition)
                 self.uow.tasks.save(task)
 
                 affected_tasks = []

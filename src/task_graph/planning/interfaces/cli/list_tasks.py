@@ -49,7 +49,7 @@ def list_tasks(
         except ValueError:
             console.print(f"[red]错误: 无效的状态: {status}[/red]")
             console.print(
-                "可选值: pending, blocked, ready, in_progress, review, done, changes_requested, skipped, discarded"
+                "可选值: pending, blocked, ready, in_progress, reviewing, decomposing, done, changes_requested, skipped, discarded"
             )
             raise typer.Exit(1)
 

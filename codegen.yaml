@@ -611,6 +611,38 @@ contexts:
           given: 传入status或issue_type过滤参数
           when: 调用count方法
           then: 返回符合过滤条件的Issue数量
+      - name: find_paged
+        description: 'Find paginated issues with filtering and return both the list
+          and total count.
+
+          This ensures consistency between the returned list and count by using the
+          same filters.'
+        inputs:
+        - type: Self
+          name: self
+        - type: integer
+          name: limit
+        - type: integer
+          name: offset
+        - type: IssueStatus
+          optional: true
+          name: status
+        - type: IssueType
+          optional: true
+          name: issue_type
+        - type: Severity
+          optional: true
+          name: severity
+        - type: string
+          container: list
+          optional: true
+          name: labels
+        - type: string
+          optional: true
+          name: project_id
+        output:
+          type: Any
+          custom_type_string: tuple[list[Issue], int]
   application:
     use_cases:
     - name: LinkIssueToTask
@@ -1069,6 +1101,24 @@ contexts:
           name: output
         output:
           type: None
+      - name: mark_blocked
+        description: "标记任务被阻塞。\n\nArgs:\n    reason: 阻塞原因\nRaises:\n    IllegalStateTransitionError:\
+          \ 如果当前状态不是 IN_PROGRESS"
+        inputs:
+        - type: Self
+          name: self
+        - type: string
+          name: reason
+        output:
+          type: None
+      - name: mark_reviewing
+        description: "标记任务进入审核状态。\n\nRaises:\n    IllegalStateTransitionError: 如果当前状态不是\
+          \ IN_PROGRESS"
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: None
       - name: mark_completed
         description: "直接标记任务完成（用于手动/自动完成场景）。\n\nRaises:\n    IllegalStateTransitionError:\
           \ 当前状态不允许直接完成"
@@ -1079,7 +1129,8 @@ contexts:
           type: None
       - name: review
         description: "验证任务并记录反馈。\n\nArgs:\n    approved: 是否通过\n    feedback: 详细评价意见\n\
-          Raises:\n    IllegalStateTransitionError: 如果当前状态不是 REVIEW"
+          \    requires_decomposition: 是否需要将该任务进一步拆分为子任务\nRaises:\n    IllegalStateTransitionError:\
+          \ 如果当前状态不是 REVIEWING"
         inputs:
         - type: Self
           name: self
@@ -1087,6 +1138,35 @@ contexts:
           name: approved
         - type: string
           name: feedback
+        - type: boolean
+          name: requires_decomposition
+          default: false
+        output:
+          type: None
+      - name: mark_decomposition_completed
+        description: "标记任务分解完成。\n\nRaises:\n    IllegalStateTransitionError: 如果当前状态不是\
+          \ DECOMPOSING"
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: None
+      - name: mark_changes_requested
+        description: "标记任务需要修改。\n\nArgs:\n    feedback: 审核反馈意见\nRaises:\n    IllegalStateTransitionError:\
+          \ 如果当前状态不是 REVIEWING"
+        inputs:
+        - type: Self
+          name: self
+        - type: string
+          name: feedback
+        output:
+          type: None
+      - name: mark_decomposing
+        description: "标记任务需要分解。\n\nRaises:\n    IllegalStateTransitionError: 如果当前状态不是\
+          \ REVIEWING"
+        inputs:
+        - type: Self
+          name: self
         output:
           type: None
       - name: is_done
@@ -1123,8 +1203,10 @@ contexts:
         value: ready
       - name: IN_PROGRESS
         value: in_progress
-      - name: REVIEW
-        value: review
+      - name: REVIEWING
+        value: reviewing
+      - name: DECOMPOSING
+        value: decomposing
       - name: DONE
         value: done
       - name: CHANGES_REQUESTED
@@ -1703,6 +1785,9 @@ contexts:
         name: approved
       - type: string
         name: feedback
+      - type: boolean
+        name: requires_decomposition
+        default: false
       outputs:
       - type: boolean
         name: success

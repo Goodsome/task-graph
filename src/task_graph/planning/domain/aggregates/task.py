@@ -20,6 +20,7 @@ from task_graph.planning.domain.events import (
     TaskInProgressEvent,
     TaskReadyEvent,
     TaskReviewRequestedEvent,
+    TaskDecomposingEvent,
 )
 
 
@@ -156,31 +157,55 @@ class Task(AggregateRoot):
             )
         self.output = output
         if output.error:
-            self.status = TaskStatus.BLOCKED
-            self.add_domain_event(
-                TaskBlockedEvent(
-                    task_id=str(self.id),
-                    project_id=self.project_id,
-                    scope_level=self.scope_level,
-                    reason=output.error,
-                )
-            )
+            self.mark_blocked(reason=output.error)
         else:
-            self.status = TaskStatus.REVIEW
-            self.add_domain_event(
-                TaskReviewRequestedEvent(
-                    task_id=str(self.id),
-                    project_id=self.project_id,
-                    scope_level=self.scope_level,
-                )
+            self.mark_reviewing()
+
+    def mark_blocked(self: Self, reason: str) -> None:
+        """标记任务被阻塞。
+
+        Args:
+            reason: 阻塞原因
+        Raises:
+            IllegalStateTransitionError: 如果当前状态不是 IN_PROGRESS"""
+        if self.status != TaskStatus.IN_PROGRESS:
+            raise IllegalStateTransitionError(
+                f"Task {self.id} cannot be marked blocked: current status is {self.status}, expected IN_PROGRESS"
             )
+        self.status = TaskStatus.BLOCKED
+        self.add_domain_event(
+            TaskBlockedEvent(
+                task_id=str(self.id),
+                project_id=self.project_id,
+                scope_level=self.scope_level,
+                reason=reason,
+            )
+        )
+
+    def mark_reviewing(self: Self) -> None:
+        """标记任务进入审核状态。
+
+        Raises:
+            IllegalStateTransitionError: 如果当前状态不是 IN_PROGRESS"""
+        if self.status != TaskStatus.IN_PROGRESS:
+            raise IllegalStateTransitionError(
+                f"Task {self.id} cannot be marked reviewing: current status is {self.status}, expected IN_PROGRESS"
+            )
+        self.status = TaskStatus.REVIEWING
+        self.add_domain_event(
+            TaskReviewRequestedEvent(
+                task_id=str(self.id),
+                project_id=self.project_id,
+                scope_level=self.scope_level,
+            )
+        )
 
     def mark_completed(self: Self) -> None:
         """直接标记任务完成（用于手动/自动完成场景）。
 
         Raises:
             IllegalStateTransitionError: 当前状态不允许直接完成"""
-        allowed = (TaskStatus.REVIEW, TaskStatus.IN_PROGRESS, TaskStatus.READY)
+        allowed = (TaskStatus.REVIEWING, TaskStatus.DECOMPOSING)
         if self.status not in allowed:
             raise IllegalStateTransitionError(
                 f"Task {self.id} cannot be marked completed: current status is {self.status}"
@@ -194,40 +219,79 @@ class Task(AggregateRoot):
             )
         )
 
-    def review(self: Self, approved: bool, feedback: str) -> None:
+    def review(self: Self, approved: bool, feedback: str, requires_decomposition: bool = False) -> None:
         """验证任务并记录反馈。
 
         Args:
             approved: 是否通过
             feedback: 详细评价意见
+            requires_decomposition: 是否需要将该任务进一步拆分为子任务
         Raises:
-            IllegalStateTransitionError: 如果当前状态不是 REVIEW"""
-        if self.status != TaskStatus.REVIEW:
+            IllegalStateTransitionError: 如果当前状态不是 REVIEWING"""
+        if self.status != TaskStatus.REVIEWING:
             raise IllegalStateTransitionError(
-                f"Task {self.id} cannot be reviewed: current status is {self.status}, expected REVIEW"
+                f"Task {self.id} cannot be reviewed: current status is {self.status}, expected REVIEWING"
             )
         self.review_feedback = ReviewFeedback(
             decision="approved" if approved else "changes_requested", comment=feedback
         )
         if approved:
-            self.status = TaskStatus.DONE
-            self.add_domain_event(
-                TaskCompletedEvent(
-                    task_id=str(self.id),
-                    project_id=self.project_id,
-                    scope_level=self.scope_level,
-                )
-            )
+            if requires_decomposition:
+                self.mark_decomposing()
+            else:
+                self.mark_completed()
         else:
-            self.status = TaskStatus.CHANGES_REQUESTED
-            self.add_domain_event(
-                TaskChangesRequestedEvent(
-                    task_id=str(self.id),
-                    project_id=self.project_id,
-                    scope_level=self.scope_level,
-                    feedback=feedback,
-                )
+            self.mark_changes_requested(feedback=feedback)
+
+    def mark_decomposition_completed(self: Self) -> None:
+        """标记任务分解完成。
+
+        Raises:
+            IllegalStateTransitionError: 如果当前状态不是 DECOMPOSING"""
+        if self.status != TaskStatus.DECOMPOSING:
+            raise IllegalStateTransitionError(
+                f"Task {self.id} cannot mark decomposition completed: current status is {self.status}, expected DECOMPOSING"
             )
+        self.mark_completed()
+
+    def mark_changes_requested(self: Self, feedback: str) -> None:
+        """标记任务需要修改。
+
+        Args:
+            feedback: 审核反馈意见
+        Raises:
+            IllegalStateTransitionError: 如果当前状态不是 REVIEWING"""
+        if self.status != TaskStatus.REVIEWING:
+            raise IllegalStateTransitionError(
+                f"Task {self.id} cannot be marked changes requested: current status is {self.status}, expected REVIEWING"
+            )
+        self.status = TaskStatus.CHANGES_REQUESTED
+        self.add_domain_event(
+            TaskChangesRequestedEvent(
+                task_id=str(self.id),
+                project_id=self.project_id,
+                scope_level=self.scope_level,
+                feedback=feedback,
+            )
+        )
+
+    def mark_decomposing(self: Self) -> None:
+        """标记任务需要分解。
+
+        Raises:
+            IllegalStateTransitionError: 如果当前状态不是 REVIEWING"""
+        if self.status != TaskStatus.REVIEWING:
+            raise IllegalStateTransitionError(
+                f"Task {self.id} cannot be marked decomposing: current status is {self.status}, expected REVIEWING"
+            )
+        self.status = TaskStatus.DECOMPOSING
+        self.add_domain_event(
+            TaskDecomposingEvent(
+                task_id=str(self.id),
+                project_id=self.project_id,
+                scope_level=self.scope_level,
+            )
+        )
 
     def is_done(self: Self) -> bool:
         return self.status is TaskStatus.DONE

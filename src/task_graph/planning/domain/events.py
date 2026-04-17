@@ -39,3 +39,10 @@ class TaskChangesRequestedEvent(DomainEvent):
     project_id: str = Field(description="Project ID")
     scope_level: ScopeLevel = Field(description="Scope level of the task")
     feedback: str = Field(description="Review feedback describing required changes")
+
+
+class TaskDecomposingEvent(DomainEvent):
+    """Event emitted when a task is approved for decomposition."""
+    task_id: str = Field(description="Task ID")
+    project_id: str = Field(description="Project ID")
+    scope_level: ScopeLevel = Field(description="Scope level of the task")
