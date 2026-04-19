@@ -55,6 +55,17 @@ def get_task(
     console.print(f"[cyan]价值:[/cyan] {task.base_value.value}")
     console.print(f"[cyan]完成逻辑:[/cyan] {task.completion_logic.value}")
 
+    # 展示范围上下文
+    if task.scope_context:
+        console.print(f"[cyan]所属领域:[/cyan] {task.scope_context.bounded_context if task.scope_context.bounded_context else '-'}")
+        console.print(f"[cyan]架构层级:[/cyan] {task.scope_context.architecture_layer.value if task.scope_context.architecture_layer else '-'}")
+
+    # 展示重复策略
+    if task.recurrence:
+        console.print(f"[cyan]重复类型:[/cyan] {task.recurrence.type.value}")
+        console.print(f"[cyan]最大重复次数:[/cyan] {task.recurrence.max_repetitions}")
+        console.print(f"[cyan]当前迭代:[/cyan] {task.recurrence.current_iteration}")
+
     console.print("\n[cyan]描述:[/cyan]")
     console.print(task.description)
 
@@ -75,3 +86,10 @@ def get_task(
             console.print(f"  产出: {', '.join(task.output.artifacts)}")
         if task.output.error:
             console.print(f"  [red]错误: {task.output.error}[/red]")
+
+    # 展示审核反馈
+    if task.review_feedback:
+        console.print("\n[cyan]审核反馈:[/cyan]")
+        decision_color = "green" if task.review_feedback.decision == "approved" else "yellow"
+        console.print(f"  决定: [{decision_color}]{task.review_feedback.decision}[/{decision_color}]")
+        console.print(f"  意见: {task.review_feedback.comment}")
