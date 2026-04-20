@@ -1017,7 +1017,6 @@ contexts:
         name: review_feedback
       behaviors:
       - name: create
-
         description: Factory method to create a new Task
         inputs:
         - type: Self
@@ -1161,17 +1160,17 @@ contexts:
         inputs:
         - type: Self
           name: self
-        - type: BaseTaskEvent
+        - type: T
           container: type
           name: event_class
-        - type: str
+        - type: string
           optional: true
           name: reason
-        - type: str
+        - type: string
           optional: true
           name: feedback
         output:
-          type: BaseTaskEvent
+          type: T
       - name: is_claimable
         inputs:
         - type: Self

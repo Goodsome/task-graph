@@ -1,4 +1,4 @@
-from pydantic import Field, field_validator
+from pydantic import Field
 from task_graph.planning.domain.enums import CompletionLogic, ScopeLevel, TaskStatus
 from task_graph.planning.domain.exceptions import (
     IllegalStateTransitionError,
@@ -19,8 +19,7 @@ from task_graph.planning.domain.events import (
     TaskReadyEvent,
     TaskReviewRequestedEvent,
 )
-from typing import Any, Self, Union, TypeVar
-
+from typing import Any, Self, TypeVar, Union
 from task_graph.planning.domain.value_objects.recurrence_policy import RecurrencePolicy
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
@@ -249,7 +248,6 @@ class Task(AggregateRoot):
         architecture_layer = (
             self.scope_context.architecture_layer if self.scope_context else None
         )
-
         params: dict[str, Any] = {
             "task_id": str(self.id),
             "project_id": self.project_id,
@@ -261,7 +259,6 @@ class Task(AggregateRoot):
             params["reason"] = reason
         if feedback is not None:
             params["feedback"] = feedback
-
         return event_class(**params)
 
     def is_claimable(self: Self) -> bool:
