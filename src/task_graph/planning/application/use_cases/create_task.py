@@ -29,6 +29,7 @@ class CreateTaskCommand(BaseModel):
     parent_id: Optional[str] = Field(default=None)
     bounded_context: Optional[str] = Field(default=None)
     architecture_layer: Optional[ArchitectureLayer] = Field(default=None)
+    atomic_name: Optional[str] = Field(default=None)
     acceptance_criteria: list[AcceptanceCriterion] = Field(
         default_factory=list,
         description="以 BDD 风格定义的验收标准列表",
@@ -83,10 +84,11 @@ class CreateTask:
 
                 # 4.1 构建 ScopeContext
                 scope_context = None
-                if cmd.bounded_context is not None or cmd.architecture_layer is not None:
+                if cmd.bounded_context is not None or cmd.architecture_layer is not None or cmd.atomic_name is not None:
                     scope_context = ScopeContext.create(
                         bounded_context=cmd.bounded_context,
                         architecture_layer=cmd.architecture_layer,
+                        atomic_name=cmd.atomic_name,
                     )
 
                 # 5. 创建实体 (默认状态 PENDING)

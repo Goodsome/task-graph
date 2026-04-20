@@ -13,7 +13,6 @@ class ReviewTaskCommand:
     task_id: str
     approved: bool
     feedback: str
-    requires_decomposition: bool = False
 
 
 @dataclass(frozen=True)
@@ -45,11 +44,19 @@ class ReviewTask:
                         error=f"Task {cmd.task_id} not found"
                     )
 
-                task.review(approved=cmd.approved, feedback=cmd.feedback, requires_decomposition=cmd.requires_decomposition)
+                task.review(approved=cmd.approved, feedback=cmd.feedback)
                 self.uow.tasks.save(task)
 
                 affected_tasks = []
                 modified_dependents = []
+                sub_tasks = []
+                
+                if task.status == TaskStatus.DECOMPOSING:
+                    sub_tasks = task.generate_sub_tasks()
+                    for sub in sub_tasks:
+                        self.uow.tasks.save(sub)
+                        affected_tasks.append(str(sub.id.value))
+
                 if task.is_done():
                     dependents = self.uow.tasks.find_dependents(task.id)
                     for dependent in dependents:
@@ -66,6 +73,9 @@ class ReviewTask:
                     self.uow.event_bus.publish(event)
                 for dep in modified_dependents:
                     for event in dep.collect_events():
+                        self.uow.event_bus.publish(event)
+                for sub_task in sub_tasks:
+                    for event in sub_task.collect_events():
                         self.uow.event_bus.publish(event)
 
                 self.uow.commit()

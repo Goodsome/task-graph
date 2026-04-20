@@ -8,15 +8,18 @@ class ScopeContext(ValueObject):
 
     bounded_context: str | None = None
     architecture_layer: ArchitectureLayer | None = None
+    atomic_name: str | None = None
 
     @classmethod
     def create(
         cls: type[Self],
         bounded_context: str | None = None,
         architecture_layer: ArchitectureLayer | None = None,
+        atomic_name: str | None = None,
     ) -> Self:
         """Factory method to create a new ScopeContext instance."""
         return cls(
             bounded_context=bounded_context,
             architecture_layer=architecture_layer,
+            atomic_name=atomic_name
         )

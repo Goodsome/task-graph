@@ -175,14 +175,13 @@ class Task(AggregateRoot):
         self.add_domain_event(self._build_task_event(TaskCompletedEvent))
 
     def review(
-        self: Self, approved: bool, feedback: str, requires_decomposition: bool = False
+        self: Self, approved: bool, feedback: str
     ) -> None:
         """验证任务并记录反馈。
 
         Args:
             approved: 是否通过
             feedback: 详细评价意见
-            requires_decomposition: 是否需要将该任务进一步拆分为子任务
         Raises:
             IllegalStateTransitionError: 如果当前状态不是 REVIEWING"""
         if self.status != TaskStatus.REVIEWING:
@@ -193,12 +192,84 @@ class Task(AggregateRoot):
             decision="approved" if approved else "changes_requested", comment=feedback
         )
         if approved:
-            if requires_decomposition:
+            if self.output and self.output.sub_tasks:
                 self.mark_decomposing()
             else:
                 self.mark_completed()
         else:
             self.mark_changes_requested(feedback=feedback)
+
+    def generate_sub_tasks(self: Self) -> list['Task']:
+        """根据输出中的 sub_tasks 生成子任务。
+
+        Returns:
+            list[Task]: 生成的子任务列表
+        Raises:
+            IllegalStateTransitionError: 只有 DECOMPOSING 状态可以生成子任务
+        """
+        if self.status != TaskStatus.DECOMPOSING:
+            raise IllegalStateTransitionError(
+                f"Task {self.id} cannot generate sub tasks: current status is {self.status}, expected DECOMPOSING"
+            )
+        if not self.output or not self.output.sub_tasks:
+            return []
+
+        level_map = {
+            ScopeLevel.PROJECT: ScopeLevel.CONTEXT,
+            ScopeLevel.CONTEXT: ScopeLevel.ARCHITECTURAL,
+            ScopeLevel.ARCHITECTURAL: ScopeLevel.ATOMIC,
+        }
+        child_scope_level = level_map.get(self.scope_level)
+        if not child_scope_level:
+            return []
+
+        sub_tasks = []
+        for sub_info in self.output.sub_tasks:
+            child_name = f"{self.name}[{sub_info.name}]"
+
+            # 继承父任务的上下文信息
+            parent_bc = self.scope_context.bounded_context if self.scope_context else None
+            parent_al = self.scope_context.architecture_layer if self.scope_context else None
+
+            from task_graph.planning.domain.enums import ArchitectureLayer
+
+            child_bc = parent_bc
+            child_al = parent_al
+            child_an = None
+
+            if child_scope_level == ScopeLevel.CONTEXT:
+                child_bc = sub_info.name
+            elif child_scope_level == ScopeLevel.ARCHITECTURAL:
+                try:
+                    child_al = ArchitectureLayer(sub_info.name)
+                except ValueError:
+                    child_al = ArchitectureLayer.NONE
+            elif child_scope_level == ScopeLevel.ATOMIC:
+                child_an = sub_info.name
+
+            child_context = ScopeContext.create(
+                bounded_context=child_bc,
+                architecture_layer=child_al,
+                atomic_name=child_an,
+            )
+
+            child_task = Task.create(
+                project_id=self.project_id,
+                name=child_name,
+                description=sub_info.description,
+                effort=sub_info.effort,
+                base_value=sub_info.base_value,
+                completion_logic=self.completion_logic,
+                dependencies=set(),
+                scope_level=child_scope_level,
+                parent_id=self.id,
+                scope_context=child_context,
+                acceptance_criteria=sub_info.acceptance_criteria,
+            )
+            child_task.mark_ready()
+            sub_tasks.append(child_task)
+
+        return sub_tasks
 
     def mark_decomposition_completed(self: Self) -> None:
         """标记任务分解完成。
