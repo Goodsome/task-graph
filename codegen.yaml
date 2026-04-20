@@ -1015,6 +1015,10 @@ contexts:
       - type: ReviewFeedback
         optional: true
         name: review_feedback
+      - type: AcceptanceCriterion
+        container: list
+        name: acceptance_criteria
+        default: list
       behaviors:
       - name: create
         description: Factory method to create a new Task
@@ -1045,6 +1049,10 @@ contexts:
         - type: ScopeContext
           optional: true
           name: scope_context
+        - type: AcceptanceCriterion
+          container: list
+          optional: true
+          name: acceptance_criteria
         output:
           type: Self
       - name: mark_ready
@@ -1293,6 +1301,25 @@ contexts:
           name: data
         output:
           type: any
+    - name: AcceptanceCriterion
+      description: '以 BDD（Behavior-Driven Development）风格记录的单条验收标准。
+
+
+        每一条验收标准将被转换为一个具体的测试用例。
+
+        结构上遵循 Given-When-Then 范式，以便后续工具自动解析并生成测试代码。'
+      attributes:
+      - type: string
+        name: title
+      - type: string
+        name: given
+      - type: string
+        name: when
+      - type: string
+        name: then
+      - type: TestType
+        name: test_type
+        default: unit
     - name: TaskOutput
       description: 任务执行者的交付物
       attributes:
@@ -1546,6 +1573,10 @@ contexts:
           when: save is invoked with the Task
           then: the saved Task's dependencies are identical to the original set of
             TaskIds
+        - name: save_preserves_acceptance_criteria
+          given: a Task with acceptance criteria
+          when: save is invoked with the Task
+          then: the saved Task's acceptance criteria are identical to the originals
       - name: get
         inputs:
         - type: Self
@@ -1703,6 +1734,10 @@ contexts:
       - type: ArchitectureLayer
         optional: true
         name: architecture_layer
+      - type: AcceptanceCriterion
+        container: list
+        name: acceptance_criteria
+        default: list
       outputs:
       - type: boolean
         name: success

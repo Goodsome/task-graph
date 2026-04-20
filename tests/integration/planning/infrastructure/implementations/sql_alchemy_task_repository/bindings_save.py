@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from tests.factories.task_factory import TaskFactory
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.enums import ScopeLevel
+from task_graph.planning.domain.value_objects.acceptance_criterion import AcceptanceCriterion
 from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import (
     SqlAlchemyTaskRepository,
 )
@@ -31,6 +32,8 @@ class SaveBindings:
                 self._arrange_existing_task()
             case "a Task with a non-empty set of dependencies":
                 self._arrange_task_with_dependencies()
+            case "a Task with acceptance criteria":
+                self._arrange_task_with_acceptance_criteria()
             case _:
                 raise NotImplementedError(f"Unhandled given: {semantic_text}")
         return self
@@ -56,6 +59,8 @@ class SaveBindings:
                 self._then_no_error_and_state_unchanged()
             case "the saved Task's dependencies are identical to the original set of TaskIds":
                 self._then_dependencies_preserved()
+            case "the saved Task's acceptance criteria are identical to the originals":
+                self._then_acceptance_criteria_preserved()
             case _:
                 raise NotImplementedError(f"Unhandled then: {semantic_text}")
         return self
@@ -104,6 +109,31 @@ class SaveBindings:
             scope_level=ScopeLevel.ATOMIC,
         )
 
+    def _arrange_task_with_acceptance_criteria(self) -> None:
+        criteria = [
+            AcceptanceCriterion(
+                title="任务创建后可查询",
+                given="项目已存在",
+                when="调用 create_task",
+                then="可通过任务 ID 查询到该任务",
+                test_type="integration",
+            ),
+            AcceptanceCriterion(
+                title="任务状态初始为 PENDING",
+                given="新任务已创建",
+                when="读取任务状态",
+                then="状态为 PENDING",
+                test_type="unit",
+            ),
+        ]
+        self._arranged_task = TaskFactory.build(
+            project_id="test-project",
+            name="Task with Acceptance Criteria",
+            description="A task with BDD acceptance criteria",
+            scope_level=ScopeLevel.ATOMIC,
+            acceptance_criteria=criteria,
+        )
+
     # ─────────────────────────── Act ────────────────────────────
 
     def _when_save_task(self) -> None:
@@ -141,6 +171,17 @@ class SaveBindings:
         retrieved_ids = {str(d) for d in self._retrieved_task.dependencies}
         assert original_ids == retrieved_ids
         # 同时全量比对其他属性，确保依赖保存时没有破坏其他字段
+        assert self._retrieved_task.model_dump() == self._arranged_task.model_dump()
+
+    def _then_acceptance_criteria_preserved(self) -> None:
+        assert self._arranged_task is not None
+        self._retrieved_task = self.repository.get(self._arranged_task.id)
+        assert self._retrieved_task is not None
+        # 验证验收标准数量与内容完全一致
+        original_criteria = [ac.model_dump() for ac in self._arranged_task.acceptance_criteria]
+        retrieved_criteria = [ac.model_dump() for ac in self._retrieved_task.acceptance_criteria]
+        assert retrieved_criteria == original_criteria
+        # 全量比对确保其他字段未受影响
         assert self._retrieved_task.model_dump() == self._arranged_task.model_dump()
 
 

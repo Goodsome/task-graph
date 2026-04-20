@@ -10,6 +10,7 @@ from task_graph.planning.domain.value_objects.value_score import ValueScore
 from task_graph.planning.domain.value_objects.scope_context import ScopeContext
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
+from task_graph.planning.domain.value_objects.acceptance_criterion import AcceptanceCriterion
 from task_graph.planning.infrastructure.orm_models.task_model import TaskModel
 from dataclasses import dataclass
 
@@ -124,6 +125,10 @@ class SqlAlchemyTaskRepository(TaskRepository):
             review_feedback=ReviewFeedback.model_validate(model.review_feedback)
             if model.review_feedback
             else None,
+            acceptance_criteria=[
+                AcceptanceCriterion.model_validate(ac)
+                for ac in (model.acceptance_criteria or [])
+            ],
             recurrence=None,  # Not currently in TaskModel
         )
 
@@ -148,6 +153,9 @@ class SqlAlchemyTaskRepository(TaskRepository):
         model.review_feedback = (
             task.review_feedback.model_dump(mode="json") if task.review_feedback else None
         )
+        model.acceptance_criteria = [
+            ac.model_dump(mode="json") for ac in task.acceptance_criteria
+        ] or None
 
         # Handle dependencies
         dep_ids = [tid.value for tid in task.dependencies]

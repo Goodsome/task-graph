@@ -5,6 +5,7 @@ from .scope_context import ScopeContext
 from .recurrence_policy import RecurrencePolicy
 from .task_output import TaskOutput
 from .review_feedback import ReviewFeedback
+from .acceptance_criterion import AcceptanceCriterion
 
 __all__ = [
     "TaskId",
@@ -14,4 +15,5 @@ __all__ = [
     "RecurrencePolicy",
     "TaskOutput",
     "ReviewFeedback",
+    "AcceptanceCriterion",
 ]

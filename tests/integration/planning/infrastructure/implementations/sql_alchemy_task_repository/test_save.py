@@ -28,3 +28,12 @@ def test_save_preserves_task_dependencies(save_bindings: SaveBindings) -> None:
     ).arrange_done().when("save is invoked with the Task").then(
         "the saved Task's dependencies are identical to the original set of TaskIds"
     )
+
+
+def test_save_preserves_acceptance_criteria(save_bindings: SaveBindings) -> None:
+    """集成测试：带有 acceptance_criteria 的任务持久化后，从数据库读回的数据应与原始数据完全一致"""
+    save_bindings.given(
+        "a Task with acceptance criteria"
+    ).arrange_done().when("save is invoked with the Task").then(
+        "the saved Task's acceptance criteria are identical to the originals"
+    )

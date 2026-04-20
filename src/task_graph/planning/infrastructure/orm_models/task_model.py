@@ -45,6 +45,8 @@ class TaskModel(Base):
     # JSONB 是二进制存储，支持索引。你可以直接查询 "WHERE output->'artifacts' ? 'file.py'"
     output: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     review_feedback: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    # BDD 验收标准列表，存储为 JSONB 数组，支持 GIN 索引扩展
+    acceptance_criteria: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True, default=list)
 
     # 时间戳处理保持不变
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

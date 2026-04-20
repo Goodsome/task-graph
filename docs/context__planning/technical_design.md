@@ -4,7 +4,7 @@
 
 `Planning` 上下文遵循典型的 DDD 战术分层架构，并确保逻辑上的高度自治：
 
-*   **Domain 层**：包含 `Task` 聚合根、领域事件 (`BaseTaskEvent`)、值对象 (`StoryPoint`, `ValueScore`) 及领域服务。
+*   **Domain 层**：包含 `Task` 聚合根、领域事件 (`BaseTaskEvent`)、值对象 (`StoryPoint`, `ValueScore`, `ScopeContext`, `AcceptanceCriterion`) 及领域服务。
 *   **Application 层**：通过 `Use Cases` 实现业务逻辑编排，定义 `UnitOfWork` 接口用于管理事务边界。
 *   **Infrastructure 层**：实现 `TaskRepository` (基于 SQLAlchemy) 和数据持久化细节。
 *   **Interfaces 层**：通过 `MCP` 和 `CLI` 适配器暴露能力。
@@ -27,7 +27,11 @@
 *   **ORM 映射**：使用 SQLAlchemy 2.0 声明式映射。
     *   **Task 表**：存储核心属性、`project_id` 及 `status`。
     *   **Dependency 关联表**：多对多关系，存储任务间的 DAG 依赖。
-    *   **JSONB 字段**：用于存储扩展的 `output` (总结与制品) 和 `recurrence` (循环策略)。
+    *   **JSONB 字段**：用于存储半结构化数据，所有字段均支持 PostgreSQL GIN 索引扩展：
+        *   `output`：任务产出物（总结 + 制品路径列表）
+        *   `review_feedback`：人工或 Agent 的审核反馈（决策 + 评注）
+        *   `acceptance_criteria`：BDD 验收标准列表（`Given/When/Then` 三段式 + 测试类型）
+        *   `scope_context`：有界上下文与架构层归属信息
 
 ## 4. 跨领域集成契约 (Integration Contracts)
 
@@ -47,3 +51,4 @@
 1.  **并发控制**：在 `claim_task` 操作中，必须使用数据库行级锁（`SELECT ... FOR UPDATE`），防止多个 Agent 同时认领同一个 `READY` 任务。
 2.  **幂等性**：事件订阅逻辑必须是幂等的，确保在重试机制下不会导致任务重复解锁。
 3.  **循环检测**：在 `modify_task_dependencies` 用例中，在保存前必须调用 `CycleDetectionService` 遍历全图，确保 DAG 的合法性。
+4.  **验收标准结构化约束**：`AcceptanceCriterion` 是强类型值对象，`test_type` 使用 `Literal` 类型而非自由字符串，Pydantic 在应用层入口处强制校验，非法值不会触达持久化层。

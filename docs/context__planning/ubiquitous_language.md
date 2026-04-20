@@ -13,6 +13,7 @@
 | **投资回报率** | ROI | 优先级计算指标。`ROI = Base Value / Effort`。分值越高，执行优先级越高。 |
 | **拆解中** | Decomposing | 任务的一种特殊状态，表示该设计任务已完成并已通过初步验收，正处于子任务执行阶段。 |
 | **产出物** | Output | 任务执行完成后的结果，包含总结（Summary）和具体制品（Artifacts，如文件路径、代码片段）。 |
+| **验收标准** | Acceptance Criterion | 以 BDD 风格描述的单条任务验收条件，由 `Given / When / Then` 三段式构成。每条验收标准对应一个具体的测试用例（单元、集成、皮下或端到端）。一个任务可包含多条验收标准。 |
 
 ## 2. 实体不变量 (Invariant Rules)
 
@@ -24,6 +25,7 @@
     *   `READY` 状态只能从 `PENDING` 或 `BLOCKED` 转换而来。
     *   只有处于 `READY` 状态的任务才能被 `Claim`（认领）进入 `IN_PROGRESS`。
 *   **层级降级约束**：子任务的 `ScopeLevel` 必须低于父任务的层级（如 `Project` 的子任务应为 `Context`）。
+*   **验收标准格式约束**：`AcceptanceCriterion` 必须包含完整的 `Given / When / Then` 三段式描述，且 `test_type` 必须是 `unit | integration | subcutaneous | e2e` 之一，不允许使用自由文本的测试类型。
 
 ## 3. 核心业务规约 (Business Rules)
 
@@ -46,3 +48,8 @@
 *   **Given**: 一个任务 B 依赖于任务 A。
 *   **When**: 任务 A 的状态变更为 `DONE` 且满足任务 B 的 `CompletionLogic`。
 *   **Then**: 任务 B 的状态必须立即从 `BLOCKED` 自动变更为 `READY`。
+
+### 验收标准强制 BDD 格式规约
+*   **Given**: 通过 `create_task` 或 `revise_task_details` 提交包含验收标准的任务。
+*   **When**: 验收标准中的 `test_type` 字段不在 `unit | integration | subcutaneous | e2e` 范围内，或 `given / when / then` 任意段为空。
+*   **Then**: 系统必须拒绝该请求并返回 `ValidationError`，不允许持久化格式不合规的验收标准。

@@ -8,6 +8,7 @@ from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.value_score import ValueScore
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.scope_context import ScopeContext
+from task_graph.planning.domain.value_objects.acceptance_criterion import AcceptanceCriterion
 from task_graph.planning.domain.enums import CompletionLogic, ScopeLevel, TaskStatus, ArchitectureLayer
 
 
@@ -83,3 +84,4 @@ class TaskFactory(ModelFactory[Task]):
     review_feedback = None
     recurrence = None
     scope_context = None
+    acceptance_criteria = []

@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from task_graph.planning.domain.aggregates import Task
 from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel, ArchitectureLayer
 from task_graph.planning.application.ports.unit_of_work import UnitOfWork
-from task_graph.planning.domain.value_objects import StoryPoint, ValueScore, TaskId, ScopeContext
+from task_graph.planning.domain.value_objects import StoryPoint, ValueScore, TaskId, ScopeContext, AcceptanceCriterion
 
 import logging
 
@@ -29,6 +29,10 @@ class CreateTaskCommand(BaseModel):
     parent_id: Optional[str] = Field(default=None)
     bounded_context: Optional[str] = Field(default=None)
     architecture_layer: Optional[ArchitectureLayer] = Field(default=None)
+    acceptance_criteria: list[AcceptanceCriterion] = Field(
+        default_factory=list,
+        description="以 BDD 风格定义的验收标准列表",
+    )
 
 
 @dataclass
@@ -97,6 +101,7 @@ class CreateTask:
                     scope_level=cmd.scope_level,
                     parent_id=parent_id,
                     scope_context=scope_context,
+                    acceptance_criteria=cmd.acceptance_criteria or [],
                 )
 
                 # 如果条件满足，则标记为 READY（此方法会添加 TaskReadyEvent 到聚合根）
