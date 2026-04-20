@@ -4,7 +4,12 @@ from sqlalchemy import select, func, or_
 from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.value_objects.task_id import TaskId
-from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
+from task_graph.planning.domain.enums import TaskStatus, ScopeLevel, CompletionLogic
+from task_graph.planning.domain.value_objects.story_point import StoryPoint
+from task_graph.planning.domain.value_objects.value_score import ValueScore
+from task_graph.planning.domain.value_objects.scope_context import ScopeContext
+from task_graph.planning.domain.value_objects.task_output import TaskOutput
+from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
 from task_graph.planning.infrastructure.orm_models.task_model import TaskModel
 from dataclasses import dataclass
 
@@ -98,7 +103,29 @@ class SqlAlchemyTaskRepository(TaskRepository):
         return [self._to_domain(m) for m in models], total
 
     def _to_domain(self, model: TaskModel) -> Task:
-        return Task.model_validate(model)
+        return Task(
+            id=TaskId.model_validate(model.id),
+            project_id=model.project_id,
+            name=model.name,
+            description=model.description,
+            status=TaskStatus(model.status),
+            completion_logic=CompletionLogic(model.completion_logic),
+            effort=StoryPoint(value=model.effort),
+            base_value=ValueScore(value=model.base_value),
+            dependencies={TaskId.model_validate(d.id) for d in model.dependencies},
+            scope_level=ScopeLevel(model.scope_level),
+            scope_context=ScopeContext.model_validate(model.scope_context)
+            if model.scope_context
+            else None,
+            parent_id=TaskId.model_validate(model.parent_id)
+            if model.parent_id
+            else None,
+            output=TaskOutput.model_validate(model.output) if model.output else None,
+            review_feedback=ReviewFeedback.model_validate(model.review_feedback)
+            if model.review_feedback
+            else None,
+            recurrence=None,  # Not currently in TaskModel
+        )
 
     def _to_model(self, task: Task) -> TaskModel:
         stmt = select(TaskModel).where(TaskModel.id == task.id.value)

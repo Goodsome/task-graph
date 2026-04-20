@@ -1016,27 +1016,8 @@ contexts:
         optional: true
         name: review_feedback
       behaviors:
-      - name: validate_dependencies
-        description: 'Convert dependencies from various formats to TaskId set.
-
-
-          Supports:
-
-          - Set of TaskId objects
-
-          - Set of str/UUID
-
-          - Set of ORM objects with ''id'' attribute'
-        inputs:
-        - type: Self
-          container: type
-          name: cls
-        - type: any
-          name: value
-        output:
-          type: TaskId
-          container: set
       - name: create
+
         description: Factory method to create a new Task
         inputs:
         - type: Self
@@ -1183,6 +1164,12 @@ contexts:
         - type: BaseTaskEvent
           container: type
           name: event_class
+        - type: str
+          optional: true
+          name: reason
+        - type: str
+          optional: true
+          name: feedback
         output:
           type: BaseTaskEvent
       - name: is_claimable

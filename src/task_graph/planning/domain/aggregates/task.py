@@ -1,5 +1,5 @@
 from pydantic import Field, field_validator
-from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel
+from task_graph.planning.domain.enums import CompletionLogic, ScopeLevel, TaskStatus
 from task_graph.planning.domain.exceptions import (
     IllegalStateTransitionError,
     TaskNotClaimableError,
@@ -9,20 +9,23 @@ from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.value_score import ValueScore
 from task_graph.planning.domain.value_objects.scope_context import ScopeContext
 from task_graph.shared.domain.core.aggregate_root import AggregateRoot
-from typing import Any, Self
-from task_graph.planning.domain.value_objects.recurrence_policy import RecurrencePolicy
-from task_graph.planning.domain.value_objects.task_output import TaskOutput
-from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
 from task_graph.planning.domain.events import (
     BaseTaskEvent,
     TaskBlockedEvent,
     TaskChangesRequestedEvent,
     TaskCompletedEvent,
+    TaskDecomposingEvent,
     TaskInProgressEvent,
     TaskReadyEvent,
     TaskReviewRequestedEvent,
-    TaskDecomposingEvent,
 )
+from typing import Any, Self, Union, TypeVar
+
+from task_graph.planning.domain.value_objects.recurrence_policy import RecurrencePolicy
+from task_graph.planning.domain.value_objects.task_output import TaskOutput
+from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
+
+T = TypeVar("T", bound=BaseTaskEvent)
 
 
 class Task(AggregateRoot):
@@ -44,29 +47,6 @@ class Task(AggregateRoot):
     output: TaskOutput | None = Field(default=None)
     review_feedback: ReviewFeedback | None = Field(default=None)
 
-    @field_validator("dependencies", mode="before")
-    @classmethod
-    def validate_dependencies(cls, value: Any) -> set[TaskId]:
-        """Convert dependencies from various formats to TaskId set.
-
-        Supports:
-        - Set of TaskId objects
-        - Set of str/UUID
-        - Set of ORM objects with 'id' attribute
-        """
-        if not isinstance(value, (set, list)):
-            raise ValueError("Dependencies must be a set or list")
-
-        deps = set()
-        for item in value:
-            if hasattr(item, "id"):
-                # ORM model or other object with id attribute
-                deps.add(TaskId.model_validate(item.id))
-            else:
-                # Direct primitive or TaskId
-                deps.add(TaskId.model_validate(item))
-        return deps
-
     @classmethod
     def create(
         cls: type[Self],
@@ -84,7 +64,6 @@ class Task(AggregateRoot):
         """Factory method to create a new Task"""
         if isinstance(scope_level, str):
             scope_level = ScopeLevel(scope_level)
-
         return cls(
             id=TaskId.create(),
             project_id=project_id,
@@ -110,9 +89,7 @@ class Task(AggregateRoot):
                 f"Task {self.id} cannot be marked ready: current status is {self.status}, expected PENDING or BLOCKED"
             )
         self.status = TaskStatus.READY
-        self.add_domain_event(
-            self._build_task_event(TaskReadyEvent)
-        )
+        self.add_domain_event(self._build_task_event(TaskReadyEvent))
 
     def mark_pending(self: Self) -> None:
         """将任务标记为 PENDING（新增了未满足的依赖）。
@@ -135,9 +112,7 @@ class Task(AggregateRoot):
                 f"Task {self.id} cannot be claimed: current status is {self.status}, expected READY or CHANGES_REQUESTED"
             )
         self.status = TaskStatus.IN_PROGRESS
-        self.add_domain_event(
-            self._build_task_event(TaskInProgressEvent)
-        )
+        self.add_domain_event(self._build_task_event(TaskInProgressEvent))
 
     def set_output(self: Self, output: TaskOutput) -> None:
         """设置任务执行结果。
@@ -166,9 +141,7 @@ class Task(AggregateRoot):
                 f"Task {self.id} cannot be marked blocked: current status is {self.status}, expected IN_PROGRESS"
             )
         self.status = TaskStatus.BLOCKED
-        self.add_domain_event(
-            self._build_task_event(TaskBlockedEvent, reason=reason)
-        )
+        self.add_domain_event(self._build_task_event(TaskBlockedEvent, reason=reason))
 
     def mark_reviewing(self: Self) -> None:
         """标记任务进入审核状态。
@@ -180,9 +153,7 @@ class Task(AggregateRoot):
                 f"Task {self.id} cannot be marked reviewing: current status is {self.status}, expected IN_PROGRESS"
             )
         self.status = TaskStatus.REVIEWING
-        self.add_domain_event(
-            self._build_task_event(TaskReviewRequestedEvent)
-        )
+        self.add_domain_event(self._build_task_event(TaskReviewRequestedEvent))
 
     def mark_completed(self: Self) -> None:
         """直接标记任务完成（用于手动/自动完成场景）。
@@ -195,11 +166,11 @@ class Task(AggregateRoot):
                 f"Task {self.id} cannot be marked completed: current status is {self.status}"
             )
         self.status = TaskStatus.DONE
-        self.add_domain_event(
-            self._build_task_event(TaskCompletedEvent)
-        )
+        self.add_domain_event(self._build_task_event(TaskCompletedEvent))
 
-    def review(self: Self, approved: bool, feedback: str, requires_decomposition: bool = False) -> None:
+    def review(
+        self: Self, approved: bool, feedback: str, requires_decomposition: bool = False
+    ) -> None:
         """验证任务并记录反馈。
 
         Args:
@@ -260,30 +231,38 @@ class Task(AggregateRoot):
                 f"Task {self.id} cannot be marked decomposing: current status is {self.status}, expected REVIEWING"
             )
         self.status = TaskStatus.DECOMPOSING
-        self.add_domain_event(
-            self._build_task_event(TaskDecomposingEvent)
-        )
+        self.add_domain_event(self._build_task_event(TaskDecomposingEvent))
 
     def is_done(self: Self) -> bool:
         return self.status is TaskStatus.DONE
 
-    def _build_task_event(self, event_class: type[BaseTaskEvent], **kwargs: Any) -> BaseTaskEvent:
-        """
-        内部辅助方法：统一构造 Task 相关的领域事件，处理基础属性的映射和展平。
-        """
-        # 统一展平字段
-        bounded_context = self.scope_context.bounded_context if self.scope_context else None
-        architecture_layer = self.scope_context.architecture_layer if self.scope_context else None
-
-        # 显式构造事件，避免关键字参数解包的类型推断问题
-        return event_class(
-            task_id=str(self.id),
-            project_id=self.project_id,
-            scope_level=self.scope_level,
-            bounded_context=bounded_context,
-            architecture_layer=architecture_layer,
-            **kwargs
+    def _build_task_event(
+        self: Self,
+        event_class: type[T],
+        reason: str | None = None,
+        feedback: str | None = None,
+    ) -> T:
+        """内部辅助方法：统一构造 Task 相关的领域事件，处理基础属性的映射和展平。"""
+        bounded_context = (
+            self.scope_context.bounded_context if self.scope_context else None
         )
+        architecture_layer = (
+            self.scope_context.architecture_layer if self.scope_context else None
+        )
+
+        params: dict[str, Any] = {
+            "task_id": str(self.id),
+            "project_id": self.project_id,
+            "scope_level": self.scope_level,
+            "bounded_context": bounded_context,
+            "architecture_layer": architecture_layer,
+        }
+        if reason is not None:
+            params["reason"] = reason
+        if feedback is not None:
+            params["feedback"] = feedback
+
+        return event_class(**params)
 
     def is_claimable(self: Self) -> bool:
         return self.status in (TaskStatus.READY, TaskStatus.CHANGES_REQUESTED)
