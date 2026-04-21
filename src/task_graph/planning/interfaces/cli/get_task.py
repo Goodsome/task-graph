@@ -88,6 +88,14 @@ def get_task(
             console.print(f"  [red]错误: {task.output.error}[/red]")
 
     # 展示审核反馈
+    if task.acceptance_criteria:
+        console.print("\n[cyan]验收标准:[/cyan]")
+        for i, criterion in enumerate(task.acceptance_criteria, 1):
+            console.print(f"\n  [bold]{i}. {criterion.title}[/bold]")
+            console.print(f"    [dim]前置条件:[/dim] {criterion.given}")
+            console.print(f"    [dim]触发动作:[/dim] {criterion.when}")
+            console.print(f"    [dim]预期结果:[/dim] {criterion.then}")
+
     if task.review_feedback:
         console.print("\n[cyan]审核反馈:[/cyan]")
         decision_color = "green" if task.review_feedback.decision == "approved" else "yellow"
