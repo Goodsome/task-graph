@@ -1,16 +1,27 @@
 from dataclasses import dataclass
-from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
 from task_graph.planning.domain.aggregates import Task
-from task_graph.planning.domain.enums import CompletionLogic, TaskStatus, ScopeLevel, ArchitectureLayer
+from task_graph.planning.domain.enums import (
+    CompletionLogic,
+    TaskStatus,
+    ScopeLevel,
+    ArchitectureLayer,
+)
 from task_graph.planning.application.ports.unit_of_work import UnitOfWork
-from task_graph.planning.domain.value_objects import StoryPoint, ValueScore, TaskId, ScopeContext, AcceptanceCriterion
+from task_graph.planning.domain.value_objects import (
+    StoryPoint,
+    ValueScore,
+    TaskId,
+    ScopeContext,
+    AcceptanceCriterion,
+)
 
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class CreateTaskCommand(BaseModel):
     """
@@ -26,19 +37,18 @@ class CreateTaskCommand(BaseModel):
     scope_level: ScopeLevel
     completion_logic: CompletionLogic = Field(default=CompletionLogic.ALL)
     dependencies: list[str] = Field(default_factory=list)
-    parent_id: Optional[str] = Field(default=None)
-    bounded_context: Optional[str] = Field(default=None)
-    architecture_layer: Optional[ArchitectureLayer] = Field(default=None)
-    atomic_name: Optional[str] = Field(default=None)
+    parent_id: str | None = Field(default=None)
+    bounded_context: str | None = Field(default=None)
+    architecture_layer: ArchitectureLayer | None = Field(default=None)
+    atomic_name: str | None = Field(default=None)
     acceptance_criteria: list[AcceptanceCriterion] = Field(
-        default_factory=list,
+        ...,
         description="以 BDD 风格定义的验收标准列表",
     )
 
 
 @dataclass
 class CreateTaskResult:
-
     success: bool
     task_id: str
     error: str
@@ -58,7 +68,7 @@ class CreateTask:
                 value_vo = ValueScore.create(cmd.base_value)
 
                 # 2. 处理依赖 (Primitives -> TaskId Set)
-                dep_ids = set()
+                dep_ids: set[TaskId] = set()
                 existing_deps = []
                 if cmd.dependencies:
                     for d_str in cmd.dependencies:
@@ -71,20 +81,28 @@ class CreateTask:
                     missing_ids = dep_ids - found_ids
                     if missing_ids:
                         missing_str = ", ".join([str(mid.value) for mid in missing_ids])
-                        return CreateTaskResult(False, "", f"Dependencies not found: {missing_str}")
+                        return CreateTaskResult(
+                            False, "", f"Dependencies not found: {missing_str}"
+                        )
 
                 # 4. 计算是否需要标记为 READY
                 should_be_ready = True
-                if dep_ids and not all(t.status == TaskStatus.DONE for t in existing_deps):
+                if dep_ids and not all(
+                    t.status == TaskStatus.DONE for t in existing_deps
+                ):
                     should_be_ready = False
-                
+
                 parent_id = None
                 if cmd.parent_id:
                     parent_id = TaskId.reconstitute(cmd.parent_id)
 
                 # 4.1 构建 ScopeContext
                 scope_context = None
-                if cmd.bounded_context is not None or cmd.architecture_layer is not None or cmd.atomic_name is not None:
+                if (
+                    cmd.bounded_context is not None
+                    or cmd.architecture_layer is not None
+                    or cmd.atomic_name is not None
+                ):
                     scope_context = ScopeContext.create(
                         bounded_context=cmd.bounded_context,
                         architecture_layer=cmd.architecture_layer,
@@ -103,17 +121,21 @@ class CreateTask:
                     scope_level=cmd.scope_level,
                     parent_id=parent_id,
                     scope_context=scope_context,
-                    acceptance_criteria=cmd.acceptance_criteria or [],
+                    acceptance_criteria=cmd.acceptance_criteria,
                 )
 
                 # 如果条件满足，则标记为 READY（此方法会添加 TaskReadyEvent 到聚合根）
                 if should_be_ready:
                     new_task.mark_ready()
-                    logger.info(f"Task {new_task.id} marked as READY (dependencies satisfied or no dependencies)")
+                    logger.info(
+                        f"Task {new_task.id} marked as READY (dependencies satisfied or no dependencies)"
+                    )
 
                 # 6. 持久化
                 self.uow.tasks.save(new_task)
-                logger.info(f"Task {new_task.id} created with status {new_task.status.value}")
+                logger.info(
+                    f"Task {new_task.id} created with status {new_task.status.value}"
+                )
 
                 events = new_task.collect_events()
                 logger.debug(f"Collected {len(events)} events from aggregate")
@@ -127,5 +149,6 @@ class CreateTask:
         except Exception as e:
             logger.error(e)
             import traceback
+
             logger.error(traceback.format_exc())
             return CreateTaskResult(False, "", str(e))
