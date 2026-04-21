@@ -1,9 +1,5 @@
-from typing import Literal
 from pydantic import Field
 from task_graph.shared.domain.core.value_object import ValueObject
-
-
-TestType = Literal["unit", "integration", "subcutaneous", "e2e"]
 
 
 class AcceptanceCriterion(ValueObject):
@@ -18,7 +14,3 @@ class AcceptanceCriterion(ValueObject):
     given: str = Field(..., description="前置条件（Given），描述测试的初始上下文")
     when: str = Field(..., description="触发动作（When），描述发生了什么操作或事件")
     then: str = Field(..., description="预期结果（Then），描述系统应有的可观测响应")
-    test_type: TestType = Field(
-        default="unit",
-        description="对应测试用例的类型：unit（单元）、integration（集成）、subcutaneous（皮下）、e2e（端到端）",
-    )

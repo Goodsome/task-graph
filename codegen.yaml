@@ -1317,9 +1317,6 @@ contexts:
         name: when
       - type: string
         name: then
-      - type: TestType
-        name: test_type
-        default: unit
     - name: TaskOutput
       description: 任务执行者的交付物
       attributes:

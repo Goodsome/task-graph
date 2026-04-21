@@ -25,7 +25,7 @@
     *   `READY` 状态只能从 `PENDING` 或 `BLOCKED` 转换而来。
     *   只有处于 `READY` 状态的任务才能被 `Claim`（认领）进入 `IN_PROGRESS`。
 *   **层级降级约束**：子任务的 `ScopeLevel` 必须低于父任务的层级（如 `Project` 的子任务应为 `Context`）。
-*   **验收标准格式约束**：`AcceptanceCriterion` 必须包含完整的 `Given / When / Then` 三段式描述，且 `test_type` 必须是 `unit | integration | subcutaneous | e2e` 之一，不允许使用自由文本的测试类型。
+*   **验收标准格式约束**：`AcceptanceCriterion` 必须包含完整的 `Given / When / Then` 三段式描述。
 
 ## 3. 核心业务规约 (Business Rules)
 
@@ -51,5 +51,5 @@
 
 ### 验收标准强制 BDD 格式规约
 *   **Given**: 通过 `create_task` 或 `revise_task_details` 提交包含验收标准的任务。
-*   **When**: 验收标准中的 `test_type` 字段不在 `unit | integration | subcutaneous | e2e` 范围内，或 `given / when / then` 任意段为空。
+*   **When**: `AcceptanceCriterion` 中的 `given / when / then` 任意段为空。
 *   **Then**: 系统必须拒绝该请求并返回 `ValidationError`，不允许持久化格式不合规的验收标准。

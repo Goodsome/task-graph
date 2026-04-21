@@ -116,14 +116,12 @@ class SaveBindings:
                 given="项目已存在",
                 when="调用 create_task",
                 then="可通过任务 ID 查询到该任务",
-                test_type="integration",
             ),
             AcceptanceCriterion(
                 title="任务状态初始为 PENDING",
                 given="新任务已创建",
                 when="读取任务状态",
                 then="状态为 PENDING",
-                test_type="unit",
             ),
         ]
         self._arranged_task = TaskFactory.build(

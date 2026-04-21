@@ -30,7 +30,7 @@
     *   **JSONB 字段**：用于存储半结构化数据，所有字段均支持 PostgreSQL GIN 索引扩展：
         *   `output`：任务产出物（总结 + 制品路径列表）
         *   `review_feedback`：人工或 Agent 的审核反馈（决策 + 评注）
-        *   `acceptance_criteria`：BDD 验收标准列表（`Given/When/Then` 三段式 + 测试类型）
+        *   `acceptance_criteria`：BDD 验收标准列表（`Given/When/Then` 三段式）
         *   `scope_context`：有界上下文与架构层归属信息
 
 ## 4. 跨领域集成契约 (Integration Contracts)
@@ -51,4 +51,3 @@
 1.  **并发控制**：在 `claim_task` 操作中，必须使用数据库行级锁（`SELECT ... FOR UPDATE`），防止多个 Agent 同时认领同一个 `READY` 任务。
 2.  **幂等性**：事件订阅逻辑必须是幂等的，确保在重试机制下不会导致任务重复解锁。
 3.  **循环检测**：在 `modify_task_dependencies` 用例中，在保存前必须调用 `CycleDetectionService` 遍历全图，确保 DAG 的合法性。
-4.  **验收标准结构化约束**：`AcceptanceCriterion` 是强类型值对象，`test_type` 使用 `Literal` 类型而非自由字符串，Pydantic 在应用层入口处强制校验，非法值不会触达持久化层。
