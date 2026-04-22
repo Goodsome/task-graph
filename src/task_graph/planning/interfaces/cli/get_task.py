@@ -5,6 +5,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 from rich.panel import Panel
+from rich.markup import escape
 from dependency_injector.wiring import Provide, inject
 
 from task_graph.planning.application.use_cases.get_task_details import (
@@ -44,7 +45,7 @@ def get_task(
     assert task is not None, "Task should not be None when result is successful"
 
     # 渲染任务详情
-    console.print(Panel(f"[bold]{task.name}[/bold]", title=f"任务 {task_id}"))
+    console.print(Panel(f"[bold]{escape(task.name)}[/bold]", title=f"任务 {task_id}"))
     console.print(f"[cyan]项目:[/cyan] {task.project_id}")
     console.print(f"[cyan]状态:[/cyan] {task.status.value}")
     console.print(f"[cyan]层级:[/cyan] {task.scope_level.value}")
@@ -57,8 +58,12 @@ def get_task(
 
     # 展示范围上下文
     if task.scope_context:
-        console.print(f"[cyan]所属领域:[/cyan] {task.scope_context.bounded_context if task.scope_context.bounded_context else '-'}")
-        console.print(f"[cyan]架构层级:[/cyan] {task.scope_context.architecture_layer.value if task.scope_context.architecture_layer else '-'}")
+        console.print(
+            f"[cyan]所属领域:[/cyan] {task.scope_context.bounded_context if task.scope_context.bounded_context else '-'}"
+        )
+        console.print(
+            f"[cyan]架构层级:[/cyan] {task.scope_context.architecture_layer.value if task.scope_context.architecture_layer else '-'}"
+        )
 
     # 展示重复策略
     if task.recurrence:
@@ -67,7 +72,7 @@ def get_task(
         console.print(f"[cyan]当前迭代:[/cyan] {task.recurrence.current_iteration}")
 
     console.print("\n[cyan]描述:[/cyan]")
-    console.print(task.description)
+    console.print(escape(task.description))
 
     if task.dependencies:
         console.print(
@@ -81,23 +86,40 @@ def get_task(
 
     if task.output:
         console.print("\n[cyan]输出:[/cyan]")
-        console.print(f"  摘要: {task.output.summary}")
+        console.print(f"  摘要: {escape(task.output.summary)}")
         if task.output.artifacts:
-            console.print(f"  产出: {', '.join(task.output.artifacts)}")
+            console.print(
+                f"  产出: {', '.join(escape(artifact) for artifact in task.output.artifacts)}"
+            )
         if task.output.error:
-            console.print(f"  [red]错误: {task.output.error}[/red]")
+            console.print(f"  [red]错误: {escape(task.output.error)}[/red]")
+        if task.output.sub_tasks:
+            console.print("\n  [cyan]子任务:[/cyan]")
+            for i, sub_task in enumerate(task.output.sub_tasks, 1):
+                console.print(f"\n    [bold]{i}. {escape(sub_task.name)}[/bold]")
+                console.print(f"      [dim]描述:[/dim] {escape(sub_task.description)}")
+                console.print(f"      [dim]工作量:[/dim] {sub_task.effort.value}")
+                console.print(f"      [dim]价值:[/dim] {sub_task.base_value.value}")
+                if sub_task.acceptance_criteria:
+                    console.print("      [dim]验收标准:[/dim]")
+                    for j, criterion in enumerate(sub_task.acceptance_criteria, 1):
+                        console.print(f"        {j}. {escape(criterion.title)}")
 
     # 展示审核反馈
     if task.acceptance_criteria:
         console.print("\n[cyan]验收标准:[/cyan]")
         for i, criterion in enumerate(task.acceptance_criteria, 1):
-            console.print(f"\n  [bold]{i}. {criterion.title}[/bold]")
-            console.print(f"    [dim]前置条件:[/dim] {criterion.given}")
-            console.print(f"    [dim]触发动作:[/dim] {criterion.when}")
-            console.print(f"    [dim]预期结果:[/dim] {criterion.then}")
+            console.print(f"\n  [bold]{i}. {escape(criterion.title)}[/bold]")
+            console.print(f"    [dim]前置条件:[/dim] {escape(criterion.given)}")
+            console.print(f"    [dim]触发动作:[/dim] {escape(criterion.when)}")
+            console.print(f"    [dim]预期结果:[/dim] {escape(criterion.then)}")
 
     if task.review_feedback:
         console.print("\n[cyan]审核反馈:[/cyan]")
-        decision_color = "green" if task.review_feedback.decision == "approved" else "yellow"
-        console.print(f"  决定: [{decision_color}]{task.review_feedback.decision}[/{decision_color}]")
-        console.print(f"  意见: {task.review_feedback.comment}")
+        decision_color = (
+            "green" if task.review_feedback.decision == "approved" else "yellow"
+        )
+        console.print(
+            f"  决定: [{decision_color}]{task.review_feedback.decision}[/{decision_color}]"
+        )
+        console.print(f"  意见: {escape(task.review_feedback.comment)}")

@@ -5,6 +5,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 from rich.table import Table
+from rich.markup import escape
 
 from task_graph.planning.application.use_cases.list_tasks import (
     ListTasksQuery,
@@ -94,7 +95,7 @@ def list_tasks(
         table.add_row(
             task.id,
             task.project_id,
-            task.name,
+            escape(task.name),
             task.status,
             task.scope_level,
             task.parent_id or "-",
