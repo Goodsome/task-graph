@@ -1117,8 +1117,7 @@ contexts:
           type: None
       - name: review
         description: "验证任务并记录反馈。\n\nArgs:\n    approved: 是否通过\n    feedback: 详细评价意见\n\
-          \    requires_decomposition: 是否需要将该任务进一步拆分为子任务\nRaises:\n    IllegalStateTransitionError:\
-          \ 如果当前状态不是 REVIEWING"
+          Raises:\n    IllegalStateTransitionError: 如果当前状态不是 REVIEWING"
         inputs:
         - type: Self
           name: self
@@ -1126,11 +1125,17 @@ contexts:
           name: approved
         - type: string
           name: feedback
-        - type: boolean
-          name: requires_decomposition
-          default: false
         output:
           type: None
+      - name: generate_sub_tasks
+        description: "根据输出中的 sub_tasks 生成子任务。\n\nReturns:\n    list[Task]: 生成的子任务列表\n\
+          Raises:\n    IllegalStateTransitionError: 只有 DECOMPOSING 状态可以生成子任务"
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: Task
+          container: list
       - name: mark_decomposition_completed
         description: "标记任务分解完成。\n\nRaises:\n    IllegalStateTransitionError: 如果当前状态不是\
           \ DECOMPOSING"
@@ -1301,6 +1306,21 @@ contexts:
           name: data
         output:
           type: any
+    - name: SubTaskInfo
+      description: 要拆分的子任务信息
+      attributes:
+      - type: string
+        name: name
+      - type: string
+        name: description
+      - type: StoryPoint
+        name: effort
+      - type: ValueScore
+        name: base_value
+      - type: AcceptanceCriterion
+        container: list
+        name: acceptance_criteria
+        default: list
     - name: AcceptanceCriterion
       description: '以 BDD（Behavior-Driven Development）风格记录的单条验收标准。
 
@@ -1328,6 +1348,10 @@ contexts:
       - type: string
         optional: true
         name: error
+      - type: SubTaskInfo
+        container: list
+        optional: true
+        name: sub_tasks
     - name: ScopeContext
       description: Value object containing context information related to the task's
         scope level.
@@ -1338,6 +1362,9 @@ contexts:
       - type: ArchitectureLayer
         optional: true
         name: architecture_layer
+      - type: string
+        optional: true
+        name: atomic_name
       behaviors:
       - name: create
         description: Factory method to create a new ScopeContext instance.
@@ -1351,6 +1378,9 @@ contexts:
         - type: ArchitectureLayer
           optional: true
           name: architecture_layer
+        - type: string
+          optional: true
+          name: atomic_name
         output:
           type: Self
     - name: RecurrencePolicy
@@ -1470,6 +1500,12 @@ contexts:
           name: self
         output:
           type: any
+      - name: __hash__
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: integer
       - name: serialize
         inputs:
         - type: Self
@@ -1689,6 +1725,10 @@ contexts:
       - type: string
         optional: true
         name: error
+      - type: SubTaskInfo
+        container: list
+        name: sub_tasks
+        default: list
       outputs:
       - type: boolean
         name: success
@@ -1731,10 +1771,12 @@ contexts:
       - type: ArchitectureLayer
         optional: true
         name: architecture_layer
+      - type: string
+        optional: true
+        name: atomic_name
       - type: AcceptanceCriterion
         container: list
         name: acceptance_criteria
-        default: list
       outputs:
       - type: boolean
         name: success
@@ -1813,9 +1855,6 @@ contexts:
         name: approved
       - type: string
         name: feedback
-      - type: boolean
-        name: requires_decomposition
-        default: false
       outputs:
       - type: boolean
         name: success
