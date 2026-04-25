@@ -217,7 +217,7 @@ class Task(AggregateRoot):
         level_map = {
             ScopeLevel.PROJECT: ScopeLevel.CONTEXT,
             ScopeLevel.CONTEXT: ScopeLevel.ARCHITECTURAL,
-            ScopeLevel.ARCHITECTURAL: ScopeLevel.ATOMIC,
+            ScopeLevel.ARCHITECTURAL: ScopeLevel.COMPONENT,
         }
         child_scope_level = level_map.get(self.scope_level)
         if not child_scope_level:
@@ -235,7 +235,7 @@ class Task(AggregateRoot):
 
             child_bc = parent_bc
             child_al = parent_al
-            child_an = None
+            child_cn = None
 
             if child_scope_level == ScopeLevel.CONTEXT:
                 child_bc = sub_info.name
@@ -244,13 +244,13 @@ class Task(AggregateRoot):
                     child_al = ArchitectureLayer(sub_info.name)
                 except ValueError:
                     child_al = ArchitectureLayer.NONE
-            elif child_scope_level == ScopeLevel.ATOMIC:
-                child_an = sub_info.name
+            elif child_scope_level == ScopeLevel.COMPONENT:
+                child_cn = sub_info.name
 
             child_context = ScopeContext.create(
                 bounded_context=child_bc,
                 architecture_layer=child_al,
-                atomic_name=child_an,
+                component_name=child_cn,
             )
 
             child_task = Task.create(

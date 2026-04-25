@@ -71,7 +71,7 @@ class GetBindings:
             project_id="test-project",
             name="Existing Task",
             description="A task that exists",
-            scope_level=ScopeLevel.ATOMIC,
+            scope_level=ScopeLevel.COMPONENT,
         )
         self.repository.save(self._arranged_task)
         self._arranged_task_id = self._arranged_task.id

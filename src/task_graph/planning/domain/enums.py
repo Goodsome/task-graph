@@ -64,7 +64,7 @@ class ScopeLevel(Enum):
     PROJECT = "project"             # PM/系统架构师：负责跨上下文的需求路由与最终交付
     CONTEXT = "context"             # 领域专家：负责单一上下文内的业务分析与架构拆解
     ARCHITECTURAL = "architectural" # 技术负责人：负责特定代码分层的技术设计与原子任务派发
-    ATOMIC = "atomic"               # 程序员：负责单一职责的代码落地
+    COMPONENT = "component"               # 程序员：负责单一职责的代码落地
     
 
 class ArchitectureLayer(Enum):

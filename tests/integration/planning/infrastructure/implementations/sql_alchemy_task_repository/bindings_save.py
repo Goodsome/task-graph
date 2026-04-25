@@ -72,7 +72,7 @@ class SaveBindings:
             project_id="test-project",
             name="Test Task",
             description="A test task",
-            scope_level=ScopeLevel.ATOMIC,
+            scope_level=ScopeLevel.COMPONENT,
         )
 
     def _arrange_existing_task(self) -> None:
@@ -80,7 +80,7 @@ class SaveBindings:
             project_id="test-project",
             name="Existing Task",
             description="An existing task",
-            scope_level=ScopeLevel.ATOMIC,
+            scope_level=ScopeLevel.COMPONENT,
         )
         self.repository.save(self._arranged_task)
 
@@ -89,13 +89,13 @@ class SaveBindings:
             project_id="test-project",
             name="Dependency Task 1",
             description="First dependency",
-            scope_level=ScopeLevel.ATOMIC,
+            scope_level=ScopeLevel.COMPONENT,
         )
         dep_task_2 = TaskFactory.build(
             project_id="test-project",
             name="Dependency Task 2",
             description="Second dependency",
-            scope_level=ScopeLevel.ATOMIC,
+            scope_level=ScopeLevel.COMPONENT,
         )
         self.repository.save(dep_task_1)
         self.repository.save(dep_task_2)
@@ -106,7 +106,7 @@ class SaveBindings:
             name="Task with Dependencies",
             description="A task that depends on others",
             dependencies={dep_task_1.id, dep_task_2.id},
-            scope_level=ScopeLevel.ATOMIC,
+            scope_level=ScopeLevel.COMPONENT,
         )
 
     def _arrange_task_with_acceptance_criteria(self) -> None:
@@ -128,7 +128,7 @@ class SaveBindings:
             project_id="test-project",
             name="Task with Acceptance Criteria",
             description="A task with BDD acceptance criteria",
-            scope_level=ScopeLevel.ATOMIC,
+            scope_level=ScopeLevel.COMPONENT,
             acceptance_criteria=criteria,
         )
 
