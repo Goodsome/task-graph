@@ -68,6 +68,11 @@ class SqlAlchemyTaskRepository(TaskRepository):
         models = self.session.execute(stmt).scalars().all()
         return [self._to_domain(m) for m in models]
 
+    def find_by_parent_id(self, parent_id: TaskId) -> list[Task]:
+        stmt = select(TaskModel).where(TaskModel.parent_id == parent_id.value)
+        models = self.session.execute(stmt).scalars().all()
+        return [self._to_domain(m) for m in models]
+
     def find_paged(
         self,
         page: int,

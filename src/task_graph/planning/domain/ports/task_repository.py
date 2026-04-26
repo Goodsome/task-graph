@@ -48,3 +48,6 @@ class TaskRepository(ABC):
         scope_level: Optional[ScopeLevel],
         search: Optional[str],
     ) -> tuple[list[Task], int]: ...
+
+    @abstractmethod
+    def find_by_parent_id(self, parent_id: TaskId) -> list[Task]: ...

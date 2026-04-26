@@ -1728,6 +1728,15 @@ contexts:
         output:
           type: Any
           custom_type_string: tuple[list[Task], int]
+      - name: find_by_parent_id
+        inputs:
+        - type: Self
+          name: self
+        - type: TaskId
+          name: parent_id
+        output:
+          type: Task
+          container: list
     domain_events:
     - name: TaskDecomposingEvent
       description: Event emitted when a task is approved for decomposition.
@@ -1840,6 +1849,21 @@ contexts:
       - type: string
         name: error
       description: Create task
+      dependencies:
+      - type: UnitOfWork
+        name: uow
+    - name: CompleteDecomposition
+      kind: command
+      inputs:
+      - type: string
+        name: task_id
+      outputs:
+      - type: string
+        name: status
+      - type: string
+        name: task_id
+      - type: string
+        name: message
       dependencies:
       - type: UnitOfWork
         name: uow
@@ -2162,6 +2186,8 @@ contexts:
     cli_commands:
     - name: create-task
       use_case: CreateTask
+    - name: complete-decomposition
+      use_case: CompleteDecomposition
     - name: delete-task
       use_case: DeleteTask
     - name: get-task
@@ -2173,6 +2199,8 @@ contexts:
       use_case: SubmitTaskResult
     - name: create_task
       use_case: CreateTask
+    - name: complete_decomposition
+      use_case: CompleteDecomposition
     - name: update_task_status
       use_case: UpdateTaskStatus
     - name: suggest_next_action
@@ -2185,13 +2213,12 @@ contexts:
       use_case: DeleteTask
     - name: modify_task_dependencies
       use_case: ModifyTaskDependencies
+    - name: revise_task_details
+      use_case: ReviseTaskDetails
     - name: claim_task
       use_case: ClaimTask
     - name: list_tasks
       use_case: ListTasks
-    - name: revise_task_details
-      use_case: ReviseTaskDetails
-      description: update task details
 - name: Shared
   domain:
     core:

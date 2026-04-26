@@ -2,6 +2,7 @@ from dependency_injector import containers, providers
 from dependency_injector.providers import Dependency, Configuration
 
 from task_graph.planning.application.use_cases.claim_task import ClaimTask
+from task_graph.planning.application.use_cases.complete_decomposition import CompleteDecomposition
 # 3. 导入 Use Cases
 from task_graph.planning.application.use_cases.create_task import CreateTask
 from task_graph.planning.application.use_cases.delete_task import DeleteTask
@@ -111,6 +112,11 @@ class Container(containers.DeclarativeContainer):
         ClaimTask,
         uow=unit_of_work,
         dependency_service=dependency_resolution_service
+    )
+
+    complete_decomposition = providers.Factory(
+        CompleteDecomposition,
+        uow=unit_of_work
     )
 
     review_task = providers.Factory(
