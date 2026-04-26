@@ -10,7 +10,6 @@ from task_graph.planning.domain.value_objects.value_score import ValueScore
 from task_graph.planning.domain.value_objects.scope_context import ScopeContext
 from task_graph.shared.domain.core.aggregate_root import AggregateRoot
 from task_graph.planning.domain.events import (
-    BaseTaskEvent,
     TaskBlockedEvent,
     TaskChangesRequestedEvent,
     TaskCompletedEvent,
@@ -20,12 +19,13 @@ from task_graph.planning.domain.events import (
     TaskReviewRequestedEvent,
 )
 from typing import Any, Self, TypeVar, Union
+from task_graph.shared.domain.core.domain_event import DomainEvent
 from task_graph.planning.domain.value_objects.recurrence_policy import RecurrencePolicy
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
 from task_graph.planning.domain.value_objects.acceptance_criterion import AcceptanceCriterion
 
-T = TypeVar("T", bound=BaseTaskEvent)
+T = TypeVar("T", bound=DomainEvent)
 
 
 class Task(AggregateRoot):

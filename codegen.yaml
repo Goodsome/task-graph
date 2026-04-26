@@ -975,6 +975,22 @@ contexts:
       use_case: AddComment
 - name: Planning
   domain:
+    core:
+    - name: BaseTask
+      description: Task 领域模型的基础类，包含所有公共上下文信息
+      attributes:
+      - type: string
+        name: task_id
+      - type: string
+        name: project_id
+      - type: ScopeLevel
+        name: scope_level
+      - type: string
+        optional: true
+        name: bounded_context
+      - type: ArchitectureLayer
+        optional: true
+        name: architecture_layer
     aggregates:
     - name: Task
       description: The atomic unit of planning, representing a node in the DAG.
@@ -1242,8 +1258,8 @@ contexts:
         value: context
       - name: ARCHITECTURAL
         value: architectural
-      - name: ATOMIC
-        value: atomic
+      - name: COMPONENT
+        value: component
     - name: ArchitectureLayer
       description: DDD architecture layers.
       members:
@@ -1364,6 +1380,9 @@ contexts:
         name: architecture_layer
       - type: string
         optional: true
+        name: component_name
+      - type: string
+        optional: true
         name: atomic_name
       behaviors:
       - name: create
@@ -1380,7 +1399,7 @@ contexts:
           name: architecture_layer
         - type: string
           optional: true
-          name: atomic_name
+          name: component_name
         output:
           type: Self
     - name: RecurrencePolicy
@@ -1709,6 +1728,41 @@ contexts:
         output:
           type: Any
           custom_type_string: tuple[list[Task], int]
+    domain_events:
+    - name: TaskDecomposingEvent
+      description: Event emitted when a task is approved for decomposition.
+      base_types:
+      - BaseTask
+    - name: TaskCompletedEvent
+      description: Event emitted when a task is completed.
+      base_types:
+      - BaseTask
+    - name: TaskBlockedEvent
+      description: Event emitted when a task is blocked (e.g., execution error).
+      base_types:
+      - BaseTask
+      attributes:
+      - type: string
+        name: reason
+    - name: TaskReadyEvent
+      description: Event emitted when a task is ready to be claimed.
+      base_types:
+      - BaseTask
+    - name: TaskReviewRequestedEvent
+      description: Event emitted when a task is submitted for review.
+      base_types:
+      - BaseTask
+    - name: TaskChangesRequestedEvent
+      description: Event emitted when a task review is rejected and changes are requested.
+      base_types:
+      - BaseTask
+      attributes:
+      - type: string
+        name: feedback
+    - name: TaskInProgressEvent
+      description: Event emitted when a task is claimed and starts execution.
+      base_types:
+      - BaseTask
   application:
     use_cases:
     - name: SubmitTaskResult
@@ -1773,7 +1827,7 @@ contexts:
         name: architecture_layer
       - type: string
         optional: true
-        name: atomic_name
+        name: component_name
       - type: AcceptanceCriterion
         container: list
         name: acceptance_criteria

@@ -9,6 +9,7 @@ class ScopeContext(ValueObject):
     bounded_context: str | None = None
     architecture_layer: ArchitectureLayer | None = None
     component_name: str | None = None
+    atomic_name: str | None = None
 
     @classmethod
     def create(
@@ -21,5 +22,5 @@ class ScopeContext(ValueObject):
         return cls(
             bounded_context=bounded_context,
             architecture_layer=architecture_layer,
-            component_name=component_name
+            component_name=component_name,
         )
