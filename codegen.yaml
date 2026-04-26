@@ -853,7 +853,7 @@ contexts:
         name: uow
     ports:
     - name: UnitOfWork
-      kind: adapter
+      kind: repository
       operations:
       - name: issues
         inputs:
@@ -1831,6 +1831,7 @@ contexts:
       - type: AcceptanceCriterion
         container: list
         name: acceptance_criteria
+        default: list
       outputs:
       - type: boolean
         name: success
@@ -2059,7 +2060,7 @@ contexts:
         name: uow
     ports:
     - name: UnitOfWork
-      kind: adapter
+      kind: repository
       operations:
       - name: tasks
         inputs:
@@ -2188,6 +2189,9 @@ contexts:
       use_case: ClaimTask
     - name: list_tasks
       use_case: ListTasks
+    - name: revise_task_details
+      use_case: ReviseTaskDetails
+      description: update task details
 - name: Shared
   domain:
     core:

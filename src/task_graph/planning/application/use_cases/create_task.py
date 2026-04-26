@@ -42,7 +42,7 @@ class CreateTaskCommand(BaseModel):
     architecture_layer: ArchitectureLayer | None = Field(default=None)
     component_name: str | None = Field(default=None)
     acceptance_criteria: list[AcceptanceCriterion] = Field(
-        ...,
+        default_factory=list,
         description="以 BDD 风格定义的验收标准列表",
     )
 

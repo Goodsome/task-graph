@@ -8,6 +8,7 @@ from .modify_task_dependencies import modify_task_dependencies
 from .review_task import review_task
 from .submit_task_result import submit_task_result
 from .suggest_next_action import suggest_next_action
+from .revise_task_details import revise_task_details
 
 __all__ = [
     "create_task",
@@ -20,6 +21,7 @@ __all__ = [
     "review_task",
     "submit_task_result",
     "suggest_next_action",
+    "revise_task_details",
     "PLANNING_TOOLS",
 ]
 
@@ -34,5 +36,6 @@ PLANNING_TOOLS = [
     modify_task_dependencies,
     review_task,
     submit_task_result,
-    suggest_next_action,
+    # suggest_next_action,
+    revise_task_details,
 ]

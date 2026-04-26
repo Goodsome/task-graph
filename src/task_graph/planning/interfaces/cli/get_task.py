@@ -104,6 +104,9 @@ def get_task(
                     console.print("      [dim]验收标准:[/dim]")
                     for j, criterion in enumerate(sub_task.acceptance_criteria, 1):
                         console.print(f"        {j}. {escape(criterion.title)}")
+                        console.print(f"          [dim]前置条件:[/dim] {escape(criterion.given)}")
+                        console.print(f"          [dim]触发动作:[/dim] {escape(criterion.when)}")
+                        console.print(f"          [dim]预期结果:[/dim] {escape(criterion.then)}")
 
     # 展示审核反馈
     if task.acceptance_criteria:

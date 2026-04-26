@@ -424,6 +424,39 @@
       "title":"DomainEventSpec",
       "type":"object"
     },
+    "DomainExceptionSpec":{
+      "additionalProperties":false,
+      "description":"Specification of a domain exception to be generated.",
+      "properties":{
+        "attributes":{
+          "$ref":"#/$defs/AttributeSpecList"
+        },
+        "base_types":{
+          "items":{
+            "type":"string"
+          },
+          "title":"Base Types",
+          "type":"array"
+        },
+        "behaviors":{
+          "$ref":"#/$defs/MethodSpecList"
+        },
+        "description":{
+          "title":"Description",
+          "type":"string"
+        },
+        "name":{
+          "title":"Name",
+          "type":"string"
+        }
+      },
+      "required":[
+        "name",
+        "description"
+      ],
+      "title":"DomainExceptionSpec",
+      "type":"object"
+    },
     "DomainSpec":{
       "additionalProperties":false,
       "description":"Specification of a domain to be generated.",
@@ -449,6 +482,13 @@
           "title":"Domain Events",
           "type":"array"
         },
+        "domain_exceptions":{
+          "items":{
+            "$ref":"#/$defs/DomainExceptionSpec"
+          },
+          "title":"Domain Exceptions",
+          "type":"array"
+        },
         "entities":{
           "items":{
             "$ref":"#/$defs/EntitySpec"
@@ -468,6 +508,13 @@
             "$ref":"#/$defs/PortSpec"
           },
           "title":"Ports",
+          "type":"array"
+        },
+        "repositories":{
+          "items":{
+            "$ref":"#/$defs/RepositorySpec"
+          },
+          "title":"Repositories",
           "type":"array"
         },
         "services":{
@@ -868,6 +915,39 @@
       ],
       "title":"PortType",
       "type":"string"
+    },
+    "RepositorySpec":{
+      "additionalProperties":false,
+      "description":"Specification of a domain repository to be generated.",
+      "properties":{
+        "attributes":{
+          "$ref":"#/$defs/AttributeSpecList"
+        },
+        "base_types":{
+          "items":{
+            "type":"string"
+          },
+          "title":"Base Types",
+          "type":"array"
+        },
+        "behaviors":{
+          "$ref":"#/$defs/MethodSpecList"
+        },
+        "description":{
+          "title":"Description",
+          "type":"string"
+        },
+        "name":{
+          "title":"Name",
+          "type":"string"
+        }
+      },
+      "required":[
+        "name",
+        "description"
+      ],
+      "title":"RepositorySpec",
+      "type":"object"
     },
     "RuleSpec":{
       "additionalProperties":false,
