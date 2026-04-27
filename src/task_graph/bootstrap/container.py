@@ -17,6 +17,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         packages=[
             "task_graph.planning.interfaces",
             "task_graph.issue_tracking.interfaces",
+            "task_graph.planning.interfaces.tui",
         ]
     )
 
