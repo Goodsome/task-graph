@@ -4,7 +4,7 @@ from task_graph.issue_tracking.domain.services.issue_status_transition_service i
     IssueStatusTransitionService,
 )
 
-from task_graph.issue_tracking.infrastructure.repositories.sql_alchemy_issue_repository import (
+from task_graph.issue_tracking.infrastructure.adapters.sql_alchemy_issue_repository import (
     SqlAlchemyIssueRepository,
 )
 from task_graph.issue_tracking.application.use_cases.update_issue_metadata import (
@@ -28,7 +28,7 @@ from task_graph.issue_tracking.application.use_cases.unlink_issue_from_task impo
 from dependency_injector.providers import Factory
 from task_graph.issue_tracking.application.use_cases.create_issue import CreateIssue
 from dependency_injector.containers import DeclarativeContainer
-from task_graph.issue_tracking.infrastructure.repositories.sql_alchemy_unit_of_work import (
+from task_graph.issue_tracking.infrastructure.adapters.sql_alchemy_unit_of_work import (
     SqlAlchemyUnitOfWork,
 )
 

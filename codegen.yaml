@@ -473,8 +473,6 @@ contexts:
     ports:
     - name: IssueRepository
       description: Persistence interface for Issue aggregate
-      kind: repository
-      aggregate: Issue
       operations:
       - name: save
         inputs:
@@ -853,7 +851,6 @@ contexts:
         name: uow
     ports:
     - name: UnitOfWork
-      kind: repository
       operations:
       - name: issues
         inputs:
@@ -1600,8 +1597,6 @@ contexts:
     ports:
     - name: TaskRepository
       description: Persistence interface for Tasks.
-      kind: repository
-      aggregate: Task
       operations:
       - name: save
         inputs:
@@ -2084,7 +2079,6 @@ contexts:
         name: uow
     ports:
     - name: UnitOfWork
-      kind: repository
       operations:
       - name: tasks
         inputs:

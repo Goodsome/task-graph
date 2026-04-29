@@ -6,7 +6,7 @@ from tests.factories.task_factory import TaskFactory, TaskOutputFactory, ScopeCo
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.enums import ScopeLevel
-from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import (
+from task_graph.planning.infrastructure.adapters.sql_alchemy_task_repository import (
     SqlAlchemyTaskRepository,
 )
 

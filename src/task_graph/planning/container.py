@@ -18,8 +18,8 @@ from task_graph.planning.application.use_cases.update_task_status import UpdateT
 from task_graph.planning.domain.services.cycle_detection_service import CycleDetectionService
 from task_graph.planning.domain.services.dependency_resolution_service import DependencyResolutionService
 from task_graph.planning.domain.services.priority_analysis_service import PriorityAnalysisService
-from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import SqlAlchemyTaskRepository
-from task_graph.planning.infrastructure.repositories.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork
+from task_graph.planning.infrastructure.adapters.sql_alchemy_task_repository import SqlAlchemyTaskRepository
+from task_graph.planning.infrastructure.adapters.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork
 from task_graph.shared.infrastructure.database import Database
 
 
