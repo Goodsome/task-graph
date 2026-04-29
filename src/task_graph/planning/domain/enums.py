@@ -75,3 +75,13 @@ class ArchitectureLayer(Enum):
     INTERFACES = "interfaces"
     CROSS_CUTTING = "cross_cutting" # 横切关注点，如日志、通用配置
     NONE = "none" # 适用于非代码层面的任务
+
+
+class GherkinKeyword(ValidatedEnum):
+    """Gherkin 语法关键字，用于 BDD 场景步骤的语义标注。"""
+
+    GIVEN = "given"
+    WHEN = "when"
+    THEN = "then"
+    AND = "and"
+    BUT = "but"

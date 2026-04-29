@@ -23,7 +23,7 @@ from task_graph.shared.domain.core.domain_event import DomainEvent
 from task_graph.planning.domain.value_objects.recurrence_policy import RecurrencePolicy
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
-from task_graph.planning.domain.value_objects.acceptance_criterion import AcceptanceCriterion
+from task_graph.planning.domain.value_objects.scenario import Scenario
 
 T = TypeVar("T", bound=DomainEvent)
 
@@ -46,9 +46,9 @@ class Task(AggregateRoot):
     recurrence: RecurrencePolicy | None = Field(default=None)
     output: TaskOutput | None = Field(default=None)
     review_feedback: ReviewFeedback | None = Field(default=None)
-    acceptance_criteria: list[AcceptanceCriterion] = Field(
+    acceptance_criteria: list[Scenario] = Field(
         default_factory=list,
-        description="以 BDD 风格记录的验收标准列表，每条对应一个潜在的测试用例",
+        description="以 Gherkin 场景定义的验收标准列表",
     )
 
     @classmethod
@@ -64,7 +64,7 @@ class Task(AggregateRoot):
         scope_level: ScopeLevel,
         parent_id: TaskId | None = None,
         scope_context: ScopeContext | None = None,
-        acceptance_criteria: list[AcceptanceCriterion] | None = None,
+        acceptance_criteria: list[Scenario] | None = None,
     ) -> Self:
         """Factory method to create a new Task"""
         if isinstance(scope_level, str):

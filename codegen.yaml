@@ -230,12 +230,6 @@ contexts:
           name: value
         output:
           type: Self
-      - name: __str__
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: string
       - name: serialize
         inputs:
         - type: Self
@@ -332,12 +326,6 @@ contexts:
           name: value
         output:
           type: IssueId
-      - name: __str__
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: string
       - name: serialize
         inputs:
         - type: Self
@@ -864,28 +852,6 @@ contexts:
           name: self
         output:
           type: EventBus
-      - name: __enter__
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: UnitOfWork
-      - name: __exit__
-        inputs:
-        - type: Self
-          name: self
-        - type: BaseException
-          container: type
-          optional: true
-          name: exc_type
-        - type: BaseException
-          optional: true
-          name: exc_val
-        - type: TracebackType
-          optional: true
-          name: exc_tb
-        output:
-          type: None
       - name: commit
         inputs:
         - type: Self
@@ -1028,7 +994,7 @@ contexts:
       - type: ReviewFeedback
         optional: true
         name: review_feedback
-      - type: AcceptanceCriterion
+      - type: Scenario
         container: list
         name: acceptance_criteria
         default: list
@@ -1062,7 +1028,7 @@ contexts:
         - type: ScopeContext
           optional: true
           name: scope_context
-        - type: AcceptanceCriterion
+        - type: Scenario
           container: list
           optional: true
           name: acceptance_criteria
@@ -1181,22 +1147,6 @@ contexts:
           name: self
         output:
           type: boolean
-      - name: _build_task_event
-        description: 内部辅助方法：统一构造 Task 相关的领域事件，处理基础属性的映射和展平。
-        inputs:
-        - type: Self
-          name: self
-        - type: T
-          container: type
-          name: event_class
-        - type: string
-          optional: true
-          name: reason
-        - type: string
-          optional: true
-          name: feedback
-        output:
-          type: T
       - name: is_claimable
         inputs:
         - type: Self
@@ -1272,6 +1222,19 @@ contexts:
         value: cross_cutting
       - name: NONE
         value: none
+    - name: GherkinKeyword
+      description: Gherkin 语法关键字，用于 BDD 场景步骤的语义标注。
+      members:
+      - name: GIVEN
+        value: given
+      - name: WHEN
+        value: when
+      - name: THEN
+        value: then
+      - name: AND
+        value: and
+      - name: BUT
+        value: but
     value_objects:
     - name: ValueScore
       description: Numeric representation of business value.
@@ -1288,22 +1251,6 @@ contexts:
           name: value
         output:
           type: ValueScore
-      - name: __add__
-        inputs:
-        - type: Self
-          name: self
-        - type: any
-          name: other
-        output:
-          type: any
-      - name: __radd__
-        inputs:
-        - type: Self
-          name: self
-        - type: any
-          name: other
-        output:
-          type: any
       - name: serialize
         inputs:
         - type: Self
@@ -1330,26 +1277,10 @@ contexts:
         name: effort
       - type: ValueScore
         name: base_value
-      - type: AcceptanceCriterion
+      - type: Scenario
         container: list
         name: acceptance_criteria
         default: list
-    - name: AcceptanceCriterion
-      description: '以 BDD（Behavior-Driven Development）风格记录的单条验收标准。
-
-
-        每一条验收标准将被转换为一个具体的测试用例。
-
-        结构上遵循 Given-When-Then 范式，以便后续工具自动解析并生成测试代码。'
-      attributes:
-      - type: string
-        name: title
-      - type: string
-        name: given
-      - type: string
-        name: when
-      - type: string
-        name: then
     - name: TaskOutput
       description: 任务执行者的交付物
       attributes:
@@ -1416,6 +1347,15 @@ contexts:
           name: self
         output:
           type: RecurrencePolicy
+    - name: Scenario
+      description: Gherkin 场景，由名称和有序步骤列表组成。
+      attributes:
+      - type: string
+        name: name
+      - type: GherkinStep
+        container: list
+        name: steps
+        default: list
     - name: StoryPoint
       description: Encapsulated Fibonacci number representing effort (1, 2, 3, 5,
         8, 13...).
@@ -1456,30 +1396,6 @@ contexts:
           name: v
         output:
           type: integer
-      - name: __add__
-        inputs:
-        - type: Self
-          name: self
-        - type: any
-          name: other
-        output:
-          type: any
-      - name: __radd__
-        inputs:
-        - type: Self
-          name: self
-        - type: any
-          name: other
-        output:
-          type: any
-      - name: __lt__
-        inputs:
-        - type: Self
-          name: self
-        - type: any
-          name: other
-        output:
-          type: any
     - name: ReviewFeedback
       description: 任务规划者的验收意见
       attributes:
@@ -1487,6 +1403,13 @@ contexts:
         name: comment
       - type: string
         name: decision
+    - name: GherkinStep
+      description: Gherkin 场景中的单一步骤，由关键字和步骤文本组成。
+      attributes:
+      - type: GherkinKeyword
+        name: keyword
+      - type: string
+        name: text
     - name: TaskId
       description: Unique identifier for a Task.
       attributes:
@@ -1510,18 +1433,6 @@ contexts:
           name: value
         output:
           type: any
-      - name: __str__
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: any
-      - name: __hash__
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: integer
       - name: serialize
         inputs:
         - type: Self
@@ -1832,7 +1743,7 @@ contexts:
       - type: string
         optional: true
         name: component_name
-      - type: AcceptanceCriterion
+      - type: Scenario
         container: list
         name: acceptance_criteria
         default: list
@@ -2092,28 +2003,6 @@ contexts:
           name: self
         output:
           type: EventBus
-      - name: __enter__
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: UnitOfWork
-      - name: __exit__
-        inputs:
-        - type: Self
-          name: self
-        - type: BaseException
-          container: type
-          optional: true
-          name: exc_type
-        - type: BaseException
-          optional: true
-          name: exc_val
-        - type: TracebackType
-          optional: true
-          name: exc_tb
-        output:
-          type: any
       - name: commit
         inputs:
         - type: Self
@@ -2294,10 +2183,3 @@ contexts:
         default: 1
       - type: Any
         name: model_config
-      behaviors:
-      - name: __init__
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: any

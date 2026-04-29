@@ -15,7 +15,7 @@ from task_graph.planning.domain.value_objects import (
     ValueScore,
     TaskId,
     ScopeContext,
-    AcceptanceCriterion,
+    Scenario,
 )
 
 import logging
@@ -41,9 +41,9 @@ class CreateTaskCommand(BaseModel):
     bounded_context: str | None = Field(default=None)
     architecture_layer: ArchitectureLayer | None = Field(default=None)
     component_name: str | None = Field(default=None)
-    acceptance_criteria: list[AcceptanceCriterion] = Field(
+    acceptance_criteria: list[Scenario] = Field(
         default_factory=list,
-        description="以 BDD 风格定义的验收标准列表",
+        description="以 Gherkin 场景定义的验收标准列表",
     )
 
 
