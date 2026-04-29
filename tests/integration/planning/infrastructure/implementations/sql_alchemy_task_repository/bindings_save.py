@@ -5,8 +5,10 @@ from dataclasses import dataclass, field
 from tests.factories.task_factory import TaskFactory
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.enums import ScopeLevel
-from task_graph.planning.domain.value_objects.acceptance_criterion import AcceptanceCriterion
-from task_graph.planning.infrastructure.repositories.sql_alchemy_task_repository import (
+from task_graph.planning.domain.value_objects.scenario import Scenario
+from task_graph.planning.domain.value_objects.gherkin_step import GherkinStep
+from task_graph.planning.domain.enums import GherkinKeyword
+from task_graph.planning.infrastructure.adapters.sql_alchemy_task_repository import (
     SqlAlchemyTaskRepository,
 )
 
@@ -111,17 +113,21 @@ class SaveBindings:
 
     def _arrange_task_with_acceptance_criteria(self) -> None:
         criteria = [
-            AcceptanceCriterion(
-                title="任务创建后可查询",
-                given="项目已存在",
-                when="调用 create_task",
-                then="可通过任务 ID 查询到该任务",
+            Scenario(
+                name="任务创建后可查询",
+                steps=[
+                    GherkinStep(keyword=GherkinKeyword.GIVEN, text="项目已存在"),
+                    GherkinStep(keyword=GherkinKeyword.WHEN, text="调用 create_task"),
+                    GherkinStep(keyword=GherkinKeyword.THEN, text="可通过任务 ID 查询到该任务"),
+                ],
             ),
-            AcceptanceCriterion(
-                title="任务状态初始为 PENDING",
-                given="新任务已创建",
-                when="读取任务状态",
-                then="状态为 PENDING",
+            Scenario(
+                name="任务状态初始为 PENDING",
+                steps=[
+                    GherkinStep(keyword=GherkinKeyword.GIVEN, text="新任务已创建"),
+                    GherkinStep(keyword=GherkinKeyword.WHEN, text="读取任务状态"),
+                    GherkinStep(keyword=GherkinKeyword.THEN, text="状态为 PENDING"),
+                ],
             ),
         ]
         self._arranged_task = TaskFactory.build(

@@ -8,7 +8,7 @@ from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.value_score import ValueScore
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.scope_context import ScopeContext
-from task_graph.planning.domain.value_objects.acceptance_criterion import AcceptanceCriterion
+from task_graph.planning.domain.value_objects.sub_task_info import SubTaskInfo
 from task_graph.planning.domain.enums import CompletionLogic, ScopeLevel, TaskStatus, ArchitectureLayer
 
 
@@ -51,12 +51,21 @@ class ScopeContextFactory(ModelFactory[ScopeContext]):
         return cls.__random__.choice(list(ArchitectureLayer))
 
 
+class SubTaskInfoFactory(ModelFactory[SubTaskInfo]):
+    __model__ = SubTaskInfo
+
+    effort = Use(StoryPointFactory.build)
+    base_value = Use(ValueScoreFactory.build)
+    acceptance_criteria = []
+
+
 class TaskOutputFactory(ModelFactory[TaskOutput]):
     __model__ = TaskOutput
 
     summary = Use(lambda: "Test task output summary")
     artifacts = Use(lambda: ["file1.py", "file2.py"])
     error = None
+    sub_tasks = Use(lambda: [])
 
 
 # ==========================================

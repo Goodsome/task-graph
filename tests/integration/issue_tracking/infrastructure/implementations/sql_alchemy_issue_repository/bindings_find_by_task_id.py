@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from tests.factories.issue_factory import IssueFactory
 from task_graph.issue_tracking.domain.aggregates.issue import Issue
-from task_graph.issue_tracking.infrastructure.repositories.sql_alchemy_issue_repository import (
+from task_graph.issue_tracking.infrastructure.adapters.sql_alchemy_issue_repository import (
     SqlAlchemyIssueRepository,
 )
 

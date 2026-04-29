@@ -5,7 +5,6 @@ from task_graph.planning.domain.value_objects.value_score import ValueScore
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.sub_task_info import SubTaskInfo
-from task_graph.planning.domain.value_objects.acceptance_criterion import AcceptanceCriterion
 
 
 @pytest.fixture
