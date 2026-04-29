@@ -264,19 +264,14 @@ class TaskDetailScreen(Screen):
             scroll.mount(Static(""))
             scroll.mount(Static("✅ 验收标准", classes="section-title"))
             scroll.mount(Rule())
-            for i, criterion in enumerate(task.acceptance_criteria, 1):
+            for i, scenario in enumerate(task.acceptance_criteria, 1):
                 scroll.mount(
-                    Static(f"  [bold]{i}. {criterion.title}[/bold]")
+                    Static(f"  [bold]{i}. {scenario.name}[/bold]")
                 )
-                scroll.mount(
-                    Static(f"    [dim]Given:[/dim] {criterion.given}")
-                )
-                scroll.mount(
-                    Static(f"    [dim]When:[/dim]  {criterion.when}")
-                )
-                scroll.mount(
-                    Static(f"    [dim]Then:[/dim]  {criterion.then}")
-                )
+                for step in scenario.steps:
+                    scroll.mount(
+                        Static(f"    [dim]{step.keyword.value}:[/dim] {step.text}")
+                    )
                 scroll.mount(Static(""))
 
         # --- 输出 ---
@@ -314,12 +309,18 @@ class TaskDetailScreen(Screen):
                         )
                     )
                     if sub.acceptance_criteria:
-                        for k, ac in enumerate(sub.acceptance_criteria, 1):
+                        for k, scenario in enumerate(sub.acceptance_criteria, 1):
                             scroll.mount(
                                 Static(
-                                    f"    [dim]验收 {k}:[/dim] {ac.title}"
+                                    f"    [dim]验收 {k}:[/dim] {scenario.name}"
                                 )
                             )
+                            for step in scenario.steps:
+                                scroll.mount(
+                                    Static(
+                                        f"      [dim]{step.keyword.value}:[/dim] {step.text}"
+                                    )
+                                )
                     scroll.mount(Static(""))
 
         # --- 审核反馈 ---

@@ -102,20 +102,18 @@ def get_task(
                 console.print(f"      [dim]价值:[/dim] {sub_task.base_value.value}")
                 if sub_task.acceptance_criteria:
                     console.print("      [dim]验收标准:[/dim]")
-                    for j, criterion in enumerate(sub_task.acceptance_criteria, 1):
-                        console.print(f"        {j}. {escape(criterion.title)}")
-                        console.print(f"          [dim]前置条件:[/dim] {escape(criterion.given)}")
-                        console.print(f"          [dim]触发动作:[/dim] {escape(criterion.when)}")
-                        console.print(f"          [dim]预期结果:[/dim] {escape(criterion.then)}")
+                    for j, scenario in enumerate(sub_task.acceptance_criteria, 1):
+                        console.print(f"        {j}. {escape(scenario.name)}")
+                        for step in scenario.steps:
+                            console.print(f"          [dim]{step.keyword.value}:[/dim] {escape(step.text)}")
 
     # 展示审核反馈
     if task.acceptance_criteria:
         console.print("\n[cyan]验收标准:[/cyan]")
-        for i, criterion in enumerate(task.acceptance_criteria, 1):
-            console.print(f"\n  [bold]{i}. {escape(criterion.title)}[/bold]")
-            console.print(f"    [dim]前置条件:[/dim] {escape(criterion.given)}")
-            console.print(f"    [dim]触发动作:[/dim] {escape(criterion.when)}")
-            console.print(f"    [dim]预期结果:[/dim] {escape(criterion.then)}")
+        for i, scenario in enumerate(task.acceptance_criteria, 1):
+            console.print(f"\n  [bold]{i}. {escape(scenario.name)}[/bold]")
+            for step in scenario.steps:
+                console.print(f"    [dim]{step.keyword.value}:[/dim] {escape(step.text)}")
 
     if task.review_feedback:
         console.print("\n[cyan]审核反馈:[/cyan]")
