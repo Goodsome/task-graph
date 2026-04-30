@@ -299,6 +299,23 @@ wheels = [
 ]
 
 [[package]]
+name = "event-hub"
+version = "0.1.0"
+source = { editable = "../event-hub" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic", specifier = ">=2.0" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "ruff", specifier = ">=0.15.12" },
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1256,6 +1273,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "dependency-injector" },
+    { name = "event-hub" },
     { name = "fastmcp" },
     { name = "httpx", extra = ["socks"] },
     { name = "psycopg", extra = ["binary"] },
@@ -1277,6 +1295,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "dependency-injector", specifier = ">=4.48.3" },
+    { name = "event-hub", editable = "../event-hub" },
     { name = "fastmcp", specifier = ">=3.2.3" },
     { name = "httpx", extras = ["socks"], specifier = ">=0.28.1" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.3" },

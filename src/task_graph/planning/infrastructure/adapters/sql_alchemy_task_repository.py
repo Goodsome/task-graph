@@ -1,4 +1,4 @@
-from typing import Union, Any, Optional, Callable, List, Tuple
+from typing import cast, override
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, or_
 from task_graph.planning.domain.ports.task_repository import TaskRepository
@@ -21,66 +21,74 @@ class SqlAlchemyTaskRepository(TaskRepository):
 
     session: Session
 
+    @override
     def save(self, task: Task) -> None:
         model = self._to_model(task)
         self.session.add(model)
         self.session.flush()
 
-    def get(self, task_id: TaskId) -> Optional[Task]:
-        stmt = select(TaskModel).where(TaskModel.id == task_id.value)
-        model = self.session.execute(stmt).scalar_one_or_none()
+    @override
+    def get(self, task_id: TaskId) -> Task | None:
+        model = self.session.get(TaskModel, task_id.value)
         if not model:
             return None
         return self._to_domain(model)
 
-    def find_all_active(self, project_id: Optional[str] = None) -> list[Task]:
+    @override
+    def find_all_active(self, project_id: str | None = None) -> list[Task]:
         stmt = select(TaskModel).where(TaskModel.status != TaskStatus.DONE.value)
         if project_id:
             stmt = stmt.where(TaskModel.project_id == project_id)
         models = self.session.execute(stmt).scalars().all()
         return [self._to_domain(m) for m in models]
 
+    @override
     def find_all(self) -> list[Task]:
         stmt = select(TaskModel)
         models = self.session.execute(stmt).scalars().all()
         return [self._to_domain(m) for m in models]
 
+    @override
     def find_dependents(self, task_id: TaskId) -> list[Task]:
-        stmt = select(TaskModel).where(TaskModel.id == task_id.value)
-        model = self.session.execute(stmt).scalar_one_or_none()
+        model = self.session.get(TaskModel, task_id.value)
         if not model:
             return []
-        return [self._to_domain(d) for d in model.dependents]
+        dependents = cast(list[TaskModel], getattr(model, "dependents", []))
+        return [self._to_domain(d) for d in dependents]
 
+    @override
     def delete(self, task_id: TaskId) -> None:
-        stmt = select(TaskModel).where(TaskModel.id == task_id.value)
-        model = self.session.execute(stmt).scalar_one_or_none()
+        model = self.session.get(TaskModel, task_id.value)
         if model:
             self.session.delete(model)
             self.session.flush()
 
+    @override
     def find_by_id(self, task_id: TaskId) -> Task | None:
         return self.get(task_id)
 
+    @override
     def find_by_ids(self, task_ids: set[TaskId]) -> list[Task]:
         ids = [tid.value for tid in task_ids]
         stmt = select(TaskModel).where(TaskModel.id.in_(ids))
         models = self.session.execute(stmt).scalars().all()
         return [self._to_domain(m) for m in models]
 
+    @override
     def find_by_parent_id(self, parent_id: TaskId) -> list[Task]:
         stmt = select(TaskModel).where(TaskModel.parent_id == parent_id.value)
         models = self.session.execute(stmt).scalars().all()
         return [self._to_domain(m) for m in models]
 
+    @override
     def find_paged(
         self,
         page: int,
         page_size: int,
-        status: Optional[TaskStatus],
-        project_id: Optional[str],
-        scope_level: Optional[ScopeLevel],
-        search: Optional[str],
+        status: TaskStatus | None,
+        project_id: str | None,
+        scope_level: ScopeLevel | None,
+        search: str | None,
     ) -> tuple[list[Task], int]:
         # Create base select statement
         stmt = select(TaskModel)
@@ -105,7 +113,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
         # Get paged results
         paged_stmt = stmt.offset((page - 1) * page_size).limit(page_size)
         models = self.session.execute(paged_stmt).scalars().all()
-        
+
         return [self._to_domain(m) for m in models], total
 
     def _to_domain(self, model: TaskModel) -> Task:
@@ -131,16 +139,14 @@ class SqlAlchemyTaskRepository(TaskRepository):
             if model.review_feedback
             else None,
             acceptance_criteria=[
-                Scenario.model_validate(ac)
-                for ac in (model.acceptance_criteria or [])
+                Scenario.model_validate(ac) for ac in (model.acceptance_criteria or [])
             ],
             recurrence=None,  # Not currently in TaskModel
         )
 
     def _to_model(self, task: Task) -> TaskModel:
-        stmt = select(TaskModel).where(TaskModel.id == task.id.value)
-        model = self.session.execute(stmt).scalar_one_or_none()
-        
+        model = self.session.get(TaskModel, task.id.value)
+
         if not model:
             model = TaskModel(id=task.id.value)
 
@@ -149,14 +155,18 @@ class SqlAlchemyTaskRepository(TaskRepository):
         model.description = task.description
         model.status = task.status.value
         model.scope_level = task.scope_level.value
-        model.scope_context = task.scope_context.model_dump(mode="json") if task.scope_context else None
+        model.scope_context = (
+            task.scope_context.model_dump(mode="json") if task.scope_context else None
+        )
         model.completion_logic = task.completion_logic.value
         model.parent_id = task.parent_id.value if task.parent_id else None
         model.effort = task.effort.value
         model.base_value = task.base_value.value
         model.output = task.output.model_dump(mode="json") if task.output else None
         model.review_feedback = (
-            task.review_feedback.model_dump(mode="json") if task.review_feedback else None
+            task.review_feedback.model_dump(mode="json")
+            if task.review_feedback
+            else None
         )
         model.acceptance_criteria = [
             ac.model_dump(mode="json") for ac in task.acceptance_criteria

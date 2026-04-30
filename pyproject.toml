@@ -5,6 +5,7 @@ description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
     "dependency-injector>=4.48.3",
+    "event-hub",
     "fastmcp>=3.2.3",
     "httpx[socks]>=0.28.1",
     "psycopg[binary]>=3.3.3",
@@ -35,3 +36,6 @@ dev = [
 include = ["src"]
 extraPaths = ["src"]
 reportUnusedCallResult = "none"
+
+[tool.uv.sources]
+event-hub = { path = "../event-hub", editable = true }

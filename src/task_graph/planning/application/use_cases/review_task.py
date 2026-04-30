@@ -69,6 +69,8 @@ class ReviewTask:
                                 affected_tasks.append(str(dependent.id.value))
                                 modified_dependents.append(dependent)
                                 
+                self.uow.commit()
+                                
                 for event in task.collect_events():
                     self.uow.event_bus.publish(event)
                 for dep in modified_dependents:
@@ -78,7 +80,6 @@ class ReviewTask:
                     for event in sub_task.collect_events():
                         self.uow.event_bus.publish(event)
 
-                self.uow.commit()
 
                 return ReviewTaskResult(
                     success=True,
