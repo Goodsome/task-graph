@@ -124,7 +124,7 @@ class CreateTask:
                     acceptance_criteria=cmd.acceptance_criteria,
                 )
 
-                # 如果条件满足，则标记为 READY（此方法会添加 TaskReadyEvent 到聚合根）
+                # 如果条件满足，则标记为 READY（此方法会添加 TaskReady 到聚合根）
                 if should_be_ready:
                     new_task.mark_ready()
                     logger.info(
