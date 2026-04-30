@@ -27,7 +27,7 @@ class GetTaskDetails:
         try:
             with self.uow:
                 task_id = TaskId.reconstitute(query.task_id)
-                task = self.uow.tasks.find_by_id(task_id)
+                task = self.uow.tasks.get(task_id)
 
                 if task:
                     return GetTaskDetailsResult(success=True, task=task)

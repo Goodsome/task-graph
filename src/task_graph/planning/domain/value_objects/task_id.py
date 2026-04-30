@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, override
 
 from pydantic import model_serializer, model_validator
 
@@ -21,9 +21,11 @@ class TaskId(ValueObject):
             value = UUID(value)
         return cls(value=value)
     
+    @override
     def __str__(self):
         return str(self.value)
 
+    @override
     def __hash__(self) -> int:
         return hash(self.value)
 

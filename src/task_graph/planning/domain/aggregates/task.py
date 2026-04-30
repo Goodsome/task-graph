@@ -18,7 +18,7 @@ from task_graph.planning.domain.events import (
     TaskReadyEvent,
     TaskReviewRequestedEvent,
 )
-from typing import Any, Self, TypeVar, Union
+from typing import Any, Self, TypeVar, Union, override
 from task_graph.shared.domain.core.domain_event import DomainEvent
 from task_graph.planning.domain.value_objects.recurrence_policy import RecurrencePolicy
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
@@ -50,6 +50,10 @@ class Task(AggregateRoot):
         default_factory=list,
         description="以 Gherkin 场景定义的验收标准列表",
     )
+
+    @override
+    def __hash__(self) -> int:
+        return hash(self.id)
 
     @classmethod
     def create(

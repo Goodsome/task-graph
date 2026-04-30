@@ -8,6 +8,9 @@ class TaskRepository(ABC):
     """Persistence interface for Tasks."""
 
     @abstractmethod
+    def collect_seen_tasks(self) -> set[Task]: ...
+
+    @abstractmethod
     def save(self, task: Task) -> None: ...
 
     @abstractmethod
@@ -32,9 +35,6 @@ class TaskRepository(ABC):
 
     @abstractmethod
     def delete(self, task_id: TaskId) -> None: ...
-
-    @abstractmethod
-    def find_by_id(self, task_id: TaskId) -> Task | None: ...
 
     @abstractmethod
     def find_by_ids(self, task_ids: set[TaskId]) -> list[Task]: ...

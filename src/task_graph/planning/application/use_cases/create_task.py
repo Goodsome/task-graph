@@ -136,12 +136,6 @@ class CreateTask:
                 logger.info(
                     f"Task {new_task.id} created with status {new_task.status.value}"
                 )
-
-                events = new_task.collect_events()
-                logger.debug(f"Collected {len(events)} events from aggregate")
-                for event in events:
-                    self.uow.event_bus.publish(event)
-
                 self.uow.commit()
 
                 return CreateTaskResult(True, str(new_task.id), error="")

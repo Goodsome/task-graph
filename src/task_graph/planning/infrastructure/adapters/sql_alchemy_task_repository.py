@@ -1,5 +1,4 @@
 from typing import cast, override
-from click.decorators import T
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, or_
 from task_graph.planning.domain.ports.task_repository import TaskRepository
@@ -13,7 +12,7 @@ from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
 from task_graph.planning.domain.value_objects.scenario import Scenario
 from task_graph.planning.infrastructure.orm_models.task_model import TaskModel
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -21,24 +20,34 @@ class SqlAlchemyTaskRepository(TaskRepository):
     """SQLAlchemy implementation of TaskRepository."""
 
     session: Session
+    _seen_tasks: set[Task] = field(default_factory=set, init=False)
+
+    @override
+    def collect_seen_tasks(self) -> set[Task]:
+        return self._seen_tasks
 
     @override
     def save(self, task: Task) -> None:
         model = self._to_model(task)
         self.session.add(model)
         self.session.flush()
+        self._track_task(task)
 
     @override
     def add(self, task: Task) -> None:
         model = self._to_model(task)
         self.session.add(model)
+        self._track_task(task)
 
     @override
     def get(self, task_id: TaskId) -> Task | None:
         model = self.session.get(TaskModel, task_id.value)
         if not model:
             return None
-        return self._to_domain(model)
+        task = self._to_domain(model)
+        
+        self._track_task(task)
+        return task
 
     @override
     def find_all_active(self, project_id: str | None = None) -> list[Task]:
@@ -68,10 +77,6 @@ class SqlAlchemyTaskRepository(TaskRepository):
         if model:
             self.session.delete(model)
             self.session.flush()
-
-    @override
-    def find_by_id(self, task_id: TaskId) -> Task | None:
-        return self.get(task_id)
 
     @override
     def find_by_ids(self, task_ids: set[TaskId]) -> list[Task]:
@@ -204,3 +209,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
             model.dependencies = []
 
         return model
+
+    def _track_task(self, task: Task) -> None:
+        self._seen_tasks.add(task)
+        
