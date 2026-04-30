@@ -1,4 +1,5 @@
 from typing import cast, override
+from click.decorators import T
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, or_
 from task_graph.planning.domain.ports.task_repository import TaskRepository
@@ -26,6 +27,11 @@ class SqlAlchemyTaskRepository(TaskRepository):
         model = self._to_model(task)
         self.session.add(model)
         self.session.flush()
+
+    @override
+    def add(self, task: Task) -> None:
+        model = self._to_model(task)
+        self.session.add(model)
 
     @override
     def get(self, task_id: TaskId) -> Task | None:
@@ -149,6 +155,22 @@ class SqlAlchemyTaskRepository(TaskRepository):
 
         if not model:
             model = TaskModel(id=task.id.value)
+
+        return self._sync_to_model(task, model)
+
+    def _sync(self, task: Task) -> None:
+        model = self.session.get(TaskModel, task.id.value)
+
+        if not model:
+            return None
+
+        self._sync_to_model(task, model)
+
+    def _create_model(self, task: Task) -> TaskModel:
+        model = TaskModel(id=task.id.value)
+        return self._sync_to_model(task, model)
+
+    def _sync_to_model(self, task: Task, model: TaskModel) -> TaskModel:
 
         model.project_id = task.project_id
         model.name = task.name

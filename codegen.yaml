@@ -873,25 +873,6 @@ contexts:
       attributes:
       - type: Session
         name: session
-      private_methods:
-      - name: _to_domain
-        description: Convert ORM model to domain aggregate
-        inputs:
-        - type: Self
-          name: self
-        - type: IssueModel
-          name: model
-        output:
-          type: Issue
-      - name: _to_model
-        description: Convert domain aggregate to ORM model
-        inputs:
-        - type: Self
-          name: self
-        - type: Issue
-          name: issue
-        output:
-          type: IssueModel
     - name: SqlAlchemyUnitOfWork
       implements: UnitOfWork
       technology: sql
@@ -1154,9 +1135,6 @@ contexts:
         output:
           type: boolean
     enums:
-    - name: ValidatedEnum
-      description: Base class for enums that can be validated from strings via Pydantic.
-      members: []
     - name: CompletionLogic
       description: Rules defining how a task is unlocked based on its dependencies.
       members:
@@ -1535,6 +1513,14 @@ contexts:
           given: a Task with acceptance criteria
           when: save is invoked with the Task
           then: the saved Task's acceptance criteria are identical to the originals
+      - name: add
+        inputs:
+        - type: Self
+          name: self
+        - type: Task
+          name: task
+        output:
+          type: None
       - name: get
         inputs:
         - type: Self
@@ -2048,23 +2034,6 @@ contexts:
       attributes:
       - type: Session
         name: session
-      private_methods:
-      - name: _to_domain
-        inputs:
-        - type: Self
-          name: self
-        - type: TaskModel
-          name: model
-        output:
-          type: Task
-      - name: _to_model
-        inputs:
-        - type: Self
-          name: self
-        - type: Task
-          name: task
-        output:
-          type: TaskModel
   interfaces:
     cli_commands:
     - name: create-task

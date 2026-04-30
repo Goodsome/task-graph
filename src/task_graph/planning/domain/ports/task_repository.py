@@ -1,7 +1,5 @@
 from task_graph.planning.domain.aggregates.task import Task
-from typing import Union, Optional
 from task_graph.planning.domain.value_objects.task_id import TaskId
-from uuid import UUID
 from abc import abstractmethod, ABC
 from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
 
@@ -13,12 +11,15 @@ class TaskRepository(ABC):
     def save(self, task: Task) -> None: ...
 
     @abstractmethod
-    def get(self, task_id: TaskId) -> Optional[Task]: ...
+    def add(self, task: Task) -> None: ...
+
+    @abstractmethod
+    def get(self, task_id: TaskId) -> Task | None: ...
 
     @abstractmethod
     def find_all_active(
         self,
-        project_id: Optional[str] = None,
+        project_id: str | None = None,
     ) -> list[Task]: ...
 
     @abstractmethod
@@ -43,10 +44,10 @@ class TaskRepository(ABC):
         self,
         page: int,
         page_size: int,
-        status: Optional[TaskStatus],
-        project_id: Optional[str],
-        scope_level: Optional[ScopeLevel],
-        search: Optional[str],
+        status: TaskStatus | None,
+        project_id: str | None,
+        scope_level: ScopeLevel | None,
+        search: str | None,
     ) -> tuple[list[Task], int]: ...
 
     @abstractmethod

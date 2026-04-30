@@ -132,7 +132,7 @@ class CreateTask:
                     )
 
                 # 6. 持久化
-                self.uow.tasks.save(new_task)
+                self.uow.tasks.add(new_task)
                 logger.info(
                     f"Task {new_task.id} created with status {new_task.status.value}"
                 )
