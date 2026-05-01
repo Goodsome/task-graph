@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func, or_
 from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.aggregates.task import Task
+from task_graph.planning.domain.exceptions import TaskNotFoundError
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.enums import TaskStatus, ScopeLevel, CompletionLogic
 from task_graph.planning.domain.value_objects.story_point import StoryPoint
@@ -40,15 +41,14 @@ class SqlAlchemyTaskRepository(TaskRepository):
         self._track_task(task)
 
     @override
-    def get(self, task_id: TaskId) -> Task | None:
+    def get(self, task_id: TaskId) -> Task:
         model = self.session.get(TaskModel, task_id.value)
         if not model:
-            return None
+            raise TaskNotFoundError(f"Task with ID {task_id.value} not found")
         task = self._to_domain(model)
-        
+
         self._track_task(task)
         return task
-
     @override
     def find_all_active(self, project_id: str | None = None) -> list[Task]:
         stmt = select(TaskModel).where(TaskModel.status != TaskStatus.DONE.value)

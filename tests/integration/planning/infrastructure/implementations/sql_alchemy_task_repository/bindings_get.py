@@ -6,6 +6,7 @@ from tests.factories.task_factory import TaskFactory, TaskOutputFactory, ScopeCo
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.enums import ScopeLevel
+from task_graph.planning.domain.exceptions import TaskNotFoundError
 from task_graph.planning.infrastructure.adapters.sql_alchemy_task_repository import (
     SqlAlchemyTaskRepository,
 )
@@ -20,6 +21,7 @@ class GetBindings:
     _nonexistent_task_id: TaskId = field(init=False)
     _retrieved_task: Task | None = field(default=None, init=False)
     _get_result: Task | None = field(default=None, init=False)
+    _captured_error: Exception | None = field(default=None, init=False)
 
     def __post_init__(self: "GetBindings") -> None:
         self.repository = SqlAlchemyTaskRepository(session=self.session)
@@ -56,8 +58,8 @@ class GetBindings:
         match semantic_text:
             case "the complete Task is returned with all its attributes intact":
                 self._then_returns_complete_task()
-            case "None is returned without raising an error":
-                self._then_returns_none()
+            case "TaskNotFoundError is raised":
+                self._then_raises_not_found()
             case "the returned Task has identical attribute values including nested objects and value objects":
                 self._then_returns_identical_task()
             case _:
@@ -98,7 +100,10 @@ class GetBindings:
 
     def _when_get_by_id(self) -> None:
         assert self._arranged_task_id is not None
-        self._get_result = self.repository.get(self._arranged_task_id)
+        try:
+            self._get_result = self.repository.get(self._arranged_task_id)
+        except Exception as e:
+            self._captured_error = e
 
     # ─────────────────────────── Assert ────────────────────────────
 
@@ -109,10 +114,8 @@ class GetBindings:
         # 深度比对所有属性，自动覆盖所有新增字段
         assert self._retrieved_task.model_dump() == self._arranged_task.model_dump()
 
-    def _then_returns_none(self) -> None:
-        assert self._arranged_task_id is not None
-        result = self.repository.get(self._arranged_task_id)
-        assert result is None
+    def _then_raises_not_found(self) -> None:
+        assert isinstance(self._captured_error, TaskNotFoundError)
 
     def _then_returns_identical_task(self) -> None:
         assert self._arranged_task is not None

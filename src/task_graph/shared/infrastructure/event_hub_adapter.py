@@ -31,12 +31,12 @@ class EventHubAdapter(EventBus):
             raise ValueError(f"Unknown event type: {type(event)}")
 
 
-    @classmethod
-    def build_factory(cls, hub: EventHub) -> Callable[[Session, str], EventBus]:
+    @staticmethod
+    def build_factory(hub: EventHub) -> Callable[[Session, str], EventBus]:
         """
         作为类方法提供给 UoW 或 DI 容器使用的工厂构建器
         """
         def factory(session: Session, channel: str) -> EventBus:
-            return cls(session=session, channel=channel, hub=hub)
-        
+            return EventHubAdapter(session=session, channel=channel, hub=hub)
+
         return factory

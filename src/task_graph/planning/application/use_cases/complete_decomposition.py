@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from task_graph.planning.application.ports.unit_of_work import UnitOfWork
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.enums import TaskStatus
+from task_graph.planning.domain.exceptions import TaskNotFoundError
 from task_graph.planning.domain.value_objects.task_id import TaskId
 
 
@@ -27,13 +28,6 @@ class CompleteDecomposition:
             with self.uow:
                 task_id = TaskId.reconstitute(cmd.task_id)
                 task = self.uow.tasks.get(task_id)
-
-                if not task:
-                    return CompleteDecompositionResult(
-                        status="failed",
-                        task_id=cmd.task_id,
-                        message=f"Task {cmd.task_id} not found",
-                    )
 
                 if task.status != TaskStatus.DECOMPOSING:
                     return CompleteDecompositionResult(

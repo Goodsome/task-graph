@@ -32,14 +32,6 @@ class ReviewTask:
                 task_id = TaskId.reconstitute(cmd.task_id)
                 task = self.uow.tasks.get(task_id)
 
-                if not task:
-                    return ReviewTaskResult(
-                        success=False,
-                        task_id=cmd.task_id,
-                        affected_tasks=[],
-                        error=f"Task {cmd.task_id} not found"
-                    )
-
                 task.review(approved=cmd.approved, feedback=cmd.feedback)
                 self.uow.tasks.save(task)
 

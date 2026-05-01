@@ -34,8 +34,6 @@ class ReviseTaskDetails:
             with self.uow:
                 task_id = TaskId.reconstitute(cmd.task_id)
                 task = self.uow.tasks.get(task_id)
-                if not task:
-                    return ReviseTaskDetailsResult(False, f"Task {cmd.task_id} not found")
 
                 # 增量更新
                 if cmd.name is not None:

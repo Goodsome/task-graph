@@ -52,7 +52,7 @@ class Container(DeclarativeContainer):
         session_factory=database.provided.session_factory,
         event_bus_channel="issue_events",
         issue_repository_factory=issue_repository_factory.provider,
-        event_bus_factory=event_bus_factory.provider,
+        event_bus_factory=event_bus_factory,
     )
     create_issue: Factory[CreateIssue] = Factory(
         CreateIssue,

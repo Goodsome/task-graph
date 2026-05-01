@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 
 from task_graph.planning.application.ports.unit_of_work import UnitOfWork
 from task_graph.planning.domain.aggregates.task import IllegalStateTransitionError
-from task_graph.planning.domain.enums import TaskStatus
 from task_graph.planning.domain.services.dependency_resolution_service import (
     DependencyResolutionService,
 )
@@ -41,14 +40,6 @@ class UnlockTask:
                     )
 
                 task = self.uow.tasks.get(task_id)
-
-                if not task:
-                    return UnlockTaskResult(
-                        success=False,
-                        task_id=cmd.task_id,
-                        error=f"Task {cmd.task_id} not found",
-                        error_code="TASK_NOT_FOUND",
-                    )
 
                 is_blocked = self.resolution_service.evaluate_blocking_status(
                     task, self.uow.tasks

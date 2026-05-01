@@ -42,20 +42,13 @@ class ModifyTaskDependencies:
             with self.uow:
                 target_id = TaskId.reconstitute(cmd.task_id)
                 task = self.uow.tasks.get(target_id)
-                if not task:
-                    return ModifyTaskDependenciesResult(
-                        False, f"Task {cmd.task_id} not found"
-                    )
                 for rem_id_str in cmd.removed_dependencies:
                     rem_id = TaskId.reconstitute(rem_id_str)
                     if rem_id in task.dependencies:
                         task.dependencies.remove(rem_id)
                 for add_id_str in cmd.added_dependencies:
                     add_id = TaskId.reconstitute(add_id_str)
-                    if not self.uow.tasks.get(add_id):
-                        return ModifyTaskDependenciesResult(
-                            False, f"Dependency {add_id_str} not found"
-                        )
+                    _ = self.uow.tasks.get(add_id)
                     if self.cycle_detector.detect_cycle(target_id, add_id, self.uow.tasks):
                         return ModifyTaskDependenciesResult(
                             False, f"Cycle detected when adding dependency {add_id_str}"

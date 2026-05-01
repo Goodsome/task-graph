@@ -28,12 +28,6 @@ class GetTaskDetails:
             with self.uow:
                 task_id = TaskId.reconstitute(query.task_id)
                 task = self.uow.tasks.get(task_id)
-
-                if task:
-                    return GetTaskDetailsResult(success=True, task=task)
-                else:
-                    return GetTaskDetailsResult(
-                        success=False, error=f"Task with ID {query.task_id} not found."
-                    )
+                return GetTaskDetailsResult(success=True, task=task)
         except Exception as e:
             return GetTaskDetailsResult(success=False, error=str(e))

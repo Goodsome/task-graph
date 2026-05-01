@@ -37,12 +37,6 @@ class SubmitTaskResult:
                 task_id = TaskId.reconstitute(cmd.task_id)
                 task = self.uow.tasks.get(task_id)
                 
-                if not task:
-                    return SubmitTaskResultResult(
-                        success=False,
-                        error=f"Task {cmd.task_id} not found"
-                    )
-                
                 # 2. 创建 TaskOutput
                 task_output = TaskOutput(
                     summary=cmd.summary,

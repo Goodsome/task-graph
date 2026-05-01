@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.enums import TaskStatus
-from task_graph.planning.domain.exceptions import TaskNotClaimableError
+from task_graph.planning.domain.exceptions import TaskNotClaimableError, TaskNotFoundError
 from task_graph.planning.domain.services.dependency_resolution_service import (
     DependencyResolutionService,
 )
@@ -44,14 +44,6 @@ class ClaimTask:
                     )
                 
                 task = self.uow.tasks.get(task_id)
-                
-                if not task:
-                    return ClaimTaskResult(
-                        success=False,
-                        task_id=cmd.task_id,
-                        error=f"Task {cmd.task_id} not found",
-                        error_code="TASK_NOT_FOUND"
-                    )
                 
                 if not task.is_claimable():
                     error_code = "ALREADY_CLAIMED" if task.status == TaskStatus.IN_PROGRESS else "TASK_NOT_READY"

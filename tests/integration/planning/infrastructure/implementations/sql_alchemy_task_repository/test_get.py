@@ -14,11 +14,11 @@ def test_get_returns_task_for_existing_id(get_bindings: GetBindings) -> None:
     )
 
 
-def test_get_returns_none_for_nonexistent_id(get_bindings: GetBindings) -> None:
+def test_get_raises_not_found_for_nonexistent_id(get_bindings: GetBindings) -> None:
     get_bindings.given(
         "no Task with the given TaskId exists in the repository"
     ).arrange_done().when("get is invoked with that TaskId").then(
-        "None is returned without raising an error"
+        "TaskNotFoundError is raised"
     )
 
 

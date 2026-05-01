@@ -17,7 +17,19 @@ class TaskRepository(ABC):
     def add(self, task: Task) -> None: ...
 
     @abstractmethod
-    def get(self, task_id: TaskId) -> Task | None: ...
+    def get(self, task_id: TaskId) -> Task:
+        """Get a task by its ID.
+
+        Args:
+            task_id: The ID of the task to retrieve.
+
+        Returns:
+            The Task object.
+
+        Raises:
+            TaskNotFoundError: If the task is not found.
+        """
+        ...
 
     @abstractmethod
     def find_all_active(

@@ -1,3 +1,8 @@
+class TaskNotFoundError(Exception):
+    """Raised when a task is not found."""
+    pass
+
+
 class TaskNotClaimableError(Exception):
     """Raised when attempting to claim a task that is not in READY state."""
     pass

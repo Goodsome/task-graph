@@ -17,6 +17,7 @@ class TaskStatus(Enum):
     IN_PROGRESS = "in_progress"
     REVIEWING = "reviewing"
     DECOMPOSING = "decomposing"
+    DELEGATED = "delegated"
     DONE = "done"
     CHANGES_REQUESTED = "changes_requested"
     SKIPPED = "skipped"

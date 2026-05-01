@@ -42,8 +42,6 @@ class UpdateTaskStatus:
             with self.uow:
                 task_id = TaskId.reconstitute(cmd.task_id)
                 task = self.uow.tasks.get(task_id)
-                if not task:
-                    return UpdateTaskStatusResult(False, [], f"Task {cmd.task_id} not found")
 
                 try:
                     new_status_enum = TaskStatus(cmd.new_status.lower())
