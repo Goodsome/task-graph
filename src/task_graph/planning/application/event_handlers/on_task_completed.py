@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
 from task_graph.planning.application.ports.task_query_service import TaskQueryService
-from task_graph.planning.application.use_cases.complete_decomposition import (
-    CompleteDecomposition,
-    CompleteDecompositionCommand,
+from task_graph.planning.application.use_cases.complete_delegated_task import (
+    CompleteDelegatedTask,
+    CompleteDelegatedTaskCommand,
 )
 from task_graph.planning.application.use_cases.unlock_task import (
     UnlockTask,
@@ -15,13 +15,14 @@ from task_graph.planning.domain.value_objects.task_id import TaskId
 
 @dataclass
 class OnTaskCompleted:
-    complete_decomposition: CompleteDecomposition
+    complete_delegated_task: CompleteDelegatedTask
     unlock_task: UnlockTask
     task_query_service: TaskQueryService
 
     def handle_complete_decomposition(self, event: TaskCompleted) -> None:
-        cmd = CompleteDecompositionCommand(task_id=event.task_id)
-        self.complete_decomposition.execute(cmd)
+        if event.parent_id:
+            cmd = CompleteDelegatedTaskCommand(task_id=event.parent_id)
+            self.complete_delegated_task.execute(cmd)
 
     def handle_unlock_task(self, event: TaskCompleted) -> None:
         task_id = TaskId.model_validate(event.task_id)

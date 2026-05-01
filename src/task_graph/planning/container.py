@@ -2,9 +2,10 @@ from dependency_injector import containers
 from dependency_injector.providers import Configuration, Dependency, Factory, Singleton
 
 from task_graph.planning.application.use_cases.claim_task import ClaimTask
-from task_graph.planning.application.use_cases.complete_decomposition import (
-    CompleteDecomposition,
+from task_graph.planning.application.use_cases.complete_delegated_task import (
+    CompleteDelegatedTask,
 )
+from task_graph.planning.application.use_cases.decompose_task import DecomposeTask
 
 # 3. 导入 Use Cases
 from task_graph.planning.application.use_cases.create_task import CreateTask
@@ -143,8 +144,12 @@ class Container(containers.DeclarativeContainer):
         ClaimTask, uow=unit_of_work, dependency_service=dependency_resolution_service
     )
 
-    complete_decomposition: Factory[CompleteDecomposition] = Factory(
-        CompleteDecomposition, uow=unit_of_work
+    complete_delegated_task: Factory[CompleteDelegatedTask] = Factory(
+        CompleteDelegatedTask, uow=unit_of_work
+    )
+
+    decompose_task: Factory[DecomposeTask] = Factory(
+        DecomposeTask, uow=unit_of_work
     )
 
     review_task: Factory[ReviewTask] = Factory(
@@ -153,7 +158,7 @@ class Container(containers.DeclarativeContainer):
 
     on_task_completed: Factory[OnTaskCompleted] = Factory(
         OnTaskCompleted,
-        complete_decomposition=complete_decomposition,
+        complete_delegated_task=complete_delegated_task,
         unlock_task=unlock_task,
         task_query_service=task_query_service,
     )

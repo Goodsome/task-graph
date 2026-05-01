@@ -6,6 +6,7 @@ from .task_blocked import TaskBlocked
 from .task_in_progress import TaskInProgress
 from .task_changes_requested import TaskChangesRequested
 from .task_decomposing import TaskDecomposing
+from .task_delegated import TaskDelegated
 
 __all__ = [
     "TaskCreated",
@@ -16,4 +17,5 @@ __all__ = [
     "TaskInProgress",
     "TaskChangesRequested",
     "TaskDecomposing",
+    "TaskDelegated",
 ]

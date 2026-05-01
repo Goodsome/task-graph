@@ -10,3 +10,4 @@ class BaseTaskEvent(DomainEvent):
     scope_level: ScopeLevel = Field(description="Scope level of the task")
     bounded_context: str | None = Field(default=None, description="Bounded context the task belongs to")
     architecture_layer: ArchitectureLayer | None = Field(default=None, description="DDD architecture layer the task targets")
+    parent_id: str | None = Field(default=None, description="Parent Task ID if this is a sub-task")

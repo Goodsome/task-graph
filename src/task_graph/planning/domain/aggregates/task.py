@@ -15,6 +15,7 @@ from task_graph.planning.domain.events import (
     TaskCompleted,
     TaskCreated,
     TaskDecomposing,
+    TaskDelegated,
     TaskInProgress,
     TaskReady,
     TaskReviewRequested,
@@ -173,7 +174,7 @@ class Task(AggregateRoot):
 
         Raises:
             IllegalStateTransitionError: 当前状态不允许直接完成"""
-        allowed = (TaskStatus.REVIEWING, TaskStatus.DECOMPOSING)
+        allowed = (TaskStatus.REVIEWING, TaskStatus.DECOMPOSING, TaskStatus.DELEGATED)
         if self.status not in allowed:
             raise IllegalStateTransitionError(
                 f"Task {self.id} cannot be marked completed: current status is {self.status}"
@@ -282,12 +283,24 @@ class Task(AggregateRoot):
         """标记任务分解完成。
 
         Raises:
+            IllegalStateTransitionError: 如果当前状态不是 DECOMPOSING 或 DELEGATED"""
+        if self.status not in (TaskStatus.DECOMPOSING, TaskStatus.DELEGATED):
+            raise IllegalStateTransitionError(
+                f"Task {self.id} cannot mark decomposition completed: current status is {self.status}, expected DECOMPOSING or DELEGATED"
+            )
+        self.mark_completed()
+
+    def mark_delegated(self: Self) -> None:
+        """标记任务已分解并委派子任务。
+
+        Raises:
             IllegalStateTransitionError: 如果当前状态不是 DECOMPOSING"""
         if self.status != TaskStatus.DECOMPOSING:
             raise IllegalStateTransitionError(
-                f"Task {self.id} cannot mark decomposition completed: current status is {self.status}, expected DECOMPOSING"
+                f"Task {self.id} cannot be marked delegated: current status is {self.status}, expected DECOMPOSING"
             )
-        self.mark_completed()
+        self.status = TaskStatus.DELEGATED
+        self.add_domain_event(self._build_task_event(TaskDelegated))
 
     def mark_changes_requested(self: Self, feedback: str) -> None:
         """标记任务需要修改。
@@ -339,6 +352,7 @@ class Task(AggregateRoot):
             "scope_level": self.scope_level,
             "bounded_context": bounded_context,
             "architecture_layer": architecture_layer,
+            "parent_id": str(self.parent_id) if self.parent_id else None,
         }
         if reason is not None:
             params["reason"] = reason

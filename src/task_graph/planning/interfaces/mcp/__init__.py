@@ -1,4 +1,3 @@
-from .complete_decomposition import complete_decomposition
 from .create_task import create_task
 from .list_tasks import list_tasks
 from .claim_task import claim_task
@@ -12,7 +11,6 @@ from .suggest_next_action import suggest_next_action
 from .revise_task_details import revise_task_details
 
 __all__ = [
-    "complete_decomposition",
     "create_task",
     "list_tasks",
     "claim_task",
@@ -29,7 +27,6 @@ __all__ = [
 
 # 统一暴露planning工具列表
 PLANNING_TOOLS = [
-    complete_decomposition,
     create_task,
     list_tasks,
     claim_task,
