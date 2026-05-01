@@ -31,6 +31,7 @@ from task_graph.planning.application.use_cases.update_task_status import (
 )
 from task_graph.planning.application.event_handlers import (
     OnTaskCompleted,
+    OnTaskDecomposing,
 )
 
 
@@ -161,4 +162,9 @@ class Container(containers.DeclarativeContainer):
         complete_delegated_task=complete_delegated_task,
         unlock_task=unlock_task,
         task_query_service=task_query_service,
+    )
+
+    on_task_decomposing: Factory[OnTaskDecomposing] = Factory(
+        OnTaskDecomposing,
+        decompose_task=decompose_task,
     )

@@ -2,7 +2,7 @@ import logging
 
 from event_hub import EventHub
 
-from task_graph.planning.domain.events import TaskCompleted
+from task_graph.planning.domain.events import TaskCompleted, TaskDecomposing
 from .container import ApplicationContainer
 
 logger = logging.getLogger(__name__)
@@ -20,5 +20,10 @@ def bind_all_events(container: ApplicationContainer) -> None:
     event_hub.register_domain(
         TaskCompleted,
         container.planning.on_task_completed().handle_unlock_task
+    )
+
+    event_hub.register_domain(
+        TaskDecomposing,
+        container.planning.on_task_decomposing().handle_decompose_task
     )
 
