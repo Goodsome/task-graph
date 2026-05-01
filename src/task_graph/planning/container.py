@@ -1,25 +1,49 @@
-from dependency_injector import containers, providers
-from dependency_injector.providers import Dependency, Configuration
+from dependency_injector import containers
+from dependency_injector.providers import Configuration, Dependency, Factory, Singleton
 
 from task_graph.planning.application.use_cases.claim_task import ClaimTask
-from task_graph.planning.application.use_cases.complete_decomposition import CompleteDecomposition
+from task_graph.planning.application.use_cases.complete_decomposition import (
+    CompleteDecomposition,
+)
+
 # 3. 导入 Use Cases
 from task_graph.planning.application.use_cases.create_task import CreateTask
 from task_graph.planning.application.use_cases.delete_task import DeleteTask
 from task_graph.planning.application.use_cases.get_task_details import GetTaskDetails
 from task_graph.planning.application.use_cases.list_tasks import ListTasks
-from task_graph.planning.application.use_cases.modify_task_dependencies import ModifyTaskDependencies
+from task_graph.planning.application.use_cases.modify_task_dependencies import (
+    ModifyTaskDependencies,
+)
 from task_graph.planning.application.use_cases.review_task import ReviewTask
-from task_graph.planning.application.use_cases.revise_task_details import ReviseTaskDetails
-from task_graph.planning.application.use_cases.submit_task_result import SubmitTaskResult
-from task_graph.planning.application.use_cases.suggest_next_action import SuggestNextAction
-from task_graph.planning.application.use_cases.update_task_status import UpdateTaskStatus
+from task_graph.planning.application.use_cases.revise_task_details import (
+    ReviseTaskDetails,
+)
+from task_graph.planning.application.use_cases.submit_task_result import (
+    SubmitTaskResult,
+)
+from task_graph.planning.application.use_cases.suggest_next_action import (
+    SuggestNextAction,
+)
+from task_graph.planning.application.use_cases.update_task_status import (
+    UpdateTaskStatus,
+)
+
 # 2. 导入 Domain Services
-from task_graph.planning.domain.services.cycle_detection_service import CycleDetectionService
-from task_graph.planning.domain.services.dependency_resolution_service import DependencyResolutionService
-from task_graph.planning.domain.services.priority_analysis_service import PriorityAnalysisService
-from task_graph.planning.infrastructure.adapters.sql_alchemy_task_repository import SqlAlchemyTaskRepository
-from task_graph.planning.infrastructure.adapters.sql_alchemy_unit_of_work import SqlAlchemyUnitOfWork
+from task_graph.planning.domain.services.cycle_detection_service import (
+    CycleDetectionService,
+)
+from task_graph.planning.domain.services.dependency_resolution_service import (
+    DependencyResolutionService,
+)
+from task_graph.planning.domain.services.priority_analysis_service import (
+    PriorityAnalysisService,
+)
+from task_graph.planning.infrastructure.adapters.sql_alchemy_task_repository import (
+    SqlAlchemyTaskRepository,
+)
+from task_graph.planning.infrastructure.adapters.sql_alchemy_unit_of_work import (
+    SqlAlchemyUnitOfWork,
+)
 from task_graph.shared.infrastructure.database import Database
 
 
@@ -29,14 +53,16 @@ class Container(containers.DeclarativeContainer):
     """
 
     # --- Dependencies injected from parent container ---
-    config = Configuration()
-    database = Dependency(instance_of=Database)
+    config: Configuration = Configuration()
+    database: Dependency[Database] = Dependency(instance_of=Database)
     event_bus_factory = Dependency()
 
     # --- Infrastructure Factories ---
-    task_repository_factory = providers.Factory(SqlAlchemyTaskRepository)
+    task_repository_factory: Factory[SqlAlchemyTaskRepository] = Factory(
+        SqlAlchemyTaskRepository
+    )
 
-    unit_of_work = providers.Factory(
+    unit_of_work: Factory[SqlAlchemyUnitOfWork] = Factory(
         SqlAlchemyUnitOfWork,
         session_factory=database.provided.session_factory,
         event_bus_channel=config.event_bus_channel,
@@ -45,85 +71,63 @@ class Container(containers.DeclarativeContainer):
     )
     # --- Domain Service Layer ---
 
-    cycle_detection_service = providers.Singleton(
+    cycle_detection_service: Singleton[CycleDetectionService] = Singleton(
         CycleDetectionService
     )
 
-    dependency_resolution_service = providers.Singleton(
+    dependency_resolution_service: Singleton[DependencyResolutionService] = Singleton(
         DependencyResolutionService
     )
 
-    priority_analysis_service = providers.Singleton(
+    priority_analysis_service: Singleton[PriorityAnalysisService] = Singleton(
         PriorityAnalysisService
     )
 
     # --- Application Layer (Use Cases) ---
 
-    create_task: providers.Factory[CreateTask] = providers.Factory(
-        CreateTask,
-        uow=unit_of_work
-    )
+    create_task: Factory[CreateTask] = Factory(CreateTask, uow=unit_of_work)
 
-    modify_task_dependencies = providers.Factory(
+    modify_task_dependencies: Factory[ModifyTaskDependencies] = Factory(
         ModifyTaskDependencies,
         uow=unit_of_work,
         cycle_detector=cycle_detection_service,
-        dependency_resolver=dependency_resolution_service
+        dependency_resolver=dependency_resolution_service,
     )
 
-    revise_task_details = providers.Factory(
-        ReviseTaskDetails,
-        uow=unit_of_work
+    revise_task_details: Factory[ReviseTaskDetails] = Factory(
+        ReviseTaskDetails, uow=unit_of_work
     )
 
-    update_task_status = providers.Factory(
+    update_task_status: Factory[UpdateTaskStatus] = Factory(
         UpdateTaskStatus,
         uow=unit_of_work,
-        resolution_service=dependency_resolution_service
+        resolution_service=dependency_resolution_service,
     )
 
-    suggest_next_action = providers.Factory(
-        SuggestNextAction,
-        uow=unit_of_work,
-        priority_service=priority_analysis_service
+    suggest_next_action: Factory[SuggestNextAction] = Factory(
+        SuggestNextAction, uow=unit_of_work, priority_service=priority_analysis_service
     )
 
-    list_tasks = providers.Factory(
-        ListTasks,
-        uow=unit_of_work
-    )
-    
-    get_task_details = providers.Factory(
-        GetTaskDetails,
-        uow=unit_of_work
+    list_tasks: Factory[ListTasks] = Factory(ListTasks, uow=unit_of_work)
+
+    get_task_details: Factory[GetTaskDetails] = Factory(
+        GetTaskDetails, uow=unit_of_work
     )
 
-    delete_task = providers.Factory(
-        DeleteTask,
-        uow=unit_of_work
+    delete_task: Factory[DeleteTask] = Factory(DeleteTask, uow=unit_of_work)
+
+    submit_task_result: Factory[SubmitTaskResult] = Factory(
+        SubmitTaskResult, uow=unit_of_work
     )
 
-    submit_task_result = providers.Factory(
-        SubmitTaskResult,
-        uow=unit_of_work
+    claim_task: Factory[ClaimTask] = Factory(
+        ClaimTask, uow=unit_of_work, dependency_service=dependency_resolution_service
     )
 
-    claim_task = providers.Factory(
-        ClaimTask,
-        uow=unit_of_work,
-        dependency_service=dependency_resolution_service
+    complete_decomposition: Factory[CompleteDecomposition] = Factory(
+        CompleteDecomposition, uow=unit_of_work
     )
 
-    complete_decomposition = providers.Factory(
-        CompleteDecomposition,
-        uow=unit_of_work
+    review_task: Factory[ReviewTask] = Factory(
+        ReviewTask, uow=unit_of_work, resolution_service=dependency_resolution_service
     )
-
-    review_task = providers.Factory(
-        ReviewTask,
-        uow=unit_of_work,
-        resolution_service=dependency_resolution_service
-    )
-
-
-    
