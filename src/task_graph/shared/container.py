@@ -1,7 +1,9 @@
+from event_hub import EventHub
+
 from dependency_injector.containers import DeclarativeContainer
-from dependency_injector.providers import Singleton, Configuration, Factory, Resource
+from dependency_injector.providers import Singleton, Configuration, Factory, Resource, Callable
 from task_graph.shared.infrastructure.database import Database, init_database
-from task_graph.shared.infrastructure.event_bus import PgNotifyEventBus
+from task_graph.shared.infrastructure.event_hub_adapter import EventHubAdapter
 
 
 class Container(DeclarativeContainer):
@@ -16,5 +18,7 @@ class Container(DeclarativeContainer):
         connection_string=config.database_url.as_(str),
     )
 
-    # Shared event bus factory
-    event_bus_factory = Factory(PgNotifyEventBus)
+    event_hub: Singleton[EventHub] = Singleton(EventHub)
+    
+    event_bus_factory: Callable = Callable(EventHubAdapter.build_factory, hub=event_hub)
+

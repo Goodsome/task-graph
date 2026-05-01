@@ -1,4 +1,7 @@
 from dataclasses import dataclass, field
+from task_graph.planning.domain.value_objects.task_id import TaskId
+from task_graph.planning.domain.enums import TaskStatus
+from task_graph.planning.domain.exceptions import TaskNotClaimableError
 from task_graph.planning.domain.services.dependency_resolution_service import (
     DependencyResolutionService,
 )
@@ -20,10 +23,6 @@ class ClaimTaskResult:
     error: str = field(default_factory=str)
     error_code: str = field(default_factory=str)
 
-
-from task_graph.planning.domain.value_objects.task_id import TaskId
-from task_graph.planning.domain.enums import TaskStatus
-from task_graph.planning.domain.exceptions import TaskNotClaimableError
 
 @dataclass
 class ClaimTask:
@@ -80,9 +79,6 @@ class ClaimTask:
                 
                 # 5. Persist
                 self.uow.tasks.save(task)
-                
-                for event in task.collect_events():
-                    self.uow.event_bus.publish(event)
                 
                 self.uow.commit()
                 

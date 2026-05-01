@@ -41,7 +41,7 @@ class Container(containers.DeclarativeContainer):
         session_factory=database.provided.session_factory,
         event_bus_channel=config.event_bus_channel,
         task_repository_factory=task_repository_factory.provider,
-        event_bus_factory=event_bus_factory.provider
+        event_bus_factory=event_bus_factory,
     )
     # --- Domain Service Layer ---
 
@@ -125,3 +125,5 @@ class Container(containers.DeclarativeContainer):
         resolution_service=dependency_resolution_service
     )
 
+
+    

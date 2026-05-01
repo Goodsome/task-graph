@@ -5,6 +5,8 @@
 from typing import Optional
 from .container import ApplicationContainer
 from .config import load_all_configurations, AppConfig
+from .subscriptions import bind_all_events
+
 
 
 def create_container(
@@ -36,6 +38,8 @@ def create_container(
     if init_resources:
         container.init_resources()
 
+    bind_all_events(container)
+    
     return container
 
 

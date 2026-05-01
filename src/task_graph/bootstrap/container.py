@@ -25,7 +25,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
     config = providers.Configuration()
 
     # Shared container - 自动接收顶层配置的 shared 段
-    shared = providers.Container(
+    shared: providers.Container[SharedContainer] = providers.Container(
         SharedContainer,
         config=config.shared,
     )

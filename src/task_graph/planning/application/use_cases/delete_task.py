@@ -26,7 +26,7 @@ class DeleteTask:
             with self.uow:
                 task_id = TaskId.reconstitute(cmd.task_id)
                 self.uow.tasks.delete(task_id)
-                self.uow.commit() # Wait, delete might not have events, but needs commit.
+                self.uow.commit()
                 return DeleteTaskResult(success=True)
         except Exception as e:
             logger.error(f"Failed to delete task {cmd.task_id}: {e}")

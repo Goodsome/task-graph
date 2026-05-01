@@ -74,7 +74,7 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
     def commit(self):
         if self.session:
             self.session.commit()
-
+            
         for task in self.tasks.collect_seen_tasks():
             for event in task.collect_events():
                 self.event_bus.publish(event)
