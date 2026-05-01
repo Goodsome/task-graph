@@ -72,9 +72,6 @@ class ModifyTaskDependencies:
                         task.mark_ready()
 
                 self.uow.tasks.save(task)
-                for event in task.collect_events():
-                    self.uow.event_bus.publish(event)
-                
                 self.uow.commit()
                 return ModifyTaskDependenciesResult(True)
         except Exception as e:

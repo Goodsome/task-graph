@@ -56,10 +56,6 @@ class SubmitTaskResult:
                 
                 # 4. 保存任务
                 self.uow.tasks.save(task)
-                
-                for event in task.collect_events():
-                    self.uow.event_bus.publish(event)
-                
                 self.uow.commit()
                 
                 return SubmitTaskResultResult(success=True)

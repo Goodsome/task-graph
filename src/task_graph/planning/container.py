@@ -24,9 +24,14 @@ from task_graph.planning.application.use_cases.submit_task_result import (
 from task_graph.planning.application.use_cases.suggest_next_action import (
     SuggestNextAction,
 )
+from task_graph.planning.application.use_cases.unlock_task import UnlockTask
 from task_graph.planning.application.use_cases.update_task_status import (
     UpdateTaskStatus,
 )
+from task_graph.planning.application.event_handlers import (
+    OnTaskCompleted,
+)
+
 
 # 2. 导入 Domain Services
 from task_graph.planning.domain.services.cycle_detection_service import (
@@ -37,6 +42,9 @@ from task_graph.planning.domain.services.dependency_resolution_service import (
 )
 from task_graph.planning.domain.services.priority_analysis_service import (
     PriorityAnalysisService,
+)
+from task_graph.planning.infrastructure.adapters.sql_alchemy_task_query_service import (
+    SqlAlchemyTaskQueryService,
 )
 from task_graph.planning.infrastructure.adapters.sql_alchemy_task_repository import (
     SqlAlchemyTaskRepository,
@@ -68,6 +76,11 @@ class Container(containers.DeclarativeContainer):
         event_bus_channel=config.event_bus_channel,
         task_repository_factory=task_repository_factory.provider,
         event_bus_factory=event_bus_factory,
+    )
+
+    task_query_service: Factory[SqlAlchemyTaskQueryService] = Factory(
+        SqlAlchemyTaskQueryService,
+        session_factory=database.provided.session_factory,
     )
     # --- Domain Service Layer ---
 
@@ -104,11 +117,17 @@ class Container(containers.DeclarativeContainer):
         resolution_service=dependency_resolution_service,
     )
 
+    unlock_task: Factory[UnlockTask] = Factory(
+        UnlockTask,
+        uow=unit_of_work,
+        resolution_service=dependency_resolution_service,
+    )
+
     suggest_next_action: Factory[SuggestNextAction] = Factory(
         SuggestNextAction, uow=unit_of_work, priority_service=priority_analysis_service
     )
 
-    list_tasks: Factory[ListTasks] = Factory(ListTasks, uow=unit_of_work)
+    list_tasks: Factory[ListTasks] = Factory(ListTasks, query_service=task_query_service)
 
     get_task_details: Factory[GetTaskDetails] = Factory(
         GetTaskDetails, uow=unit_of_work
@@ -129,5 +148,12 @@ class Container(containers.DeclarativeContainer):
     )
 
     review_task: Factory[ReviewTask] = Factory(
-        ReviewTask, uow=unit_of_work, resolution_service=dependency_resolution_service
+        ReviewTask, uow=unit_of_work,
+    )
+
+    on_task_completed: Factory[OnTaskCompleted] = Factory(
+        OnTaskCompleted,
+        complete_decomposition=complete_decomposition,
+        unlock_task=unlock_task,
+        task_query_service=task_query_service,
     )

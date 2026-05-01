@@ -10,7 +10,7 @@ class Container(DeclarativeContainer):
     """Shared kernel DI container for cross-cutting concerns."""
 
     # Use Dependency Injector native Configuration provider
-    config = Configuration()
+    config: Configuration = Configuration()
 
     # Shared infrastructure
     database = Resource(

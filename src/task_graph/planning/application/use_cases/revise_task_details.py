@@ -52,10 +52,6 @@ class ReviseTaskDetails:
                     task.base_value = ValueScore.create(cmd.base_value)
 
                 self.uow.tasks.save(task)
-                
-                for event in task.collect_events():
-                    self.uow.event_bus.publish(event)
-                
                 self.uow.commit()
                 return ReviseTaskDetailsResult(True)
 

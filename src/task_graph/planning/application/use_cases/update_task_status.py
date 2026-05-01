@@ -61,18 +61,6 @@ class UpdateTaskStatus:
                 self.uow.tasks.save(task)
 
                 affected_ids = []
-                modified_dependents = []
-
-                # 连锁反应：如果任务完成了，检查它的下游任务是否可以被解锁
-                if task.is_done():
-                    modified_dependents = self._unlock_dependents(task)
-                    affected_ids = [str(dep.id.value) for dep in modified_dependents]
-
-                for event in task.collect_events():
-                    self.uow.event_bus.publish(event)
-                for dep in modified_dependents:
-                    for event in dep.collect_events():
-                        self.uow.event_bus.publish(event)
 
                 self.uow.commit()
 

@@ -20,11 +20,11 @@ from textual.widgets import (
 from rich.text import Text
 from dependency_injector.wiring import Provide, inject
 
+from task_graph.planning.application.dtos.summary_task import SummaryTaskDto
 from task_graph.planning.application.use_cases.list_tasks import (
     ListTasks,
     ListTasksQuery,
     ListTasksResult,
-    SummaryTask,
 )
 from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
 from task_graph.planning.interfaces.tui.theme import (
@@ -130,7 +130,7 @@ class TaskListScreen(Screen):
         self._filter_project: str | None = None
         self._filter_status: TaskStatus | None = None
         self._filter_scope: ScopeLevel | None = None
-        self._tasks: list[SummaryTask] = []
+        self._tasks: list[SummaryTaskDto] = []
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
