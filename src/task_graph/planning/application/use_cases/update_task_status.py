@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 from task_graph.planning.domain.services import DependencyResolutionService
 from task_graph.planning.domain.value_objects import TaskId
-from task_graph.planning.domain.aggregates.task import Task
 
 
 from pydantic import BaseModel
@@ -66,21 +65,3 @@ class UpdateTaskStatus:
 
         except Exception as e:
             return UpdateTaskStatusResult(False, [], str(e))
-
-    def _unlock_dependents(self, task: Task) -> list[Task]:
-        """检查并解锁已满足依赖条件的下游任务。"""
-        modified = []
-        dependents = self.uow.tasks.find_dependents(task.id)
-
-        for dependent in dependents:
-            if dependent.status in (TaskStatus.BLOCKED, TaskStatus.PENDING):
-                is_blocked = self.resolution_service.evaluate_blocking_status(
-                    dependent, self.uow.tasks
-                )
-                if not is_blocked:
-                    dependent.mark_ready()
-                    self.uow.tasks.save(dependent)
-                    modified.append(dependent)
-
-        return modified
-        
