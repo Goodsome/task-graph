@@ -31,7 +31,6 @@ class SqlAlchemyTaskRepository(TaskRepository):
     def save(self, task: Task) -> None:
         model = self._to_model(task)
         self.session.add(model)
-        self.session.flush()
         self._track_task(task)
 
     @override
@@ -76,7 +75,6 @@ class SqlAlchemyTaskRepository(TaskRepository):
         model = self.session.get(TaskModel, task_id.value)
         if model:
             self.session.delete(model)
-            self.session.flush()
 
     @override
     def find_by_ids(self, task_ids: set[TaskId]) -> list[Task]:
