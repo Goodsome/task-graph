@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from task_graph.shared.ports.event_bus import EventBus
-from event_hub import EventHub, DomainEvent, IntegrationEvent
+from event_hub import EventHub, DomainEvent
 from dataclasses import dataclass
 from typing import Callable
 
@@ -19,16 +19,8 @@ class EventHubAdapter(EventBus):
         实现 EventBus port 的 publish 方法。
         根据事件类型路由到具体的 hub 发布方法。
         """
-        # 注意：因为 UoW.commit() 是同步的，这里必须使用同步发布
-        if isinstance(event, DomainEvent):
-            self.hub.publish_domain_sync(event)
-            logger.info(f"Published domain event: {event}")
-        elif isinstance(event, IntegrationEvent):
-            # 假设你的 EventHub 也有针对集成事件的同步发布方法
-            # self.hub.publish_integration_sync(event)
-            pass
-        else:
-            raise ValueError(f"Unknown event type: {type(event)}")
+        self.hub.publish_domain_sync(event)
+        logger.info(f"Published domain event: {event.event_type}")
 
 
     @staticmethod

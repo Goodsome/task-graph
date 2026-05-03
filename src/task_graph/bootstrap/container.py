@@ -36,6 +36,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         config=config.planning,
         database=shared.database,
         event_bus_factory=shared.event_bus_factory,
+        event_hub=shared.event_hub,
     )
 
     # Issue Tracking bounded context container

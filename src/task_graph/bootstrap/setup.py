@@ -33,12 +33,12 @@ def create_container(
     # Dependency Injector自动将配置分层传递给所有子容器
     container.config.from_pydantic(app_config)
     
+    bind_all_events(container)
 
     # 4. 初始化需要建立连接的资源（数据库连接池、事件总线等）
     if init_resources:
         container.init_resources()
 
-    bind_all_events(container)
     
     return container
 

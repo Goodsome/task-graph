@@ -32,6 +32,7 @@ from task_graph.planning.application.use_cases.update_task_status import (
 from task_graph.planning.application.event_handlers import (
     OnTaskCompleted,
     OnTaskDecomposing,
+    OnTaskReady,
 )
 
 
@@ -55,6 +56,7 @@ from task_graph.planning.infrastructure.adapters.sql_alchemy_unit_of_work import
     SqlAlchemyUnitOfWork,
 )
 from task_graph.shared.infrastructure.database import Database
+from event_hub import EventHub
 
 
 class Container(containers.DeclarativeContainer):
@@ -65,6 +67,7 @@ class Container(containers.DeclarativeContainer):
     # --- Dependencies injected from parent container ---
     config: Configuration = Configuration()
     database: Dependency[Database] = Dependency(instance_of=Database)
+    event_hub: Dependency[EventHub] = Dependency(instance_of=EventHub)
     event_bus_factory = Dependency()
 
     # --- Infrastructure Factories ---
@@ -167,4 +170,9 @@ class Container(containers.DeclarativeContainer):
     on_task_decomposing: Factory[OnTaskDecomposing] = Factory(
         OnTaskDecomposing,
         decompose_task=decompose_task,
+    )
+
+    on_task_ready: Factory[OnTaskReady] = Factory(
+        OnTaskReady,
+        event_hub=event_hub,
     )

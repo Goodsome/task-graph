@@ -87,4 +87,15 @@ def setup_mcp_logging() -> logging.Logger:
 
 def setup_cli_logging() -> logging.Logger:
     """为CLI服务配置日志"""
-    return setup_logging(logger_name="task_graph", log_file="cli.log", console_output=False)
+    logger = setup_logging(logger_name="task_graph", log_file="cli.log", console_output=False)
+
+    sdk_logger = logging.getLogger("event_hub") # 接管整个 event_hub 命名空间
+     
+    # 关键：将主程序的 handlers 共享给 SDK logger
+    for handler in logger.handlers:
+        sdk_logger.addHandler(handler)
+
+    # 设置 SDK 的级别
+    sdk_logger.setLevel(logging.INFO)
+    sdk_logger.propagate = False  # 避免如果 root 配置了导致重复输出
+    return logger

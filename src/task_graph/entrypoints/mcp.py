@@ -13,7 +13,6 @@ def create_app():
 
     # 1. DI 容器初始化
     logger.info("Initializing DI container")
-    _ = create_container()
 
     mcp = FastMCP("TaskGraph")
 
@@ -35,7 +34,9 @@ def create_app():
 
 def main():
     logger = logging.getLogger("task_graph.mcp")
+    container = None
     try:
+        container = create_container()
         mcp = create_app()
         logger.info("Starting MCP server")
         mcp.run()
@@ -43,6 +44,8 @@ def main():
         logger.error(f"MCP server failed to start: {str(e)}", exc_info=True)
         raise
     finally:
+        if container is not None:
+            container.shutdown()
         logger.info("MCP server stopped")
 
 if __name__ == "__main__":

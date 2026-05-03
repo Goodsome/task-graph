@@ -1,7 +1,6 @@
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from abc import abstractmethod, ABC
-from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
 
 
 class TaskRepository(ABC):
