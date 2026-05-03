@@ -18,17 +18,6 @@ class TaskRepository(ABC):
 
     @abstractmethod
     def get(self, task_id: TaskId) -> Task:
-        """Get a task by its ID.
-
-        Args:
-            task_id: The ID of the task to retrieve.
-
-        Returns:
-            The Task object.
-
-        Raises:
-            TaskNotFoundError: If the task is not found.
-        """
         ...
 
     @abstractmethod
@@ -38,29 +27,10 @@ class TaskRepository(ABC):
     ) -> list[Task]: ...
 
     @abstractmethod
-    def find_all(
-        self,
-    ) -> list[Task]: ...
-
-    @abstractmethod
-    def find_dependents(self, task_id: TaskId) -> list[Task]: ...
-
-    @abstractmethod
     def delete(self, task_id: TaskId) -> None: ...
 
     @abstractmethod
     def find_by_ids(self, task_ids: set[TaskId]) -> list[Task]: ...
-
-    @abstractmethod
-    def find_paged(
-        self,
-        page: int,
-        page_size: int,
-        status: TaskStatus | None,
-        project_id: str | None,
-        scope_level: ScopeLevel | None,
-        search: str | None,
-    ) -> tuple[list[Task], int]: ...
 
     @abstractmethod
     def find_by_parent_id(self, parent_id: TaskId) -> list[Task]: ...

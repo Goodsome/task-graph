@@ -48,6 +48,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
 
         self._track_task(task)
         return task
+        
     @override
     def find_all_active(self, project_id: str | None = None) -> list[Task]:
         stmt = select(TaskModel).where(TaskModel.status != TaskStatus.DONE.value)
@@ -55,20 +56,6 @@ class SqlAlchemyTaskRepository(TaskRepository):
             stmt = stmt.where(TaskModel.project_id == project_id)
         models = self.session.execute(stmt).scalars().all()
         return [self._to_domain(m) for m in models]
-
-    @override
-    def find_all(self) -> list[Task]:
-        stmt = select(TaskModel)
-        models = self.session.execute(stmt).scalars().all()
-        return [self._to_domain(m) for m in models]
-
-    @override
-    def find_dependents(self, task_id: TaskId) -> list[Task]:
-        model = self.session.get(TaskModel, task_id.value)
-        if not model:
-            return []
-        dependents = cast(list[TaskModel], getattr(model, "dependents", []))
-        return [self._to_domain(d) for d in dependents]
 
     @override
     def delete(self, task_id: TaskId) -> None:
@@ -88,42 +75,6 @@ class SqlAlchemyTaskRepository(TaskRepository):
         stmt = select(TaskModel).where(TaskModel.parent_id == parent_id.value)
         models = self.session.execute(stmt).scalars().all()
         return [self._to_domain(m) for m in models]
-
-    @override
-    def find_paged(
-        self,
-        page: int,
-        page_size: int,
-        status: TaskStatus | None,
-        project_id: str | None,
-        scope_level: ScopeLevel | None,
-        search: str | None,
-    ) -> tuple[list[Task], int]:
-        # Create base select statement
-        stmt = select(TaskModel)
-        if status:
-            stmt = stmt.where(TaskModel.status == status.value)
-        if project_id:
-            stmt = stmt.where(TaskModel.project_id == project_id)
-        if scope_level:
-            stmt = stmt.where(TaskModel.scope_level == scope_level.value)
-        if search:
-            stmt = stmt.where(
-                or_(
-                    TaskModel.name.ilike(f"%{search}%"),
-                    TaskModel.description.ilike(f"%{search}%"),
-                )
-            )
-
-        # Get total count using a scalar subquery or separate count query
-        count_stmt = select(func.count()).select_from(stmt.subquery())
-        total = self.session.execute(count_stmt).scalar() or 0
-
-        # Get paged results
-        paged_stmt = stmt.offset((page - 1) * page_size).limit(page_size)
-        models = self.session.execute(paged_stmt).scalars().all()
-
-        return [self._to_domain(m) for m in models], total
 
     def _to_domain(self, model: TaskModel) -> Task:
         return Task(
