@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from task_graph.planning.domain.events import TaskReady
-from event_hub import EventHub, TaskReady as TaskReadyIntegrationEvent
+from event_hub import EventHub, integration_events as ie
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ class OnTaskReady:
     event_hub: EventHub
 
     def handle_publish_integration_event(self, event: TaskReady):
-        ie = TaskReadyIntegrationEvent(
+        e = ie.TaskReady(
             task_id=event.task_id,
             project_id=event.project_id,
             scope_level=event.scope_level.value,
@@ -20,4 +20,5 @@ class OnTaskReady:
             architecture_layer=event.architecture_layer.value if event.architecture_layer else None,
             parent_id=event.parent_id
         )
-        self.event_hub.publish_integration_sync(ie)
+        self.event_hub.publish_integration_sync(e)
+        
