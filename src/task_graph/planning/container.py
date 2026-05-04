@@ -33,6 +33,7 @@ from task_graph.planning.application.event_handlers import (
     OnTaskCompleted,
     OnTaskDecomposing,
     OnTaskReady,
+    OnTaskReviewRequested,
 )
 
 
@@ -174,5 +175,10 @@ class Container(containers.DeclarativeContainer):
 
     on_task_ready: Factory[OnTaskReady] = Factory(
         OnTaskReady,
+        event_hub=event_hub,
+    )
+
+    on_task_review_requested: Factory[OnTaskReviewRequested] = Factory(
+        OnTaskReviewRequested,
         event_hub=event_hub,
     )
