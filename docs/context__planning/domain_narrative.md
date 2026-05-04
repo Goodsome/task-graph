@@ -12,7 +12,7 @@
 系统通过四级任务定义明确了研发的不同阶段与职责：
 1.  **Project 级 (战略层)**：维护整个项目的战略设计。负责划分核心域、支撑域、定义北极星目标及限界上下文映射图（Context Map）。
 2.  **Context 级 (战术层)**：维护特定限界上下文内的战术设计。负责编写领域叙事、统一语言、聚合根定义及上下文内的技术实现蓝图。
-3.  **Architectural 级 (架构层)**：负责特定上下文内各个架构层（Domain, Application, Interfaces, Infrastructure）的详细技术设计与原子任务派发。
+3.  **Architecture 级 (架构层)**：负责特定上下文内各个架构层（Domain, Application, Interfaces, Infrastructure）的详细技术设计与原子任务派发。
 4.  **Atomic 级 (执行层)**：负责单一职责的代码落地，是最小的可执行单元。
 
 ### B. 递归拆解与递归验收流 (Recursive Decomposition & Review)
@@ -31,6 +31,6 @@
 ## 3. 典型用户故事 (User Stories)
 
 *   **作为战略 Agent**，我根据原始 Issue 开启了一个 `Project` 级的战略设计任务，在完成后提交给人类或高级 Agent 审核，并在审核通过后开始将其拆解为多个 `Context` 级的战术任务。
-*   **作为战术 Agent**，我接收到 `Context` 任务后，专注于该领域内的业务叙事与通用语言定义，并在我的设计产出被父级任务验收后，进一步拆解为 Domain 层或 Application 层的 `Architectural` 任务。
+*   **作为战术 Agent**，我接收到 `Context` 任务后，专注于该领域内的业务叙事与通用语言定义，并在我的设计产出被父级任务验收后，进一步拆解为 Domain 层或 Application 层的 `Architecture` 任务。
 *   **作为开发 Agent**，我执行具体的 `Atomic` 任务（如编写一个 Pydantic 模型），并在我提交产出后，系统自动触发父级架构任务的进度更新与后续验收。
 *   **作为规划 Agent**，我在创建任务时为其编写结构化的验收标准（BDD 格式），明确该任务的 `Given / When / Then` 完成条件，以便后续由 Agent 或 CI 工具自动将其转化为对应类型的测试用例（单元、集成或端到端）。

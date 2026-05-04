@@ -42,7 +42,7 @@ def create_task(
         typer.Option(
             "--level",
             "-l",
-            help="任务范围层级: project, context, architectural, component",
+            help="任务范围层级: project, context, architecture, component",
         ),
     ] = "component",
     completion_logic: Annotated[
@@ -69,7 +69,7 @@ def create_task(
         level = ScopeLevel(scope_level.lower())
     except ValueError:
         console.print(f"[red]错误: 无效的 scope_level: {scope_level}[/red]")
-        console.print("可选值: project, context, architectural, component")
+        console.print("可选值: project, context, architecture, component")
         raise typer.Exit(1)
 
     try:

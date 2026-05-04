@@ -1181,8 +1181,8 @@ contexts:
         value: project
       - name: CONTEXT
         value: context
-      - name: ARCHITECTURAL
-        value: architectural
+      - name: ARCHITECTURE
+        value: architecture
       - name: COMPONENT
         value: component
     - name: ArchitectureLayer

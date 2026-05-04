@@ -60,7 +60,7 @@ def list_tasks(
             level = ScopeLevel(scope_level.lower())
         except ValueError:
             console.print(f"[red]错误: 无效的层级: {scope_level}[/red]")
-            console.print("可选值: project, context, architectural, component")
+            console.print("可选值: project, context, architecture, component")
             raise typer.Exit(1)
 
     query = ListTasksQuery(

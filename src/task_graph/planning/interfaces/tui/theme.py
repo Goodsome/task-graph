@@ -19,7 +19,7 @@ STATUS_COLORS: dict[str, str] = {
 SCOPE_COLORS: dict[str, str] = {
     "project": "bright_cyan",
     "context": "bright_magenta",
-    "architectural": "bright_yellow",
+    "architecture": "bright_yellow",
     "component": "bright_green",
 }
 

@@ -86,7 +86,7 @@ class GetBindings:
             project_id="full-project",
             name="Fully Populated Task",
             description="Task with all fields set",
-            scope_level=ScopeLevel.ARCHITECTURAL,
+            scope_level=ScopeLevel.ARCHITECTURE,
             scope_context=ScopeContextFactory.build(),
         )
         # PENDING -> READY -> IN_PROGRESS (required for set_output)
