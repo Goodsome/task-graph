@@ -27,6 +27,9 @@ def main():
         container = create_container()
         app = create_app()
         app()
+    except SystemExit:
+        # Normal exit from --help or other Click/Typer signals
+        pass
     except Exception as e:
         logger.error(f"CLI application failed: {str(e)}", exc_info=True)
         raise

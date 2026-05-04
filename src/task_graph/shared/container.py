@@ -16,7 +16,11 @@ def init_event_hub() -> Iterator[EventHub]:
 
     yield hub
 
-    asyncio.run(hub.stop())
+    try:
+        asyncio.run(hub.stop())
+    except RuntimeError:
+        # Event loop may already be closing during process shutdown
+        pass
     
 
 class Container(DeclarativeContainer):
