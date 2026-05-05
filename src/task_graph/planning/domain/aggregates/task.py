@@ -21,11 +21,11 @@ from task_graph.planning.domain.events import (
     TaskReviewRequested,
 )
 from typing import Any, Self, TypeVar, Union, override
-from task_graph.shared.domain.core.domain_event import DomainEvent
 from task_graph.planning.domain.value_objects.recurrence_policy import RecurrencePolicy
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
 from task_graph.planning.domain.value_objects.scenario import Scenario
+from event_hub import DomainEvent
 
 T = TypeVar("T", bound=DomainEvent)
 

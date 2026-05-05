@@ -1,6 +1,6 @@
 from pydantic import Field
-from task_graph.shared.domain.core.domain_event import DomainEvent
 from task_graph.planning.domain.enums import ScopeLevel, ArchitectureLayer
+from event_hub import DomainEvent
 
 
 class BaseTaskEvent(DomainEvent):

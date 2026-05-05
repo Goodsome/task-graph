@@ -1,4 +1,4 @@
-from task_graph.shared.domain.core.domain_event import DomainEvent
+from event_hub import DomainEvent
 from pydantic import Field
 from task_graph.issue_tracking.domain.enums import IssueStatus, IssueType, Severity
 

@@ -920,7 +920,7 @@ contexts:
 - name: Planning
   domain:
     core:
-    - name: BaseTask
+    - name: BaseTaskEvent
       description: Task 领域模型的基础类，包含所有公共上下文信息
       attributes:
       - type: string
@@ -935,6 +935,9 @@ contexts:
       - type: ArchitectureLayer
         optional: true
         name: architecture_layer
+      - type: string
+        optional: true
+        name: parent_id
     aggregates:
     - name: Task
       description: The atomic unit of planning, representing a node in the DAG.
@@ -1098,7 +1101,15 @@ contexts:
           container: list
       - name: mark_decomposition_completed
         description: "标记任务分解完成。\n\nRaises:\n    IllegalStateTransitionError: 如果当前状态不是\
-          \ DECOMPOSING"
+          \ DECOMPOSING 或 DELEGATED"
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: None
+      - name: mark_delegated
+        description: "标记任务已分解并委派子任务。\n\nRaises:\n    IllegalStateTransitionError:\
+          \ 如果当前状态不是 DECOMPOSING"
         inputs:
         - type: Self
           name: self
@@ -1157,6 +1168,8 @@ contexts:
         value: reviewing
       - name: DECOMPOSING
         value: decomposing
+      - name: DELEGATED
+        value: delegated
       - name: DONE
         value: done
       - name: CHANGES_REQUESTED
@@ -1487,6 +1500,13 @@ contexts:
     - name: TaskRepository
       description: Persistence interface for Tasks.
       operations:
+      - name: collect_seen_tasks
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: Task
+          container: set
       - name: save
         inputs:
         - type: Self
@@ -1529,16 +1549,15 @@ contexts:
           name: task_id
         output:
           type: Task
-          optional: true
         rules:
         - name: get_returns_task_for_existing_id
           given: a Task with the given TaskId exists in the repository
           when: get is invoked with that TaskId
           then: the complete Task is returned with all its attributes intact
-        - name: get_returns_none_for_nonexistent_id
+        - name: get_raises_not_found_for_nonexistent_id
           given: no Task with the given TaskId exists in the repository
           when: get is invoked with that TaskId
-          then: None is returned without raising an error
+          then: TaskNotFoundError is raised
         - name: get_returns_fully_reconstituted_task
           given: a Task was previously saved with all attributes populated
           when: get is invoked with the Task's TaskId
@@ -1554,22 +1573,6 @@ contexts:
         output:
           type: Task
           container: list
-      - name: find_all
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: Task
-          container: list
-      - name: find_dependents
-        inputs:
-        - type: Self
-          name: self
-        - type: TaskId
-          name: task_id
-        output:
-          type: Task
-          container: list
       - name: delete
         inputs:
         - type: Self
@@ -1578,15 +1581,6 @@ contexts:
           name: task_id
         output:
           type: None
-      - name: find_by_id
-        inputs:
-        - type: Self
-          name: self
-        - type: TaskId
-          name: task_id
-        output:
-          type: Task
-          optional: true
       - name: find_by_ids
         inputs:
         - type: Self
@@ -1597,29 +1591,6 @@ contexts:
         output:
           type: Task
           container: list
-      - name: find_paged
-        inputs:
-        - type: Self
-          name: self
-        - type: integer
-          name: page
-        - type: integer
-          name: page_size
-        - type: TaskStatus
-          optional: true
-          name: status
-        - type: string
-          optional: true
-          name: project_id
-        - type: ScopeLevel
-          optional: true
-          name: scope_level
-        - type: string
-          optional: true
-          name: search
-        output:
-          type: Any
-          custom_type_string: tuple[list[Task], int]
       - name: find_by_parent_id
         inputs:
         - type: Self
@@ -1630,40 +1601,49 @@ contexts:
           type: Task
           container: list
     domain_events:
-    - name: TaskDecomposingEvent
-      description: Event emitted when a task is approved for decomposition.
+    - name: TaskCreated
+      description: Event emitted when a new task is created.
       base_types:
-      - BaseTask
-    - name: TaskCompletedEvent
-      description: Event emitted when a task is completed.
-      base_types:
-      - BaseTask
-    - name: TaskBlockedEvent
-      description: Event emitted when a task is blocked (e.g., execution error).
-      base_types:
-      - BaseTask
-      attributes:
-      - type: string
-        name: reason
-    - name: TaskReadyEvent
-      description: Event emitted when a task is ready to be claimed.
-      base_types:
-      - BaseTask
-    - name: TaskReviewRequestedEvent
-      description: Event emitted when a task is submitted for review.
-      base_types:
-      - BaseTask
-    - name: TaskChangesRequestedEvent
+      - BaseTaskEvent
+    - name: TaskChangesRequested
       description: Event emitted when a task review is rejected and changes are requested.
       base_types:
-      - BaseTask
+      - BaseTaskEvent
       attributes:
       - type: string
         name: feedback
-    - name: TaskInProgressEvent
+    - name: TaskDelegated
+      description: Event emitted when a task has been decomposed and sub-tasks are
+        created.
+      base_types:
+      - BaseTaskEvent
+    - name: TaskInProgress
       description: Event emitted when a task is claimed and starts execution.
       base_types:
-      - BaseTask
+      - BaseTaskEvent
+    - name: TaskBlocked
+      description: Event emitted when a task is blocked (e.g., execution error).
+      base_types:
+      - BaseTaskEvent
+      attributes:
+      - type: string
+        name: reason
+    - name: TaskDecomposing
+      description: Event emitted when a task is approved for decomposition.
+      base_types:
+      - BaseTaskEvent
+    - name: TaskReady
+      description: Event emitted when a task is ready to be claimed.
+      base_types:
+      - BaseTaskEvent
+    - name: TaskReviewRequested
+      description: Event emitted when a task is submitted for review.
+      base_types:
+      - BaseTaskEvent
+    - name: TaskCompleted
+      description: Event emitted when a task is completed.
+      base_types:
+      - BaseTaskEvent
   application:
     use_cases:
     - name: SubmitTaskResult
@@ -1744,7 +1724,7 @@ contexts:
       dependencies:
       - type: UnitOfWork
         name: uow
-    - name: CompleteDecomposition
+    - name: CompleteDelegatedTask
       kind: command
       inputs:
       - type: string
@@ -1781,6 +1761,40 @@ contexts:
         name: uow
       - type: DependencyResolutionService
         name: resolution_service
+    - name: DecomposeTask
+      kind: command
+      inputs:
+      - type: string
+        name: task_id
+      outputs:
+      - type: boolean
+        name: success
+      - type: string
+        name: task_id
+      - type: string
+        container: list
+        name: sub_task_ids
+        default: list
+      - type: string
+        optional: true
+        name: error
+      description: 'Decompose a task into sub-tasks.
+
+
+        This use case:
+
+        1. Retrieves the task by ID.
+
+        2. Generates sub-tasks based on the task''s output.
+
+        3. Persists the new sub-tasks.
+
+        4. Marks the original task as DELEGATED.
+
+        5. Persists the original task.'
+      dependencies:
+      - type: UnitOfWork
+        name: uow
     - name: SuggestNextAction
       kind: query
       inputs:
@@ -1841,8 +1855,6 @@ contexts:
       dependencies:
       - type: UnitOfWork
         name: uow
-      - type: DependencyResolutionService
-        name: resolution_service
     - name: DeleteTask
       kind: command
       inputs:
@@ -1858,6 +1870,27 @@ contexts:
       dependencies:
       - type: UnitOfWork
         name: uow
+    - name: UnlockTask
+      kind: command
+      inputs:
+      - type: string
+        name: task_id
+      outputs:
+      - type: boolean
+        name: success
+      - type: string
+        name: task_id
+      - type: string
+        name: error
+        default: str
+      - type: string
+        name: error_code
+        default: str
+      dependencies:
+      - type: UnitOfWork
+        name: uow
+      - type: DependencyResolutionService
+        name: resolution_service
     - name: ModifyTaskDependencies
       kind: command
       inputs:
@@ -1959,7 +1992,7 @@ contexts:
         name: search
         default: ''
       outputs:
-      - type: SummaryTask
+      - type: SummaryTaskDto
         container: list
         name: tasks
       - type: integer
@@ -1972,9 +2005,53 @@ contexts:
         optional: true
         name: error
       dependencies:
-      - type: UnitOfWork
-        name: uow
+      - type: TaskQueryService
+        name: query_service
     ports:
+    - name: TaskQueryService
+      description: 'Read-only query interface for tasks (CQRS query side).
+
+
+        Implementations must return lightweight DTOs rather than full domain
+
+        aggregates to avoid loading unnecessary data and coupling queries to
+
+        the domain model.'
+      operations:
+      - name: find_paged
+        description: Return a paginated list of task summaries and the total count.
+        inputs:
+        - type: Self
+          name: self
+        - type: integer
+          name: page
+        - type: integer
+          name: page_size
+        - type: TaskStatus
+          optional: true
+          name: status
+        - type: string
+          optional: true
+          name: project_id
+        - type: ScopeLevel
+          optional: true
+          name: scope_level
+        - type: string
+          optional: true
+          name: search
+        output:
+          type: Any
+          custom_type_string: tuple[list[SummaryTaskDto], int]
+      - name: find_dependents
+        description: Return summaries of all tasks that directly depend on *task_id*.
+        inputs:
+        - type: Self
+          name: self
+        - type: TaskId
+          name: task_id
+        output:
+          type: SummaryTaskDto
+          container: list
     - name: UnitOfWork
       operations:
       - name: tasks
@@ -2003,6 +2080,19 @@ contexts:
           type: any
   infrastructure:
     implementations:
+    - name: SqlAlchemyTaskQueryService
+      implements: TaskQueryService
+      technology: sql
+      description: 'SQLAlchemy implementation of TaskQueryService.
+
+
+        Queries operate directly on ORM models and project lightweight DTOs
+
+        without materialising full domain aggregates.'
+      attributes:
+      - type: Any
+        custom_type_string: sessionmaker[Session]
+        name: session_factory
     - name: SqlAlchemyUnitOfWork
       implements: UnitOfWork
       technology: sql
@@ -2034,12 +2124,14 @@ contexts:
       attributes:
       - type: Session
         name: session
+      - type: Task
+        container: set
+        name: _seen_tasks
+        default: set
   interfaces:
     cli_commands:
     - name: create-task
       use_case: CreateTask
-    - name: complete-decomposition
-      use_case: CompleteDecomposition
     - name: delete-task
       use_case: DeleteTask
     - name: get-task
@@ -2051,8 +2143,6 @@ contexts:
       use_case: SubmitTaskResult
     - name: create_task
       use_case: CreateTask
-    - name: complete_decomposition
-      use_case: CompleteDecomposition
     - name: update_task_status
       use_case: UpdateTaskStatus
     - name: suggest_next_action
@@ -2130,25 +2220,5 @@ contexts:
       base_types:
       - BaseModel
       attributes:
-      - type: Any
-        name: model_config
-    - name: DomainEvent
-      description: 领域事件基类 所有领域事件必须： 1. 不可变（frozen=True） 2. 包含唯一标识和时间戳 3. 使用 UTC 时区
-        4. 携带事件类型标识
-      base_types:
-      - BaseModel
-      attributes:
-      - type: uuid
-        name: event_id
-        default: uuid4
-      - type: datetime
-        name: occurred_at
-        default: 'lambda: datetime.now(timezone.utc)'
-      - type: string
-        name: event_type
-        default: ''
-      - type: integer
-        name: version
-        default: 1
       - type: Any
         name: model_config

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, PrivateAttr, ConfigDict
 
-from .domain_event import DomainEvent
+from event_hub import DomainEvent
 
 
 class AggregateRoot(BaseModel):
