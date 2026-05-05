@@ -30,6 +30,7 @@ from task_graph.planning.application.use_cases.update_task_status import (
     UpdateTaskStatus,
 )
 from task_graph.planning.application.event_handlers import (
+    OnTaskChangesRequested,
     OnTaskCompleted,
     OnTaskDecomposing,
     OnTaskReady,
@@ -180,5 +181,10 @@ class Container(containers.DeclarativeContainer):
 
     on_task_review_requested: Factory[OnTaskReviewRequested] = Factory(
         OnTaskReviewRequested,
+        event_hub=event_hub,
+    )
+
+    on_task_changes_requested: Factory[OnTaskChangesRequested] = Factory(
+        OnTaskChangesRequested,
         event_hub=event_hub,
     )
