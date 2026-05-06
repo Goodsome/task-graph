@@ -18,6 +18,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
             "task_graph.planning.interfaces",
             "task_graph.issue_tracking.interfaces",
             "task_graph.planning.interfaces.tui",
+            "task_graph.issue_tracking.interfaces.tui",
         ]
     )
 

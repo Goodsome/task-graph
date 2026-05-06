@@ -51,6 +51,7 @@ class TaskListScreen(Screen):
         ("q", "quit", "退出"),
         ("r", "refresh", "刷新"),
         ("slash", "focus_filter", "过滤"),
+        ("i", "switch_issues", "Issues"),
     ]
 
     DEFAULT_CSS = """
@@ -175,6 +176,7 @@ class TaskListScreen(Screen):
         table.add_column("父任务", width=10, key="parent")
         table.add_column("工作量", width=8, key="effort")
         table.add_column("价值", width=8, key="value")
+        table.focus()
         self._load_data()
 
     # --- 过滤器事件 ---
@@ -237,6 +239,9 @@ class TaskListScreen(Screen):
 
     def action_quit(self) -> None:
         self.app.exit()
+
+    def action_switch_issues(self) -> None:
+        self.app.switch_to_issues()
 
     # --- 数据加载 ---
 

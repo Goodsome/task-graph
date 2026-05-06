@@ -1,5 +1,4 @@
 from dependency_injector.providers import Dependency, Configuration, Singleton
-from task_graph.shared.ports.event_bus import EventBus
 from task_graph.issue_tracking.domain.services.issue_status_transition_service import (
     IssueStatusTransitionService,
 )
@@ -38,9 +37,7 @@ from task_graph.shared.infrastructure.database import Database
 class Container(DeclarativeContainer):
     config: Configuration = Configuration()
     database: Dependency[Database] = Dependency(instance_of=Database)
-    event_bus_factory: Dependency[EventBus] = Dependency(
-        instance_of=EventBus
-    )
+    event_bus_factory = Dependency()
 
     # Unit of Work
     issue_repository_factory: Factory[SqlAlchemyIssueRepository] = Factory(
