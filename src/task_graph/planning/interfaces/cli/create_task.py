@@ -45,12 +45,6 @@ def create_task(
             help="任务范围层级: project, context, architecture, component",
         ),
     ] = "component",
-    completion_logic: Annotated[
-        str,
-        typer.Option(
-            "--logic", help="依赖完成逻辑: all (所有依赖完成), any (任一依赖完成)"
-        ),
-    ] = "all",
     dependencies: Annotated[
         list[str] | None, typer.Option("--dep", help="前置任务ID (可多次指定)")
     ] = None,
@@ -99,7 +93,6 @@ def create_task(
         effort=effort,
         base_value=base_value,
         scope_level=level,
-        completion_logic=logic,
         dependencies=dependencies or [],
         parent_id=parent_id,
         bounded_context=bounded_context,

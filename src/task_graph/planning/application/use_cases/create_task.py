@@ -4,7 +4,6 @@ from pydantic import BaseModel, Field
 
 from task_graph.planning.domain.aggregates import Task
 from task_graph.planning.domain.enums import (
-    CompletionLogic,
     TaskStatus,
     ScopeLevel,
     ArchitectureLayer,
@@ -35,7 +34,6 @@ class CreateTaskCommand(BaseModel):
     effort: int
     base_value: float
     scope_level: ScopeLevel
-    completion_logic: CompletionLogic = Field(default=CompletionLogic.ALL)
     dependencies: list[str] = Field(default_factory=list)
     parent_id: str | None = Field(default=None)
     bounded_context: str | None = Field(default=None)
@@ -116,7 +114,6 @@ class CreateTask:
                     description=cmd.description,
                     effort=effort_vo,
                     base_value=value_vo,
-                    completion_logic=cmd.completion_logic,
                     dependencies=dep_ids,
                     scope_level=cmd.scope_level,
                     parent_id=parent_id,
