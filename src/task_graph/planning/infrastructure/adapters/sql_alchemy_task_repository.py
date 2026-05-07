@@ -13,7 +13,7 @@ from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
 from task_graph.planning.domain.value_objects.scenario import Scenario
 from task_graph.planning.infrastructure.orm_models.task_model import TaskModel
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
@@ -21,34 +21,30 @@ class SqlAlchemyTaskRepository(TaskRepository):
     """SQLAlchemy implementation of TaskRepository."""
 
     session: Session
-    _seen_tasks: set[Task] = field(default_factory=set, init=False)
 
     @override
-    def collect_seen_tasks(self) -> set[Task]:
-        return self._seen_tasks
-
-    @override
-    def save(self, task: Task) -> None:
-        model = self._to_model(task)
+    def _save(self, aggregate: Task) -> None:
+        model = self._to_model(aggregate)
         self.session.add(model)
-        self._track_task(task)
 
     @override
-    def add(self, task: Task) -> None:
-        model = self._to_model(task)
+    def _add(self, aggregate: Task) -> None:
+        model = self._to_model(aggregate)
         self.session.add(model)
-        self._track_task(task)
 
     @override
-    def get(self, task_id: TaskId) -> Task:
-        model = self.session.get(TaskModel, task_id.value)
+    def _get(self, id: TaskId) -> Task:
+        model = self.session.get(TaskModel, id.value)
         if not model:
-            raise TaskNotFoundError(f"Task with ID {task_id.value} not found")
-        task = self._to_domain(model)
+            raise TaskNotFoundError(f"Task with ID {id.value} not found")
+        return self._to_domain(model)
 
-        self._track_task(task)
-        return task
-        
+    @override
+    def _delete(self, id: TaskId) -> None:
+        model = self.session.get(TaskModel, id.value)
+        if model:
+            self.session.delete(model)
+
     @override
     def find_all_active(self, project_id: str | None = None) -> list[Task]:
         stmt = select(TaskModel).where(TaskModel.status != TaskStatus.DONE.value)
@@ -56,12 +52,6 @@ class SqlAlchemyTaskRepository(TaskRepository):
             stmt = stmt.where(TaskModel.project_id == project_id)
         models = self.session.execute(stmt).scalars().all()
         return [self._to_domain(m) for m in models]
-
-    @override
-    def delete(self, task_id: TaskId) -> None:
-        model = self.session.get(TaskModel, task_id.value)
-        if model:
-            self.session.delete(model)
 
     @override
     def find_by_ids(self, task_ids: set[TaskId]) -> list[Task]:
@@ -159,6 +149,3 @@ class SqlAlchemyTaskRepository(TaskRepository):
 
         return model
 
-    def _track_task(self, task: Task) -> None:
-        self._seen_tasks.add(task)
-        
