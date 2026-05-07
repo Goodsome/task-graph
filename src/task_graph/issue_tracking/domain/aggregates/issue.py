@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-from typing import Any, Self
+from typing import Any, Self, override
 
 from task_graph.issue_tracking.domain.enums import IssueStatus, IssueType, Severity
 from task_graph.issue_tracking.domain.entities.comment import Comment
@@ -37,6 +37,10 @@ class Issue(AggregateRoot):
     task_links: list[TaskLink]
     created_at: datetime
     updated_at: datetime
+
+    @override
+    def __hash__(self) -> int:
+        return hash(self.id)
 
     @classmethod
     def create(
@@ -109,7 +113,7 @@ class Issue(AggregateRoot):
             resolution=resolution,
         ))
 
-    def add_comment(self: Self, content: str, author: str) -> None:
+    def add_comment(self: Self, content: str, author: str) -> Comment:
         """Add a comment to the issue"""
         comment = Comment.create(content=content, author=author)
         self.comments.append(comment)
@@ -121,6 +125,7 @@ class Issue(AggregateRoot):
             author=author,
             content=content,
         ))
+        return comment
 
     def add_label(self: Self, label: Label) -> None:
         """Add a label to the issue (duplicates ignored)"""

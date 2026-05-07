@@ -2,13 +2,11 @@ from task_graph.issue_tracking.domain.enums import IssueStatus, IssueType, Sever
 from abc import ABC, abstractmethod
 from task_graph.issue_tracking.domain.aggregates.issue import Issue
 from task_graph.issue_tracking.domain.value_objects.issue_id import IssueId
+from task_graph.shared.domain.ports.repository import Repository
 
 
-class IssueRepository(ABC):
+class IssueRepository(Repository[Issue, IssueId], ABC):
     """Persistence interface for Issue aggregate"""
-
-    @abstractmethod
-    def save(self, issue: Issue) -> None: ...
 
     @abstractmethod
     def find_by_id(self, issue_id: IssueId) -> Issue | None: ...
@@ -24,9 +22,6 @@ class IssueRepository(ABC):
         labels: list[str] | None = None,
         project_id: str | None = None,
     ) -> list[Issue]: ...
-
-    @abstractmethod
-    def delete(self, issue_id: IssueId) -> bool: ...
 
     @abstractmethod
     def find_by_task_id(self, task_id: str) -> list[Issue]: ...

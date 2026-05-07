@@ -12,6 +12,7 @@ from task_graph.issue_tracking.infrastructure.orm_models.issue_model import (
     IssueTaskLinkModel,
 )
 from dataclasses import dataclass
+from typing import override
 
 
 @dataclass
@@ -20,9 +21,26 @@ class SqlAlchemyIssueRepository(IssueRepository):
 
     session: Session
 
-    def save(self: Self, issue: Issue) -> None:
-        """Save or update an issue aggregate"""
-        model = self._to_model(issue)
+    @override
+    def _add(self, aggregate: Issue) -> None:
+        model = self._to_model(aggregate)
+        self.session.add(model)
+        self.session.flush()
+
+    @override
+    def _get(self, id: IssueId) -> Issue:
+        stmt = select(IssueModel).options(
+            joinedload(IssueModel.comments),
+            joinedload(IssueModel.task_links)
+        ).where(IssueModel.id == id.value)
+        model = self.session.execute(stmt).unique().scalar_one_or_none()
+        if not model:
+            raise ValueError(f"Issue with ID {id.value} not found")
+        return self._to_domain(model)
+
+    @override
+    def _save(self, aggregate: Issue) -> None:
+        model = self._to_model(aggregate)
         self.session.add(model)
         self.session.flush()
 
@@ -68,14 +86,12 @@ class SqlAlchemyIssueRepository(IssueRepository):
 
         return [self._to_domain(model) for model in models]
 
-    def delete(self: Self, issue_id: IssueId) -> bool:
-        """Delete an issue by ID"""
-        model = self.session.get(IssueModel, issue_id.value)
+    @override
+    def _delete(self, id: IssueId) -> None:
+        model = self.session.get(IssueModel, id.value)
         if model:
             self.session.delete(model)
             self.session.flush()
-            return True
-        return False
 
     def find_by_task_id(self: Self, task_id: str) -> list[Issue]:
         """Find all issues linked to a specific task ID"""

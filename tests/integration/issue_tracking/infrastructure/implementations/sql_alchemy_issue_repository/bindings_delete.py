@@ -17,7 +17,7 @@ class DeleteBindings:
     repository: SqlAlchemyIssueRepository = field(init=False)
     _arranged_issue: Issue | None = field(default=None, init=False)
     _issue_id_to_delete: IssueId | None = field(default=None, init=False)
-    _result: bool = field(default=False, init=False)
+    _result: None = field(default=None, init=False)
 
     def __post_init__(self: "DeleteBindings") -> None:
         self.repository = SqlAlchemyIssueRepository(session=self.session)
@@ -68,19 +68,20 @@ class DeleteBindings:
 
     def _when_call_delete(self) -> None:
         assert self._issue_id_to_delete is not None
-        self._result = self.repository.delete(self._issue_id_to_delete)
+        self.repository.delete(self._issue_id_to_delete)
 
     # ─────────────────────────── Assert ────────────────────────────
 
     def _then_issue_deleted_return_true(self) -> None:
-        assert self._result is True
         # 验证数据库中确实不存在了
         assert self._issue_id_to_delete is not None
         deleted_issue = self.repository.find_by_id(self._issue_id_to_delete)
         assert deleted_issue is None
 
     def _then_no_change_return_false(self) -> None:
-        assert self._result is False
+        # delete on non-existent is a no-op
+        assert self._issue_id_to_delete is not None
+        assert self.repository.find_by_id(self._issue_id_to_delete) is None
 
 
 @pytest.fixture

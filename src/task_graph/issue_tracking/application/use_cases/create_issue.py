@@ -1,15 +1,13 @@
+
 from pydantic import BaseModel, Field
 from task_graph.issue_tracking.domain.enums import IssueType, Severity
 from dataclasses import dataclass
-from task_graph.issue_tracking.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.issue_tracking.domain.ports.issue_repository import IssueRepository
 from task_graph.issue_tracking.domain.aggregates.issue import Issue
 from task_graph.issue_tracking.domain.value_objects.submitter import Submitter
 import logging
-
-
 logger = logging.getLogger(__name__)
-
-
 class CreateIssueCommand(BaseModel):
     project_id: str
     title: str
@@ -17,19 +15,15 @@ class CreateIssueCommand(BaseModel):
     type: IssueType
     severity: Severity
     submitter_name: str
-
-
 class CreateIssueResult(BaseModel):
     success: bool
     issue_id: str
     error: str = Field(default="")
-
-
 @dataclass
 class CreateIssue:
     """Create a new issue with initial status NEW"""
 
-    uow: UnitOfWork
+    uow: UnitOfWork[IssueRepository]
 
     def execute(self, cmd: CreateIssueCommand) -> CreateIssueResult:
         try:
@@ -50,15 +44,8 @@ class CreateIssue:
                 )
 
                 # Persist issue
-                self.uow.issues.save(issue)
+                self.uow.repository.save(issue)
                 logger.info(f"Issue {issue.id} created with status {issue.status.value}")
-
-                # Collect and publish all domain events
-                events = issue.collect_events()
-                logger.debug(f"Collected {len(events)} events from issue aggregate")
-                for event in events:
-                    self.uow.event_bus.publish(event)
-
                 # Commit transaction
                 self.uow.commit()
 

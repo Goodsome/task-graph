@@ -1,35 +1,24 @@
 from pydantic import BaseModel, Field
 from dataclasses import dataclass
 from datetime import datetime
-from task_graph.issue_tracking.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.issue_tracking.domain.ports.issue_repository import IssueRepository
 from task_graph.issue_tracking.domain.value_objects.issue_id import IssueId
 from task_graph.issue_tracking.domain.enums import IssueStatus, IssueType, Severity
-
-
 class GetIssueDetailsQuery(BaseModel):
     issue_id: str
-
-
 class CommentDTO(BaseModel):
     id: str
     content: str
     author: str
     created_at: datetime
-
-
 class LabelDTO(BaseModel):
     name: str
-
-
 class TaskLinkDTO(BaseModel):
     task_id: str
     linked_at: datetime
-
-
 class SubmitterDTO(BaseModel):
     name: str
-
-
 class IssueDetailsDTO(BaseModel):
     id: str
     project_id: str
@@ -44,19 +33,15 @@ class IssueDetailsDTO(BaseModel):
     task_links: list[TaskLinkDTO]
     created_at: datetime
     updated_at: datetime
-
-
 class GetIssueDetailsResult(BaseModel):
     success: bool
     issue: IssueDetailsDTO | None = Field(default=None)
     error: str = Field(default="")
-
-
 @dataclass
 class GetIssueDetails:
     """Get full issue details including comments and labels"""
 
-    uow: UnitOfWork
+    uow: UnitOfWork[IssueRepository]
 
     def execute(self, query: GetIssueDetailsQuery) -> GetIssueDetailsResult:
         try:
@@ -65,7 +50,7 @@ class GetIssueDetails:
                 issue_id = IssueId.reconstitute(query.issue_id)
 
                 # Find issue
-                issue = self.uow.issues.find_by_id(issue_id)
+                issue = self.uow.repository.find_by_id(issue_id)
             if not issue:
                 return GetIssueDetailsResult(
                     success=False,
@@ -119,4 +104,3 @@ class GetIssueDetails:
                 issue=None,
                 error=str(e)
             )
-

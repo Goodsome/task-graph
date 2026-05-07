@@ -2,31 +2,26 @@ from pydantic import BaseModel, Field
 from task_graph.issue_tracking.domain.enums import IssueType, Severity
 from dataclasses import dataclass
 import logging
-from task_graph.issue_tracking.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.issue_tracking.domain.ports.issue_repository import IssueRepository
 from task_graph.issue_tracking.domain.value_objects.issue_id import IssueId
 from task_graph.issue_tracking.domain.value_objects.label import Label
 
 logger = logging.getLogger(__name__)
-
-
 class UpdateIssueMetadataCommand(BaseModel):
     issue_id: str
     type: IssueType | None = Field(default=None)
     severity: Severity | None = Field(default=None)
     add_labels: list[str] | None = Field(default=None)
     remove_labels: list[str] | None = Field(default=None)
-
-
 class UpdateIssueMetadataResult(BaseModel):
     success: bool
     error: str = Field(default="")
-
-
 @dataclass
 class UpdateIssueMetadata:
     """Update issue metadata like type, severity, and labels"""
 
-    uow: UnitOfWork
+    uow: UnitOfWork[IssueRepository]
 
     def execute(self, cmd: UpdateIssueMetadataCommand) -> UpdateIssueMetadataResult:
         try:
@@ -35,7 +30,7 @@ class UpdateIssueMetadata:
                 issue_id = IssueId.reconstitute(cmd.issue_id)
 
                 # Find issue
-                issue = self.uow.issues.find_by_id(issue_id)
+                issue = self.uow.repository.find_by_id(issue_id)
                 if not issue:
                     return UpdateIssueMetadataResult(
                         success=False,
@@ -60,15 +55,8 @@ class UpdateIssueMetadata:
                         issue.remove_label(label_name)
 
                 # Persist changes
-                self.uow.issues.save(issue)
+                self.uow.repository.save(issue)
                 logger.info(f"Issue {issue.id} metadata updated")
-
-                # Collect and publish all domain events
-                events = issue.collect_events()
-                logger.debug(f"Collected {len(events)} events from issue aggregate")
-                for event in events:
-                    self.uow.event_bus.publish(event)
-
                 # Commit transaction
                 self.uow.commit()
 
@@ -78,4 +66,3 @@ class UpdateIssueMetadata:
                 success=False,
                 error=str(e)
             )
-

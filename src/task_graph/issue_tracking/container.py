@@ -1,4 +1,5 @@
-from dependency_injector.providers import Dependency, Configuration, Singleton
+import functools
+from dependency_injector.providers import Callable, Dependency, Configuration, Singleton
 from task_graph.issue_tracking.domain.services.issue_status_transition_service import (
     IssueStatusTransitionService,
 )
@@ -27,11 +28,11 @@ from task_graph.issue_tracking.application.use_cases.unlink_issue_from_task impo
 from dependency_injector.providers import Factory
 from task_graph.issue_tracking.application.use_cases.create_issue import CreateIssue
 from dependency_injector.containers import DeclarativeContainer
-from task_graph.issue_tracking.infrastructure.adapters.sql_alchemy_unit_of_work import (
+from task_graph.issue_tracking.domain.ports.issue_repository import IssueRepository
+from task_graph.shared.infrastructure.database import Database
+from task_graph.shared.infrastructure.sql_alchemy_unit_of_work import (
     SqlAlchemyUnitOfWork,
 )
-
-from task_graph.shared.infrastructure.database import Database
 
 
 class Container(DeclarativeContainer):
@@ -44,12 +45,19 @@ class Container(DeclarativeContainer):
         SqlAlchemyIssueRepository
     )
 
-    unit_of_work: Factory[SqlAlchemyUnitOfWork] = Factory(
+    event_publisher_factory = Callable(
+        lambda event_bus_factory, channel: functools.partial(
+            event_bus_factory, channel=channel
+        ),
+        event_bus_factory=event_bus_factory,
+        channel="issue_events",
+    )
+
+    unit_of_work: Factory[SqlAlchemyUnitOfWork[IssueRepository]] = Factory(
         SqlAlchemyUnitOfWork,
         session_factory=database.provided.session_factory,
-        event_bus_channel="issue_events",
-        issue_repository_factory=issue_repository_factory.provider,
-        event_bus_factory=event_bus_factory,
+        repository_factory=issue_repository_factory.provider,
+        event_publisher_factory=event_publisher_factory,
     )
     create_issue: Factory[CreateIssue] = Factory(
         CreateIssue,
