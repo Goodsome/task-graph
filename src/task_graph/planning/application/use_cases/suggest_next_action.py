@@ -4,7 +4,8 @@ from task_graph.planning.domain.services.priority_analysis_service import (
     PriorityAnalysisService,
 )
 from dataclasses import dataclass
-from task_graph.planning.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.planning.domain.ports.task_repository import TaskRepository
 
 
 from typing import Optional
@@ -26,13 +27,13 @@ class SuggestNextActionResult:
 class SuggestNextAction:
     """Returns the highest priority tasks that are ready to execute."""
 
-    uow: UnitOfWork
+    uow: UnitOfWork[TaskRepository]
     priority_service: PriorityAnalysisService
 
     def execute(self, query: SuggestNextActionQuery) -> SuggestNextActionResult:
         with self.uow:
             # 1. 计算全图优先级
-            sorted_tasks = self.priority_service.calculate_priorities(self.uow.tasks, project_id=query.project_id)
+            sorted_tasks = self.priority_service.calculate_priorities(self.uow.repository, project_id=query.project_id)
 
             actionable_tasks = [
                 t for t in sorted_tasks

@@ -1,4 +1,5 @@
-from task_graph.planning.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.planning.domain.ports.task_repository import TaskRepository
 from dataclasses import dataclass, field
 from task_graph.planning.domain.services import CycleDetectionService
 from task_graph.planning.domain.value_objects import TaskId
@@ -30,7 +31,7 @@ class ModifyTaskDependenciesResult:
 @dataclass
 class ModifyTaskDependencies:
 
-    uow: UnitOfWork
+    uow: UnitOfWork[TaskRepository]
     cycle_detector: CycleDetectionService
     dependency_resolver: DependencyResolutionService
 
@@ -41,22 +42,22 @@ class ModifyTaskDependencies:
         try:
             with self.uow:
                 target_id = TaskId.reconstitute(cmd.task_id)
-                task = self.uow.tasks.get(target_id)
+                task = self.uow.repository.get(target_id)
                 for rem_id_str in cmd.removed_dependencies:
                     rem_id = TaskId.reconstitute(rem_id_str)
                     if rem_id in task.dependencies:
                         task.dependencies.remove(rem_id)
                 for add_id_str in cmd.added_dependencies:
                     add_id = TaskId.reconstitute(add_id_str)
-                    _ = self.uow.tasks.get(add_id)
-                    if self.cycle_detector.detect_cycle(target_id, add_id, self.uow.tasks):
+                    _ = self.uow.repository.get(add_id)
+                    if self.cycle_detector.detect_cycle(target_id, add_id, self.uow.repository):
                         return ModifyTaskDependenciesResult(
                             False, f"Cycle detected when adding dependency {add_id_str}"
                         )
                     task.dependencies.add(add_id)
                 
                 # Recalculate status based on new dependencies
-                is_blocked = self.dependency_resolver.evaluate_blocking_status(task, self.uow.tasks)
+                is_blocked = self.dependency_resolver.evaluate_blocking_status(task, self.uow.repository)
                 if is_blocked:
                     if task.status == TaskStatus.READY:
                         task.mark_pending()
@@ -64,7 +65,7 @@ class ModifyTaskDependencies:
                     if task.status in (TaskStatus.PENDING, TaskStatus.BLOCKED):
                         task.mark_ready()
 
-                self.uow.tasks.save(task)
+                self.uow.repository.save(task)
                 self.uow.commit()
                 return ModifyTaskDependenciesResult(True)
         except Exception as e:

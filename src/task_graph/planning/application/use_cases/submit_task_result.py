@@ -1,4 +1,5 @@
-from task_graph.planning.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.sub_task_info import SubTaskInfo
@@ -28,14 +29,14 @@ class SubmitTaskResultResult:
 class SubmitTaskResult:
     """Submit task execution result with artifacts and optional error. Updates task.output."""
 
-    uow: UnitOfWork
+    uow: UnitOfWork[TaskRepository]
 
     def execute(self, cmd: SubmitTaskResultCommand) -> SubmitTaskResultResult:
         try:
             with self.uow:
                 # 1. 查找任务
                 task_id = TaskId.reconstitute(cmd.task_id)
-                task = self.uow.tasks.get(task_id)
+                task = self.uow.repository.get(task_id)
                 
                 # 2. 创建 TaskOutput
                 task_output = TaskOutput(
@@ -49,7 +50,7 @@ class SubmitTaskResult:
                 task.set_output(task_output)
                 
                 # 4. 保存任务
-                self.uow.tasks.save(task)
+                self.uow.repository.save(task)
                 self.uow.commit()
                 
                 return SubmitTaskResultResult(success=True)

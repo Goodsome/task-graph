@@ -1,5 +1,6 @@
 from task_graph.planning.domain.enums import TaskStatus
-from task_graph.planning.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.planning.domain.ports.task_repository import TaskRepository
 from dataclasses import dataclass
 
 from task_graph.planning.domain.services import DependencyResolutionService
@@ -33,14 +34,14 @@ _STATUS_TO_METHOD: dict[TaskStatus, str] = {
 class UpdateTaskStatus:
     """Updates a task's status and triggers chain reactions for dependents."""
 
-    uow: UnitOfWork
+    uow: UnitOfWork[TaskRepository]
     resolution_service: DependencyResolutionService
 
     def execute(self, cmd: UpdateTaskStatusCommand) -> UpdateTaskStatusResult:
         try:
             with self.uow:
                 task_id = TaskId.reconstitute(cmd.task_id)
-                task = self.uow.tasks.get(task_id)
+                task = self.uow.repository.get(task_id)
 
                 try:
                     new_status_enum = TaskStatus(cmd.new_status.lower())
@@ -55,7 +56,7 @@ class UpdateTaskStatus:
                     )
 
                 getattr(task, method_name)()
-                self.uow.tasks.save(task)
+                self.uow.repository.save(task)
 
                 affected_ids = []
 

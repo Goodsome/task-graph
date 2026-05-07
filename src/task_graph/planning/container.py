@@ -1,5 +1,6 @@
+import functools
 from dependency_injector import containers
-from dependency_injector.providers import Configuration, Dependency, Factory, Singleton
+from dependency_injector.providers import Callable, Configuration, Dependency, Factory, Singleton
 
 from task_graph.planning.application.use_cases.claim_task import ClaimTask
 from task_graph.planning.application.use_cases.complete_delegated_task import (
@@ -51,13 +52,14 @@ from task_graph.planning.domain.services.priority_analysis_service import (
 from task_graph.planning.infrastructure.adapters.sql_alchemy_task_query_service import (
     SqlAlchemyTaskQueryService,
 )
+from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.infrastructure.adapters.sql_alchemy_task_repository import (
     SqlAlchemyTaskRepository,
 )
-from task_graph.planning.infrastructure.adapters.sql_alchemy_unit_of_work import (
+from task_graph.shared.infrastructure.database import Database
+from task_graph.shared.infrastructure.sql_alchemy_unit_of_work import (
     SqlAlchemyUnitOfWork,
 )
-from task_graph.shared.infrastructure.database import Database
 from event_hub import EventHub
 
 
@@ -77,12 +79,19 @@ class Container(containers.DeclarativeContainer):
         SqlAlchemyTaskRepository
     )
 
-    unit_of_work: Factory[SqlAlchemyUnitOfWork] = Factory(
+    event_publisher_factory = Callable(
+        lambda event_bus_factory, channel: functools.partial(
+            event_bus_factory, channel=channel
+        ),
+        event_bus_factory=event_bus_factory,
+        channel=config.event_bus_channel,
+    )
+
+    unit_of_work: Factory[SqlAlchemyUnitOfWork[TaskRepository]] = Factory(
         SqlAlchemyUnitOfWork,
         session_factory=database.provided.session_factory,
-        event_bus_channel=config.event_bus_channel,
-        task_repository_factory=task_repository_factory.provider,
-        event_bus_factory=event_bus_factory,
+        repository_factory=task_repository_factory.provider,
+        event_publisher_factory=event_publisher_factory,
     )
 
     task_query_service: Factory[SqlAlchemyTaskQueryService] = Factory(

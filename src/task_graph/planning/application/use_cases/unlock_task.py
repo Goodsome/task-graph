@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
-from task_graph.planning.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.aggregates.task import IllegalStateTransitionError
 from task_graph.planning.domain.services.dependency_resolution_service import (
     DependencyResolutionService,
@@ -23,7 +24,7 @@ class UnlockTaskResult:
 
 @dataclass
 class UnlockTask:
-    uow: UnitOfWork
+    uow: UnitOfWork[TaskRepository]
     resolution_service: DependencyResolutionService
 
     def execute(self, cmd: UnlockTaskCommand) -> UnlockTaskResult:
@@ -39,10 +40,10 @@ class UnlockTask:
                         error_code="TASK_NOT_FOUND",
                     )
 
-                task = self.uow.tasks.get(task_id)
+                task = self.uow.repository.get(task_id)
 
                 is_blocked = self.resolution_service.evaluate_blocking_status(
-                    task, self.uow.tasks
+                    task, self.uow.repository
                 )
                 if is_blocked:
                     return UnlockTaskResult(
@@ -53,7 +54,7 @@ class UnlockTask:
                     )
 
                 task.mark_ready()
-                self.uow.tasks.save(task)
+                self.uow.repository.save(task)
                 self.uow.commit()
 
                 return UnlockTaskResult(success=True, task_id=cmd.task_id)

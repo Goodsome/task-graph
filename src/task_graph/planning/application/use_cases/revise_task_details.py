@@ -1,4 +1,5 @@
-from task_graph.planning.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.planning.domain.ports.task_repository import TaskRepository
 from typing import Union
 from dataclasses import dataclass, field
 
@@ -27,13 +28,13 @@ class ReviseTaskDetailsResult:
 class ReviseTaskDetails:
     """Revise a task's details like name, description, effort, or base value."""
 
-    uow: UnitOfWork
+    uow: UnitOfWork[TaskRepository]
 
     def execute(self, cmd: ReviseTaskDetailsCommand) -> ReviseTaskDetailsResult:
         try:
             with self.uow:
                 task_id = TaskId.reconstitute(cmd.task_id)
-                task = self.uow.tasks.get(task_id)
+                task = self.uow.repository.get(task_id)
 
                 # 增量更新
                 if cmd.name is not None:
@@ -49,7 +50,7 @@ class ReviseTaskDetails:
                 if cmd.base_value is not None:
                     task.base_value = ValueScore.create(cmd.base_value)
 
-                self.uow.tasks.save(task)
+                self.uow.repository.save(task)
                 self.uow.commit()
                 return ReviseTaskDetailsResult(True)
 

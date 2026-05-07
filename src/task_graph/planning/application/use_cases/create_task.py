@@ -8,7 +8,8 @@ from task_graph.planning.domain.enums import (
     ScopeLevel,
     ArchitectureLayer,
 )
-from task_graph.planning.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.value_objects import (
     StoryPoint,
     ValueScore,
@@ -56,7 +57,7 @@ class CreateTaskResult:
 class CreateTask:
     """Create task"""
 
-    uow: UnitOfWork
+    uow: UnitOfWork[TaskRepository]
 
     def execute(self, cmd: CreateTaskCommand) -> CreateTaskResult:
         try:
@@ -73,7 +74,7 @@ class CreateTask:
                         dep_ids.add(TaskId.model_validate(d_str))
 
                     # 3. 校验依赖是否存在
-                    existing_deps = self.uow.tasks.find_by_ids(dep_ids)
+                    existing_deps = self.uow.repository.find_by_ids(dep_ids)
                     found_ids = {t.id for t in existing_deps}
 
                     missing_ids = dep_ids - found_ids
@@ -129,7 +130,7 @@ class CreateTask:
                     )
 
                 # 6. 持久化
-                self.uow.tasks.add(new_task)
+                self.uow.repository.add(new_task)
                 logger.info(
                     f"Task {new_task.id} created with status {new_task.status.value}"
                 )

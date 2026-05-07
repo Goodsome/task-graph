@@ -5,7 +5,8 @@ from task_graph.planning.domain.exceptions import TaskNotClaimableError, TaskNot
 from task_graph.planning.domain.services.dependency_resolution_service import (
     DependencyResolutionService,
 )
-from task_graph.planning.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.planning.domain.ports.task_repository import TaskRepository
 
 
 @dataclass(frozen=True)
@@ -27,7 +28,7 @@ class ClaimTaskResult:
 @dataclass
 class ClaimTask:
 
-    uow: UnitOfWork
+    uow: UnitOfWork[TaskRepository]
     dependency_service: DependencyResolutionService
 
     def execute(self, cmd: ClaimTaskCommand) -> ClaimTaskResult:
@@ -43,7 +44,7 @@ class ClaimTask:
                         error_code="TASK_NOT_FOUND"
                     )
                 
-                task = self.uow.tasks.get(task_id)
+                task = self.uow.repository.get(task_id)
                 
                 if not task.is_claimable():
                     error_code = "ALREADY_CLAIMED" if task.status == TaskStatus.IN_PROGRESS else "TASK_NOT_READY"
@@ -56,7 +57,7 @@ class ClaimTask:
                 
                 task.claim()
                 
-                self.uow.tasks.save(task)
+                self.uow.repository.save(task)
                 
                 self.uow.commit()
                 

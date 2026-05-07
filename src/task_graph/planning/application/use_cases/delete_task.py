@@ -1,7 +1,8 @@
 import logging
 from typing import Union
 from dataclasses import dataclass, field
-from task_graph.planning.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
+from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.value_objects import TaskId
 
 logger = logging.getLogger(__name__)
@@ -19,13 +20,13 @@ class DeleteTaskResult:
 
 @dataclass
 class DeleteTask:
-    uow: UnitOfWork
+    uow: UnitOfWork[TaskRepository]
 
     def execute(self, cmd: DeleteTaskCommand) -> DeleteTaskResult:
         try:
             with self.uow:
                 task_id = TaskId.reconstitute(cmd.task_id)
-                self.uow.tasks.delete(task_id)
+                self.uow.repository.delete(task_id)
                 self.uow.commit()
                 return DeleteTaskResult(success=True)
         except Exception as e:

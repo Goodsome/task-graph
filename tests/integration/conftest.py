@@ -43,7 +43,7 @@ def app_container(test_config: AppConfig) -> Generator[ApplicationContainer, Non
     # 测试结束后清理容器资源
     container.shutdown_resources()
 
-from task_graph.planning.application.ports.unit_of_work import UnitOfWork
+from task_graph.shared.application.ports.unit_of_work import UnitOfWork
 
 # 3. 数据库表结构初始化（基于容器中的Engine）
 @pytest.fixture(scope="session")

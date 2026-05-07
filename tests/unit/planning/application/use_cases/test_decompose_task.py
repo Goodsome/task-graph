@@ -18,7 +18,7 @@ from task_graph.planning.domain.value_objects.sub_task_info import SubTaskInfo
 @pytest.fixture
 def mock_uow():
     uow = MagicMock()
-    uow.tasks = MagicMock()
+    uow.repository = MagicMock()
     # Mock context manager
     uow.__enter__.return_value = uow
     return uow
@@ -54,20 +54,20 @@ def test_decompose_task_success(mock_uow):
     # Verify pre-condition: status should be DECOMPOSING after review with sub_tasks
     assert task.status == TaskStatus.DECOMPOSING
 
-    mock_uow.tasks.get.return_value = task
-    
+    mock_uow.repository.get.return_value = task
+
     use_case = DecomposeTask(uow=mock_uow)
     cmd = DecomposeTaskCommand(task_id=str(task_id))
-    
+
     # Execute
     result = use_case.execute(cmd)
-    
+
     # Assert
     assert result.success
     assert len(result.sub_task_ids) == 1
     assert task.status == TaskStatus.DELEGATED
-    mock_uow.tasks.add.assert_called()
-    mock_uow.tasks.save.assert_called_with(task)
+    mock_uow.repository.add.assert_called()
+    mock_uow.repository.save.assert_called_with(task)
     mock_uow.commit.assert_called_once()
 
 
@@ -87,8 +87,8 @@ def test_complete_decomposition_with_delegated_task(mock_uow):
     task.id = task_id
     task.status = TaskStatus.DELEGATED
     
-    mock_uow.tasks.get.return_value = task
-    mock_uow.tasks.find_by_parent_id.return_value = [] # All subtasks done
+    mock_uow.repository.get.return_value = task
+    mock_uow.repository.find_by_parent_id.return_value = [] # All subtasks done
     
     use_case = CompleteDelegatedTask(uow=mock_uow)
     cmd = CompleteDelegatedTaskCommand(task_id=str(task_id))
