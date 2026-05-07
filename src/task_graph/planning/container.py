@@ -72,19 +72,11 @@ class Container(containers.DeclarativeContainer):
     config: Configuration = Configuration()
     database: Dependency[Database] = Dependency(instance_of=Database)
     event_hub: Dependency[EventHub] = Dependency(instance_of=EventHub)
-    event_bus_factory = Dependency()
+    event_publisher_factory = Dependency()
 
     # --- Infrastructure Factories ---
     task_repository_factory: Factory[SqlAlchemyTaskRepository] = Factory(
         SqlAlchemyTaskRepository
-    )
-
-    event_publisher_factory = Callable(
-        lambda event_bus_factory, channel: functools.partial(
-            event_bus_factory, channel=channel
-        ),
-        event_bus_factory=event_bus_factory,
-        channel=config.event_bus_channel,
     )
 
     unit_of_work: Factory[SqlAlchemyUnitOfWork[TaskRepository]] = Factory(

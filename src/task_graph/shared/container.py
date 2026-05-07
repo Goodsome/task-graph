@@ -37,5 +37,5 @@ class Container(DeclarativeContainer):
 
     event_hub: Resource[EventHub] = Resource(init_event_hub)
     
-    event_bus_factory: Callable = Callable(EventHubAdapter.build_factory, hub=event_hub)
+    event_publisher_factory: Callable = Callable(EventHubAdapter.build_factory, hub=event_hub)
 

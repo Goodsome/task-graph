@@ -38,19 +38,11 @@ from task_graph.shared.infrastructure.sql_alchemy_unit_of_work import (
 class Container(DeclarativeContainer):
     config: Configuration = Configuration()
     database: Dependency[Database] = Dependency(instance_of=Database)
-    event_bus_factory = Dependency()
+    event_publisher_factory = Dependency()
 
     # Unit of Work
     issue_repository_factory: Factory[SqlAlchemyIssueRepository] = Factory(
         SqlAlchemyIssueRepository
-    )
-
-    event_publisher_factory = Callable(
-        lambda event_bus_factory, channel: functools.partial(
-            event_bus_factory, channel=channel
-        ),
-        event_bus_factory=event_bus_factory,
-        channel="issue_events",
     )
 
     unit_of_work: Factory[SqlAlchemyUnitOfWork[IssueRepository]] = Factory(

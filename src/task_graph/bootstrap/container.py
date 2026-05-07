@@ -36,7 +36,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         PlanningContainer,
         config=config.planning,
         database=shared.database,
-        event_bus_factory=shared.event_bus_factory,
+        event_publisher_factory=shared.event_publisher_factory,
         event_hub=shared.event_hub,
     )
 
@@ -45,7 +45,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         IssueTrackingContainer,
         config=config.issue_tracking,
         database=shared.database,
-        event_bus_factory=shared.event_bus_factory,
+        event_publisher_factory=shared.event_publisher_factory,
     )
 
 

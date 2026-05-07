@@ -89,7 +89,7 @@ contexts:
         - type: string
           name: author
         output:
-          type: None
+          type: Comment
       - name: add_label
         description: Add a label to the issue (duplicates ignored)
         inputs:
@@ -462,23 +462,6 @@ contexts:
     - name: IssueRepository
       description: Persistence interface for Issue aggregate
       operations:
-      - name: save
-        inputs:
-        - type: Self
-          name: self
-        - type: Issue
-          name: issue
-        output:
-          type: None
-        rules:
-        - name: save_new_issue
-          given: 传入一个未持久化的Issue聚合根实例
-          when: 调用save方法
-          then: Issue实例被持久化到数据库，没有返回值
-        - name: update_existing_issue
-          given: 传入一个已在数据库中存在的Issue聚合根实例
-          when: 调用save方法
-          then: 数据库中对应的Issue记录被更新，没有返回值
       - name: find_by_id
         inputs:
         - type: Self
@@ -541,23 +524,6 @@ contexts:
           given: 过滤条件没有匹配的Issue
           when: 调用find_all方法
           then: 返回空列表
-      - name: delete
-        inputs:
-        - type: Self
-          name: self
-        - type: IssueId
-          name: issue_id
-        output:
-          type: boolean
-        rules:
-        - name: delete_existing_issue
-          given: 传入的issue_id对应的Issue在数据库中存在
-          when: 调用delete方法
-          then: Issue被从数据库中删除，返回True
-        - name: delete_non_existent_issue
-          given: 传入的issue_id对应的Issue在数据库中不存在
-          when: 调用delete方法
-          then: 数据库没有变化，返回False
       - name: find_by_task_id
         inputs:
         - type: Self
@@ -646,7 +612,8 @@ contexts:
         default: ''
       description: Link an issue to a task from Planning context
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
         name: uow
     - name: CloseIssue
       kind: command
@@ -664,7 +631,8 @@ contexts:
         default: ''
       description: Close an issue that is in RESOLVED status
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
         name: uow
     - name: UpdateIssueStatus
       kind: command
@@ -683,7 +651,8 @@ contexts:
         default: ''
       description: Update issue status with state machine validation
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
         name: uow
       - type: IssueStatusTransitionService
         name: status_transition_service
@@ -703,7 +672,8 @@ contexts:
         default: ''
       description: Get full issue details including comments and labels
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
         name: uow
     - name: CreateIssue
       kind: command
@@ -730,7 +700,8 @@ contexts:
         default: ''
       description: Create a new issue with initial status NEW
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
         name: uow
     - name: UpdateIssueMetadata
       kind: command
@@ -759,7 +730,8 @@ contexts:
         default: ''
       description: Update issue metadata like type, severity, and labels
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
         name: uow
     - name: ListIssues
       kind: query
@@ -797,7 +769,8 @@ contexts:
         default: ''
       description: Paginated list of issues with filtering
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
         name: uow
     - name: UnlinkIssueFromTask
       kind: command
@@ -814,7 +787,8 @@ contexts:
         default: ''
       description: Unlink an issue from a task
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
         name: uow
     - name: AddComment
       kind: command
@@ -835,35 +809,9 @@ contexts:
         default: ''
       description: Add a comment to an issue
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
         name: uow
-    ports:
-    - name: UnitOfWork
-      operations:
-      - name: issues
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: IssueRepository
-      - name: event_bus
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: EventBus
-      - name: commit
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: any
-      - name: rollback
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: any
   infrastructure:
     implementations:
     - name: SqlAlchemyIssueRepository
@@ -873,30 +821,6 @@ contexts:
       attributes:
       - type: Session
         name: session
-    - name: SqlAlchemyUnitOfWork
-      implements: UnitOfWork
-      technology: sql
-      attributes:
-      - type: Any
-        custom_type_string: sessionmaker[Session]
-        name: session_factory
-      - type: string
-        name: event_bus_channel
-      - type: IssueRepository
-        container: callable
-        name: issue_repository_factory
-      - type: EventBus
-        container: callable
-        name: event_bus_factory
-      - type: Session
-        optional: true
-        name: session
-      - type: IssueRepository
-        optional: true
-        name: _issues
-      - type: EventBus
-        optional: true
-        name: _event_bus
   interfaces:
     mcp_tools:
     - name: link_issue_to_task
@@ -999,13 +923,14 @@ contexts:
           name: effort
         - type: ValueScore
           name: base_value
-        - type: CompletionLogic
-          name: completion_logic
         - type: TaskId
           container: set
           name: dependencies
         - type: ScopeLevel
           name: scope_level
+        - type: CompletionLogic
+          name: completion_logic
+          default: CompletionLogic.ALL
         - type: TaskId
           optional: true
           name: parent_id
@@ -1500,69 +1425,6 @@ contexts:
     - name: TaskRepository
       description: Persistence interface for Tasks.
       operations:
-      - name: collect_seen_tasks
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: Task
-          container: set
-      - name: save
-        inputs:
-        - type: Self
-          name: self
-        - type: Task
-          name: task
-        output:
-          type: None
-        rules:
-        - name: save_persists_task_for_subsequent_retrieval
-          given: a valid Task with a unique TaskId
-          when: save is invoked with the Task
-          then: the Task can be retrieved from the repository by its TaskId
-        - name: save_is_idempotent_for_existing_task
-          given: a Task already persisted in the repository
-          when: save is invoked again with the same Task
-          then: no error is raised and the Task state remains unchanged
-        - name: save_preserves_task_dependencies
-          given: a Task with a non-empty set of dependencies
-          when: save is invoked with the Task
-          then: the saved Task's dependencies are identical to the original set of
-            TaskIds
-        - name: save_preserves_acceptance_criteria
-          given: a Task with acceptance criteria
-          when: save is invoked with the Task
-          then: the saved Task's acceptance criteria are identical to the originals
-      - name: add
-        inputs:
-        - type: Self
-          name: self
-        - type: Task
-          name: task
-        output:
-          type: None
-      - name: get
-        inputs:
-        - type: Self
-          name: self
-        - type: TaskId
-          name: task_id
-        output:
-          type: Task
-        rules:
-        - name: get_returns_task_for_existing_id
-          given: a Task with the given TaskId exists in the repository
-          when: get is invoked with that TaskId
-          then: the complete Task is returned with all its attributes intact
-        - name: get_raises_not_found_for_nonexistent_id
-          given: no Task with the given TaskId exists in the repository
-          when: get is invoked with that TaskId
-          then: TaskNotFoundError is raised
-        - name: get_returns_fully_reconstituted_task
-          given: a Task was previously saved with all attributes populated
-          when: get is invoked with the Task's TaskId
-          then: the returned Task has identical attribute values including nested
-            objects and value objects
       - name: find_all_active
         inputs:
         - type: Self
@@ -1573,14 +1435,6 @@ contexts:
         output:
           type: Task
           container: list
-      - name: delete
-        inputs:
-        - type: Self
-          name: self
-        - type: TaskId
-          name: task_id
-        output:
-          type: None
       - name: find_by_ids
         inputs:
         - type: Self
@@ -1673,7 +1527,8 @@ contexts:
       description: Submit task execution result with artifacts and optional error.
         Updates task.output.
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
     - name: CreateTask
       kind: command
@@ -1690,9 +1545,6 @@ contexts:
         name: base_value
       - type: ScopeLevel
         name: scope_level
-      - type: CompletionLogic
-        name: completion_logic
-        default: CompletionLogic.ALL
       - type: string
         container: list
         name: dependencies
@@ -1722,7 +1574,8 @@ contexts:
         name: error
       description: Create task
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
     - name: CompleteDelegatedTask
       kind: command
@@ -1737,7 +1590,8 @@ contexts:
       - type: string
         name: message
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
     - name: UpdateTaskStatus
       kind: command
@@ -1757,7 +1611,8 @@ contexts:
         default: ''
       description: Updates a task's status and triggers chain reactions for dependents.
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
       - type: DependencyResolutionService
         name: resolution_service
@@ -1793,7 +1648,8 @@ contexts:
 
         5. Persists the original task.'
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
     - name: SuggestNextAction
       kind: query
@@ -1809,7 +1665,8 @@ contexts:
         name: tasks
       description: Returns the highest priority tasks that are ready to execute.
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
       - type: PriorityAnalysisService
         name: priority_service
@@ -1829,7 +1686,8 @@ contexts:
         name: error
       description: Use case to get details of a specific task.
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
     - name: ReviewTask
       kind: command
@@ -1853,7 +1711,8 @@ contexts:
         name: error
         default: ''
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
     - name: DeleteTask
       kind: command
@@ -1868,7 +1727,8 @@ contexts:
         name: error
         default: ''
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
     - name: UnlockTask
       kind: command
@@ -1887,7 +1747,8 @@ contexts:
         name: error_code
         default: str
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
       - type: DependencyResolutionService
         name: resolution_service
@@ -1911,7 +1772,8 @@ contexts:
         name: error
         default: str
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
       - type: CycleDetectionService
         name: cycle_detector
@@ -1943,7 +1805,8 @@ contexts:
       description: Revise a task's details like name, description, effort, or base
         value.
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
     - name: ClaimTask
       kind: command
@@ -1965,7 +1828,8 @@ contexts:
         name: error_code
         default: str
       dependencies:
-      - type: UnitOfWork
+      - type: Any
+        custom_type_string: UnitOfWork[TaskRepository]
         name: uow
       - type: DependencyResolutionService
         name: dependency_service
@@ -2052,32 +1916,6 @@ contexts:
         output:
           type: SummaryTaskDto
           container: list
-    - name: UnitOfWork
-      operations:
-      - name: tasks
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: TaskRepository
-      - name: event_bus
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: EventBus
-      - name: commit
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: any
-      - name: rollback
-        inputs:
-        - type: Self
-          name: self
-        output:
-          type: any
   infrastructure:
     implementations:
     - name: SqlAlchemyTaskQueryService
@@ -2093,30 +1931,6 @@ contexts:
       - type: Any
         custom_type_string: sessionmaker[Session]
         name: session_factory
-    - name: SqlAlchemyUnitOfWork
-      implements: UnitOfWork
-      technology: sql
-      attributes:
-      - type: Any
-        custom_type_string: sessionmaker[Session]
-        name: session_factory
-      - type: string
-        name: event_bus_channel
-      - type: TaskRepository
-        container: callable
-        name: task_repository_factory
-      - type: EventBus
-        container: callable
-        name: event_bus_factory
-      - type: Session
-        optional: true
-        name: session
-      - type: TaskRepository
-        optional: true
-        name: _tasks
-      - type: EventBus
-        optional: true
-        name: _event_bus
     - name: SqlAlchemyTaskRepository
       implements: TaskRepository
       technology: sql
@@ -2124,10 +1938,6 @@ contexts:
       attributes:
       - type: Session
         name: session
-      - type: Task
-        container: set
-        name: _seen_tasks
-        default: set
   interfaces:
     cli_commands:
     - name: create-task
@@ -2222,3 +2032,85 @@ contexts:
       attributes:
       - type: Any
         name: model_config
+    ports:
+    - name: Repository
+      operations:
+      - name: collect_seens
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: T_AR
+          container: set
+      - name: add
+        inputs:
+        - type: Self
+          name: self
+        - type: T_AR
+          name: aggregate
+        output:
+          type: None
+      - name: get
+        inputs:
+        - type: Self
+          name: self
+        - type: T_ID
+          name: id
+        output:
+          type: T_AR
+      - name: save
+        inputs:
+        - type: Self
+          name: self
+        - type: T_AR
+          name: aggregate
+        output:
+          type: None
+      - name: delete
+        inputs:
+        - type: Self
+          name: self
+        - type: T_ID
+          name: id
+        output:
+          type: None
+  application:
+    ports:
+    - name: EventPublisher
+      description: Abstract port for publishing domain events.
+      operations:
+      - name: publish
+        description: Publish a domain event.
+        inputs:
+        - type: Self
+          name: self
+        - type: DomainEvent
+          name: event
+        output:
+          type: None
+    - name: UnitOfWork
+      operations:
+      - name: repository
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: T_Repo
+      - name: event_publisher
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: EventPublisher
+      - name: commit
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: any
+      - name: rollback
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: any
