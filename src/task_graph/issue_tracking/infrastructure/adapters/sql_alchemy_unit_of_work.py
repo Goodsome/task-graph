@@ -37,6 +37,7 @@ class SqlAlchemyUnitOfWork(UnitOfWork):
     ) -> None:
         if exc_type is not None:
             self.rollback()
+            logger.error(f"Transaction rolled back due to error: {exc_val}")
 
         if self.session:
             self.session.close()

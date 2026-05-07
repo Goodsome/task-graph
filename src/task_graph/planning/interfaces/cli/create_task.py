@@ -66,13 +66,6 @@ def create_task(
         console.print("可选值: project, context, architecture, component")
         raise typer.Exit(1)
 
-    try:
-        logic = CompletionLogic(completion_logic.lower())
-    except ValueError:
-        console.print(f"[red]错误: 无效的 completion_logic: {completion_logic}[/red]")
-        console.print("可选值: all, any")
-        raise typer.Exit(1)
-
     arch_layer = None
     if architecture_layer:
         try:
