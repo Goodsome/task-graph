@@ -27,6 +27,7 @@ from task_graph.issue_tracking.application.use_cases.unlink_issue_from_task impo
 )
 from dependency_injector.providers import Factory
 from task_graph.issue_tracking.application.use_cases.create_issue import CreateIssue
+from task_graph.issue_tracking.application.event_handlers.on_issue_created import OnIssueCreated
 from dependency_injector.containers import DeclarativeContainer
 from task_graph.issue_tracking.domain.ports.issue_repository import IssueRepository
 from task_graph.shared.infrastructure.database import Database
@@ -39,6 +40,7 @@ class Container(DeclarativeContainer):
     config: Configuration = Configuration()
     database: Dependency[Database] = Dependency(instance_of=Database)
     event_publisher_factory = Dependency()
+    event_hub = Dependency()
 
     # Unit of Work
     issue_repository_factory: Factory[SqlAlchemyIssueRepository] = Factory(
@@ -89,3 +91,9 @@ class Container(DeclarativeContainer):
         GetIssueDetails, uow=unit_of_work
     )
     list_issues: Factory[ListIssues] = Factory(ListIssues, uow=unit_of_work)
+
+    # Event Handlers
+    on_issue_created: Factory[OnIssueCreated] = Factory(
+        OnIssueCreated,
+        event_hub=event_hub,
+    )

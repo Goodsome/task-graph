@@ -4,6 +4,7 @@ from event_hub import EventHub
 
 from typing import cast
 from task_graph.planning.domain.events import TaskChangesRequested, TaskCompleted, TaskDecomposing, TaskReady, TaskReviewRequested
+from task_graph.issue_tracking.domain.events import IssueCreatedEvent
 from .container import ApplicationContainer
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,11 @@ def bind_all_events(container: ApplicationContainer) -> None:
     event_hub.register_domain(
         TaskChangesRequested,
         container.planning.on_task_changes_requested().handle_publish_integration_event
+    )
+
+    event_hub.register_domain(
+        IssueCreatedEvent,
+        container.issue_tracking.on_issue_created().handle_publish_integration_event
     )
 
 

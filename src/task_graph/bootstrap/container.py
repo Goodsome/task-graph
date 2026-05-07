@@ -46,6 +46,7 @@ class ApplicationContainer(containers.DeclarativeContainer):
         config=config.issue_tracking,
         database=shared.database,
         event_publisher_factory=shared.event_publisher_factory,
+        event_hub=shared.event_hub,
     )
 
 
