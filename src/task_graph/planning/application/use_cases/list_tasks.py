@@ -1,7 +1,7 @@
 import math
 from dataclasses import dataclass
 
-from task_graph.planning.application.dtos.summary_task import SummaryTaskDto
+from task_graph.planning.application.dtos.summary_task import SummaryTask
 from task_graph.planning.application.ports.task_query_service import TaskQueryService
 from task_graph.planning.domain.enums import TaskStatus, ScopeLevel
 
@@ -18,7 +18,7 @@ class ListTasksQuery:
 
 @dataclass(frozen=True)
 class ListTasksResult:
-    tasks: list[SummaryTaskDto]
+    tasks: list[SummaryTask]
     total_count: int
     total_pages: int
     current_page: int

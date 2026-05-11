@@ -10,7 +10,7 @@ class ScopeContextSummary:
 
 
 @dataclass(frozen=True)
-class SummaryTaskDto:
+class SummaryTask:
     """Summary representation of a task for query-side read models."""
 
     id: str

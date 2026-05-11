@@ -3,7 +3,7 @@ from pydantic import Field
 from task_graph.issue_tracking.domain.enums import IssueStatus
 
 
-class IssueStatusChangedEvent(DomainEvent):
+class IssueStatusChanged(DomainEvent):
     """Event emitted when an issue's status is changed."""
     issue_id: str = Field(description="Issue ID")
     old_status: IssueStatus = Field(description="Old status")

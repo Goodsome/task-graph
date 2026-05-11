@@ -38,6 +38,12 @@ contexts:
       - type: datetime
         name: updated_at
       behaviors:
+      - name: __hash__
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: integer
       - name: create
         description: Create a new Issue aggregate
         inputs:
@@ -230,6 +236,12 @@ contexts:
           name: value
         output:
           type: Self
+      - name: __str__
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: string
       - name: serialize
         inputs:
         - type: Self
@@ -326,6 +338,12 @@ contexts:
           name: value
         output:
           type: IssueId
+      - name: __str__
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: string
       - name: serialize
         inputs:
         - type: Self
@@ -595,6 +613,52 @@ contexts:
         output:
           type: Any
           custom_type_string: tuple[list[Issue], int]
+    domain_events:
+    - name: IssueStatusChanged
+      description: Event emitted when an issue's status is changed.
+      attributes:
+      - type: string
+        name: issue_id
+      - type: IssueStatus
+        name: old_status
+      - type: IssueStatus
+        name: new_status
+      - type: string
+        name: changed_by
+    - name: IssueCommentAdded
+      description: Event emitted when a new comment is added to an issue.
+      attributes:
+      - type: string
+        name: issue_id
+      - type: string
+        name: comment_id
+      - type: string
+        name: author
+      - type: string
+        name: content
+    - name: IssueCreated
+      description: Event emitted when a new issue is reported.
+      attributes:
+      - type: string
+        name: issue_id
+      - type: string
+        name: project_id
+      - type: string
+        name: title
+      - type: IssueType
+        name: type
+      - type: Severity
+        name: severity
+      - type: string
+        name: submitter_name
+    - name: IssueClosed
+      description: Event emitted when an issue is closed.
+      attributes:
+      - type: string
+        name: issue_id
+      - type: string
+        optional: true
+        name: resolution
   application:
     use_cases:
     - name: LinkIssueToTask
@@ -907,6 +971,12 @@ contexts:
         name: acceptance_criteria
         default: list
       behaviors:
+      - name: __hash__
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: integer
       - name: create
         description: Factory method to create a new Task
         inputs:
@@ -1064,6 +1134,22 @@ contexts:
           name: self
         output:
           type: boolean
+      - name: _build_task_event
+        description: 内部辅助方法：统一构造 Task 相关的领域事件，处理基础属性的映射和展平。
+        inputs:
+        - type: Self
+          name: self
+        - type: T
+          container: type
+          name: event_class
+        - type: string
+          optional: true
+          name: reason
+        - type: string
+          optional: true
+          name: feedback
+        output:
+          type: T
       - name: is_claimable
         inputs:
         - type: Self
@@ -1167,6 +1253,22 @@ contexts:
           name: value
         output:
           type: ValueScore
+      - name: __add__
+        inputs:
+        - type: Self
+          name: self
+        - type: any
+          name: other
+        output:
+          type: any
+      - name: __radd__
+        inputs:
+        - type: Self
+          name: self
+        - type: any
+          name: other
+        output:
+          type: any
       - name: serialize
         inputs:
         - type: Self
@@ -1312,6 +1414,30 @@ contexts:
           name: v
         output:
           type: integer
+      - name: __add__
+        inputs:
+        - type: Self
+          name: self
+        - type: any
+          name: other
+        output:
+          type: any
+      - name: __radd__
+        inputs:
+        - type: Self
+          name: self
+        - type: any
+          name: other
+        output:
+          type: any
+      - name: __lt__
+        inputs:
+        - type: Self
+          name: self
+        - type: any
+          name: other
+        output:
+          type: any
     - name: ReviewFeedback
       description: 任务规划者的验收意见
       attributes:
@@ -1349,6 +1475,18 @@ contexts:
           name: value
         output:
           type: any
+      - name: __str__
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: any
+      - name: __hash__
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: integer
       - name: serialize
         inputs:
         - type: Self
@@ -1856,7 +1994,7 @@ contexts:
         name: search
         default: ''
       outputs:
-      - type: SummaryTaskDto
+      - type: SummaryTask
         container: list
         name: tasks
       - type: integer
@@ -1905,7 +2043,7 @@ contexts:
           name: search
         output:
           type: Any
-          custom_type_string: tuple[list[SummaryTaskDto], int]
+          custom_type_string: tuple[list[SummaryTask], int]
       - name: find_dependents
         description: Return summaries of all tasks that directly depend on *task_id*.
         inputs:
@@ -1914,8 +2052,32 @@ contexts:
         - type: TaskId
           name: task_id
         output:
-          type: SummaryTaskDto
+          type: SummaryTask
           container: list
+    dtos:
+    - name: SummaryTask
+      description: Summary representation of a task for query-side read models.
+      attributes:
+      - type: string
+        name: id
+      - type: string
+        name: project_id
+      - type: string
+        name: name
+      - type: string
+        name: status
+      - type: string
+        name: scope_level
+      - type: ScopeContextSummary
+        optional: true
+        name: scope_context
+      - type: string
+        optional: true
+        name: parent_id
+      - type: integer
+        name: effort
+      - type: float
+        name: base_value
   infrastructure:
     implementations:
     - name: SqlAlchemyTaskQueryService
@@ -2074,6 +2236,38 @@ contexts:
           name: id
         output:
           type: None
+      - name: _add
+        inputs:
+        - type: Self
+          name: self
+        - type: T_AR
+          name: aggregate
+        output:
+          type: None
+      - name: _get
+        inputs:
+        - type: Self
+          name: self
+        - type: T_ID
+          name: id
+        output:
+          type: T_AR
+      - name: _save
+        inputs:
+        - type: Self
+          name: self
+        - type: T_AR
+          name: aggregate
+        output:
+          type: None
+      - name: _delete
+        inputs:
+        - type: Self
+          name: self
+        - type: T_ID
+          name: id
+        output:
+          type: None
   application:
     ports:
     - name: EventPublisher
@@ -2102,6 +2296,28 @@ contexts:
           name: self
         output:
           type: EventPublisher
+      - name: __enter__
+        inputs:
+        - type: Self
+          name: self
+        output:
+          type: Self
+      - name: __exit__
+        inputs:
+        - type: Self
+          name: self
+        - type: BaseException
+          container: type
+          optional: true
+          name: exc_type
+        - type: BaseException
+          optional: true
+          name: exc_val
+        - type: TracebackType
+          optional: true
+          name: exc_tb
+        output:
+          type: any
       - name: commit
         inputs:
         - type: Self

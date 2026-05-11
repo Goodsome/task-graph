@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from event_hub import EventHub, integration_events as ie
-from task_graph.issue_tracking.domain.events import IssueCreatedEvent
+from task_graph.issue_tracking.domain.events import IssueCreated
 import logging
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ class OnIssueCreated:
 
     event_hub: EventHub
 
-    def handle_publish_integration_event(self, event: IssueCreatedEvent):
+    def handle_publish_integration_event(self, event: IssueCreated):
         e = ie.IssueCreated(
             issue_id=event.issue_id,
             project_id=event.project_id,

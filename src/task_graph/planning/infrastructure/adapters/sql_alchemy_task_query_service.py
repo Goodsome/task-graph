@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from task_graph.planning.application.dtos.summary_task import (
     ScopeContextSummary,
-    SummaryTaskDto,
+    SummaryTask,
 )
 from task_graph.planning.application.ports.task_query_service import TaskQueryService
 from task_graph.planning.domain.enums import ScopeLevel, TaskStatus
@@ -24,7 +24,7 @@ class SqlAlchemyTaskQueryService(TaskQueryService):
 
     session_factory: sessionmaker[Session]
 
-    def _to_dto(self, model: TaskModel) -> SummaryTaskDto:
+    def _to_dto(self, model: TaskModel) -> SummaryTask:
         scope_context = None
         if model.scope_context:
             scope_context = ScopeContextSummary(
@@ -32,7 +32,7 @@ class SqlAlchemyTaskQueryService(TaskQueryService):
                 architecture_layer=model.scope_context.get("architecture_layer"),
             )
 
-        return SummaryTaskDto(
+        return SummaryTask(
             id=str(model.id),
             project_id=model.project_id,
             name=model.name,
@@ -53,7 +53,7 @@ class SqlAlchemyTaskQueryService(TaskQueryService):
         project_id: str | None,
         scope_level: ScopeLevel | None,
         search: str | None,
-    ) -> tuple[list[SummaryTaskDto], int]:
+    ) -> tuple[list[SummaryTask], int]:
         with self.session_factory() as session:
             stmt = select(TaskModel)
             if status:
@@ -79,7 +79,7 @@ class SqlAlchemyTaskQueryService(TaskQueryService):
             return [self._to_dto(m) for m in models], total
 
     @override
-    def find_dependents(self, task_id: TaskId) -> list[SummaryTaskDto]:
+    def find_dependents(self, task_id: TaskId) -> list[SummaryTask]:
         with self.session_factory() as session:
             model = session.get(TaskModel, task_id.value)
             if not model:

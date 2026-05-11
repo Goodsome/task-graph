@@ -14,10 +14,10 @@ from task_graph.issue_tracking.domain.value_objects.task_link import TaskLink
 from task_graph.issue_tracking.domain.value_objects.label import Label
 from task_graph.shared.domain.core.aggregate_root import AggregateRoot
 from task_graph.issue_tracking.domain.events import (
-    IssueCreatedEvent,
-    IssueStatusChangedEvent,
-    IssueClosedEvent,
-    IssueCommentAddedEvent,
+    IssueCreated,
+    IssueStatusChanged,
+    IssueClosed,
+    IssueCommentAdded,
 )
 
 
@@ -71,7 +71,7 @@ class Issue(AggregateRoot):
             updated_at=now,
         )
         # Add created event
-        issue.add_domain_event(IssueCreatedEvent(
+        issue.add_domain_event(IssueCreated(
             issue_id=str(issue_id),
             project_id=project_id,
             title=title,
@@ -91,7 +91,7 @@ class Issue(AggregateRoot):
         self.status = new_status
         self.updated_at = datetime.now(timezone.utc)
         # Add status changed event
-        self.add_domain_event(IssueStatusChangedEvent(
+        self.add_domain_event(IssueStatusChanged(
             issue_id=str(self.id),
             old_status=old_status,
             new_status=new_status,
@@ -108,7 +108,7 @@ class Issue(AggregateRoot):
             self.add_comment(f"Resolution: {resolution}", author="system")
         self.updated_at = datetime.now(timezone.utc)
         # Add closed event
-        self.add_domain_event(IssueClosedEvent(
+        self.add_domain_event(IssueClosed(
             issue_id=str(self.id),
             resolution=resolution,
         ))
@@ -119,7 +119,7 @@ class Issue(AggregateRoot):
         self.comments.append(comment)
         self.updated_at = datetime.now(timezone.utc)
         # Add comment added event
-        self.add_domain_event(IssueCommentAddedEvent(
+        self.add_domain_event(IssueCommentAdded(
             issue_id=str(self.id),
             comment_id=str(comment.id),
             author=author,
