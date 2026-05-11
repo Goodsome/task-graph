@@ -232,6 +232,7 @@ class Task(AggregateRoot):
             return []
 
         sub_tasks: list[Task] = []
+        last_task_id: TaskId | None = None
         for sub_info in self.output.sub_tasks:
             child_name = f"{self.name}[{sub_info.name}]"
 
@@ -260,6 +261,9 @@ class Task(AggregateRoot):
                 architecture_layer=child_al,
                 component_name=child_cn,
             )
+            dependencies: set[TaskId] = set()
+            if last_task_id is not None:
+                dependencies = {last_task_id}
 
             child_task = Task.create(
                 project_id=self.project_id,
@@ -268,13 +272,17 @@ class Task(AggregateRoot):
                 effort=sub_info.effort,
                 base_value=sub_info.base_value,
                 completion_logic=self.completion_logic,
-                dependencies=set(),
+                dependencies=dependencies,
                 scope_level=child_scope_level,
                 parent_id=self.id,
                 scope_context=child_context,
                 acceptance_criteria=sub_info.acceptance_criteria,
             )
-            child_task.mark_ready()
+            
+            if last_task_id is None:
+                child_task.mark_ready()
+                
+            last_task_id = child_task.id
             sub_tasks.append(child_task)
 
         return sub_tasks
