@@ -8,8 +8,9 @@ from task_graph.planning.domain.value_objects.scenario import Scenario
 class SubTaskInfo(ValueObject):
     """要拆分的子任务信息"""
 
-    name: str = Field(..., description="与子任务 scope_level 对应的名字（将赋值给 ScopeContext）")
+    name: str
     description: str
     effort: StoryPoint
     base_value: ValueScore
     acceptance_criteria: list[Scenario] = Field(default_factory=list)
+    dependencies: set[str] = Field(default_factory=set)

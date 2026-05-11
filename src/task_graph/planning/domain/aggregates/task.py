@@ -1,5 +1,10 @@
 from pydantic import Field
-from task_graph.planning.domain.enums import CompletionLogic, ScopeLevel, TaskStatus
+from task_graph.planning.domain.enums import (
+    ArchitectureLayer,
+    CompletionLogic,
+    ScopeLevel,
+    TaskStatus,
+)
 from task_graph.planning.domain.exceptions import (
     IllegalStateTransitionError,
     TaskNotClaimableError,
@@ -20,8 +25,9 @@ from task_graph.planning.domain.events import (
     TaskReady,
     TaskReviewRequested,
 )
-from typing import Any, Self, TypeVar, Union, override
+from typing import Any, Self, TypeVar, override
 from task_graph.planning.domain.value_objects.recurrence_policy import RecurrencePolicy
+from task_graph.planning.domain.value_objects.sub_task_info import SubTaskInfo
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
 from task_graph.planning.domain.value_objects.review_feedback import ReviewFeedback
 from task_graph.planning.domain.value_objects.scenario import Scenario
@@ -182,9 +188,7 @@ class Task(AggregateRoot):
         self.status = TaskStatus.DONE
         self.add_domain_event(self._build_task_event(TaskCompleted))
 
-    def review(
-        self: Self, approved: bool, feedback: str
-    ) -> None:
+    def review(self: Self, approved: bool, feedback: str) -> None:
         """验证任务并记录反馈。
 
         Args:
@@ -207,7 +211,7 @@ class Task(AggregateRoot):
         else:
             self.mark_changes_requested(feedback=feedback)
 
-    def generate_sub_tasks(self: Self) -> list['Task']:
+    def generate_sub_tasks(self: Self) -> list["Task"]:
         """根据输出中的 sub_tasks 生成子任务。
 
         Returns:
@@ -231,61 +235,106 @@ class Task(AggregateRoot):
         if not child_scope_level:
             return []
 
+        # ── 第一阶段: 创建所有子任务实例，建立 name → Task 映射 ──
         sub_tasks: list[Task] = []
-        last_task_id: TaskId | None = None
+        name_to_task: dict[str, Task] = {}
+
         for sub_info in self.output.sub_tasks:
-            child_name = f"{self.name}[{sub_info.name}]"
-
-            # 继承父任务的上下文信息
-            parent_bc = self.scope_context.bounded_context if self.scope_context else None
-            parent_al = self.scope_context.architecture_layer if self.scope_context else None
-
-            from task_graph.planning.domain.enums import ArchitectureLayer
-
-            child_bc = parent_bc
-            child_al = parent_al
-            child_cn = None
-
-            if child_scope_level == ScopeLevel.CONTEXT:
-                child_bc = sub_info.name
-            elif child_scope_level == ScopeLevel.ARCHITECTURE:
-                try:
-                    child_al = ArchitectureLayer(sub_info.name)
-                except ValueError:
-                    child_al = ArchitectureLayer.NONE
-            elif child_scope_level == ScopeLevel.COMPONENT:
-                child_cn = sub_info.name
-
-            child_context = ScopeContext.create(
-                bounded_context=child_bc,
-                architecture_layer=child_al,
-                component_name=child_cn,
-            )
-            dependencies: set[TaskId] = set()
-            if last_task_id is not None:
-                dependencies = {last_task_id}
-
-            child_task = Task.create(
-                project_id=self.project_id,
-                name=child_name,
-                description=sub_info.description,
-                effort=sub_info.effort,
-                base_value=sub_info.base_value,
-                completion_logic=self.completion_logic,
-                dependencies=dependencies,
-                scope_level=child_scope_level,
-                parent_id=self.id,
-                scope_context=child_context,
-                acceptance_criteria=sub_info.acceptance_criteria,
-            )
-            
-            if last_task_id is None:
-                child_task.mark_ready()
-                
-            last_task_id = child_task.id
+            child_task = self._create_child_task(sub_info, child_scope_level)
             sub_tasks.append(child_task)
+            name_to_task[sub_info.name] = child_task
+
+        # ── 第二阶段: 解析依赖关系并设置状态 ──
+        for sub_info, child_task in zip(self.output.sub_tasks, sub_tasks):
+            resolved_deps = self._resolve_sub_task_dependencies(
+                sub_info, sub_tasks, child_task, name_to_task
+            )
+            child_task.dependencies = resolved_deps
+            if resolved_deps:
+                child_task.status = TaskStatus.BLOCKED
+            else:
+                child_task.mark_ready()
 
         return sub_tasks
+
+    def _create_child_task(
+        self: Self,
+        sub_info: "SubTaskInfo",
+        child_scope_level: ScopeLevel,
+    ) -> "Task":
+        """创建单个子任务实例（第一阶段辅助方法）。"""
+        child_name = f"{self.name}[{sub_info.name}]"
+
+        parent_bc = self.scope_context.bounded_context if self.scope_context else None
+        parent_al = (
+            self.scope_context.architecture_layer if self.scope_context else None
+        )
+
+        child_bc = parent_bc
+        child_al = parent_al
+        child_cn: str | None = None
+
+        if child_scope_level == ScopeLevel.CONTEXT:
+            child_bc = sub_info.name
+        elif child_scope_level == ScopeLevel.ARCHITECTURE:
+            try:
+                child_al = ArchitectureLayer(sub_info.name)
+            except ValueError:
+                child_al = ArchitectureLayer.NONE
+        elif child_scope_level == ScopeLevel.COMPONENT:
+            child_cn = sub_info.name
+
+        child_context = ScopeContext.create(
+            bounded_context=child_bc,
+            architecture_layer=child_al,
+            component_name=child_cn,
+        )
+        return Task.create(
+            project_id=self.project_id,
+            name=child_name,
+            description=sub_info.description,
+            effort=sub_info.effort,
+            base_value=sub_info.base_value,
+            completion_logic=self.completion_logic,
+            dependencies=set(),
+            scope_level=child_scope_level,
+            parent_id=self.id,
+            scope_context=child_context,
+            acceptance_criteria=sub_info.acceptance_criteria,
+        )
+
+    def _resolve_sub_task_dependencies(
+        self: Self,
+        sub_info: "SubTaskInfo",
+        all_sub_tasks: list["Task"],
+        current_task: "Task",
+        name_to_task: dict[str, "Task"],
+    ) -> set[TaskId]:
+        """解析子任务的依赖关系（第二阶段辅助方法）。
+
+        显式依赖: 通过 SubTaskInfo.dependencies 中的 name 查找对应的 TaskId。
+        隐式依赖: 无显式依赖且非第一个子任务时，隐式依赖列表中的前一个子任务。
+
+        Raises:
+            ValueError: 当显式依赖的 name 在子任务列表中不存在时
+        """
+        if sub_info.dependencies:
+            resolved: set[TaskId] = set()
+            for dep_name in sub_info.dependencies:
+                if dep_name not in name_to_task:
+                    available = list(name_to_task.keys())
+                    raise ValueError(
+                        f"Sub-task dependency '{dep_name}' not found in generated sub-tasks. Available: {available}"
+                    )
+                resolved.add(name_to_task[dep_name].id)
+            return resolved
+
+        # 隐式依赖: 非第一个子任务时依赖前一个子任务
+        current_index = all_sub_tasks.index(current_task)
+        if current_index > 0:
+            return {all_sub_tasks[current_index - 1].id}
+
+        return set()
 
     def mark_decomposition_completed(self: Self) -> None:
         """标记任务分解完成。
