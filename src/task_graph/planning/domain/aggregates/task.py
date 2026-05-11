@@ -231,7 +231,7 @@ class Task(AggregateRoot):
         if not child_scope_level:
             return []
 
-        sub_tasks = []
+        sub_tasks: list[Task] = []
         for sub_info in self.output.sub_tasks:
             child_name = f"{self.name}[{sub_info.name}]"
 

@@ -196,6 +196,10 @@ class IssueListScreen(Screen):
         table.focus()
         self._load_data()
 
+    def on_screen_resume(self) -> None:
+        """当从详情页返回此页面时，自动刷新数据。"""
+        self._load_data()
+
     # --- 过滤器事件 ---
 
     @on(Input.Changed, "#issue-filter-project")

@@ -22,12 +22,18 @@ from task_graph.issue_tracking.application.use_cases.get_issue_details import (
     GetIssueDetailsResult,
     IssueDetailsDTO,
 )
+from task_graph.issue_tracking.application.use_cases.close_issue import (
+    CloseIssue,
+    CloseIssueCommand,
+    CloseIssueResult,
+)
 from task_graph.issue_tracking.interfaces.tui.theme import (
     ISSUE_STATUS_COLORS,
     SEVERITY_COLORS,
     ISSUE_TYPE_COLORS,
 )
 from task_graph.planning.interfaces.tui.widgets.task_id_label import TaskIdLabel
+from task_graph.planning.interfaces.tui.screens.confirm_dialog import ConfirmDialog
 
 
 class IssueDetailScreen(Screen):
@@ -35,6 +41,7 @@ class IssueDetailScreen(Screen):
 
     BINDINGS = [
         ("escape", "go_back", "返回列表"),
+        ("c", "close_issue", "关闭 Issue"),
         ("q", "quit", "退出"),
     ]
 
@@ -48,10 +55,16 @@ class IssueDetailScreen(Screen):
         padding: 1 2;
         background: $surface;
         dock: top;
+        layout: horizontal;
     }
 
     #issue-btn-back {
         min-width: 14;
+    }
+
+    #issue-btn-close {
+        min-width: 14;
+        margin-left: 1;
     }
 
     #issue-detail-scroll {
@@ -136,6 +149,7 @@ class IssueDetailScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(id="issue-detail-header"):
             yield Button("◀ 返回列表", id="issue-btn-back", variant="default")
+            yield Button("🔒 关闭 Issue", id="issue-btn-close", variant="error")
         yield Static("正在加载 Issue 详情...", id="issue-detail-loading")
         yield Footer()
 
@@ -146,6 +160,10 @@ class IssueDetailScreen(Screen):
     def _on_back(self) -> None:
         self.action_go_back()
 
+    @on(Button.Pressed, "#issue-btn-close")
+    def _on_close_pressed(self) -> None:
+        self.action_close_issue()
+
     @on(TaskIdLabel.NavigateToTask)
     def _on_navigate_to_task(self, event: TaskIdLabel.NavigateToTask) -> None:
         """处理可点击 Task ID 的跳转请求。"""
@@ -154,8 +172,40 @@ class IssueDetailScreen(Screen):
     def action_go_back(self) -> None:
         self.app.pop_screen()
 
+    def action_close_issue(self) -> None:
+        """关闭当前 Issue。"""
+        if self._issue_detail and self._issue_detail.status.value == "closed":
+            self.notify("该 Issue 已经是关闭状态", severity="warning")
+            return
+
+        def check_confirm(confirmed: bool) -> None:
+            if confirmed:
+                self._close_issue()
+
+        self.app.push_screen(
+            ConfirmDialog("确定要关闭这个 Issue 吗？"),
+            check_confirm,
+        )
+
     def action_quit(self) -> None:
         self.app.exit()
+
+    @work(thread=True)
+    @inject
+    def _close_issue(
+        self, use_case: CloseIssue = Provide["issue_tracking.close_issue"]
+    ) -> None:
+        """执行关闭 Issue 的 Use Case。"""
+        cmd = CloseIssueCommand(issue_id=self._issue_id)
+        result: CloseIssueResult = use_case.execute(cmd)
+
+        if result.success:
+            self.app.call_from_thread(self.notify, "Issue 已成功关闭", severity="information")
+            self.app.call_from_thread(self.action_go_back)
+        else:
+            self.app.call_from_thread(
+                self.notify, f"关闭失败: {result.error}", severity="error"
+            )
 
     @work(thread=True)
     @inject

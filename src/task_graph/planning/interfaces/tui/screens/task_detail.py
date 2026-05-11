@@ -21,9 +21,15 @@ from task_graph.planning.application.use_cases.get_task_details import (
     GetTaskDetailsQuery,
     GetTaskDetailsResult,
 )
+from task_graph.planning.application.use_cases.delete_task import (
+    DeleteTask,
+    DeleteTaskCommand,
+    DeleteTaskResult,
+)
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.interfaces.tui.theme import STATUS_COLORS, SCOPE_COLORS
 from task_graph.planning.interfaces.tui.widgets.task_id_label import TaskIdLabel
+from task_graph.planning.interfaces.tui.screens.confirm_dialog import ConfirmDialog
 
 
 class TaskDetailScreen(Screen):
@@ -31,6 +37,7 @@ class TaskDetailScreen(Screen):
 
     BINDINGS = [
         ("escape", "go_back", "返回列表"),
+        ("d", "delete_task", "删除任务"),
         ("q", "quit", "退出"),
     ]
 
@@ -44,10 +51,16 @@ class TaskDetailScreen(Screen):
         padding: 1 2;
         background: $surface;
         dock: top;
+        layout: horizontal;
     }
 
     #btn-back {
         min-width: 14;
+    }
+
+    #btn-delete {
+        min-width: 14;
+        margin-left: 1;
     }
 
     #detail-scroll {
@@ -119,6 +132,7 @@ class TaskDetailScreen(Screen):
         yield Header(show_clock=True)
         with Horizontal(id="detail-header"):
             yield Button("◀ 返回列表", id="btn-back", variant="default")
+            yield Button("🗑️ 删除任务", id="btn-delete", variant="error")
         yield Static("正在加载任务详情...", id="detail-loading")
         yield Footer()
 
@@ -129,6 +143,10 @@ class TaskDetailScreen(Screen):
     def _on_back(self) -> None:
         self.action_go_back()
 
+    @on(Button.Pressed, "#btn-delete")
+    def _on_delete_pressed(self) -> None:
+        self.action_delete_task()
+
     @on(TaskIdLabel.NavigateToTask)
     def _on_navigate_to_task(self, event: TaskIdLabel.NavigateToTask) -> None:
         """处理可点击 ID 的跳转请求。"""
@@ -137,8 +155,37 @@ class TaskDetailScreen(Screen):
     def action_go_back(self) -> None:
         self.app.pop_screen()
 
+    def action_delete_task(self) -> None:
+        """删除当前任务。"""
+
+        def check_confirm(confirmed: bool) -> None:
+            if confirmed:
+                self._delete_task()
+
+        self.app.push_screen(
+            ConfirmDialog("确定要删除这个任务吗？此操作无法撤销。"),
+            check_confirm,
+        )
+
     def action_quit(self) -> None:
         self.app.exit()
+
+    @work(thread=True)
+    @inject
+    def _delete_task(
+        self, use_case: DeleteTask = Provide["planning.delete_task"]
+    ) -> None:
+        """执行删除任务的 Use Case。"""
+        cmd = DeleteTaskCommand(task_id=self._task_id)
+        result: DeleteTaskResult = use_case.execute(cmd)
+
+        if result.success:
+            self.app.call_from_thread(self.notify, "任务已成功删除", severity="information")
+            self.app.call_from_thread(self.action_go_back)
+        else:
+            self.app.call_from_thread(
+                self.notify, f"删除失败: {result.error}", severity="error"
+            )
 
     @work(thread=True)
     @inject
