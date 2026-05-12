@@ -498,6 +498,14 @@ contexts:
           given: 传入的issue_id对应的Issue在数据库中不存在
           when: 调用find_by_id方法
           then: 返回None
+        - name: find_existing_issue_by_id
+          given: 传入的issue_id对应的Issue在数据库中存在
+          when: 调用find_by_id方法
+          then: 返回对应的Issue聚合根实例
+        - name: find_non_existent_issue_by_id
+          given: 传入的issue_id对应的Issue在数据库中不存在
+          when: 调用find_by_id方法
+          then: 返回None
       - name: find_all
         inputs:
         - type: Self
@@ -542,6 +550,22 @@ contexts:
           given: 过滤条件没有匹配的Issue
           when: 调用find_all方法
           then: 返回空列表
+        - name: find_all_issues_with_pagination
+          given: 传入limit和offset参数，其他过滤参数为空
+          when: 调用find_all方法
+          then: 返回按分页参数查询到的Issue列表，不应用任何过滤条件
+        - name: find_issues_filtered_by_status
+          given: 传入status过滤参数
+          when: 调用find_all方法
+          then: 返回符合指定状态的Issue列表
+        - name: find_issues_with_multiple_filters
+          given: 传入多个过滤参数（如status、issue_type、severity、labels）
+          when: 调用find_all方法
+          then: 返回同时满足所有过滤条件的Issue列表
+        - name: find_issues_no_matches
+          given: 过滤条件没有匹配的Issue
+          when: 调用find_all方法
+          then: 返回空列表
       - name: find_by_task_id
         inputs:
         - type: Self
@@ -552,6 +576,14 @@ contexts:
           type: Issue
           container: list
         rules:
+        - name: find_issues_linked_to_task
+          given: 传入有效的task_id
+          when: 调用find_by_task_id方法
+          then: 返回所有与该task_id关联的Issue列表
+        - name: find_issues_no_linked_to_task
+          given: 传入的task_id没有关联任何Issue
+          when: 调用find_by_task_id方法
+          then: 返回空列表
         - name: find_issues_linked_to_task
           given: 传入有效的task_id
           when: 调用find_by_task_id方法
@@ -573,6 +605,14 @@ contexts:
         output:
           type: integer
         rules:
+        - name: count_all_issues
+          given: 不传入任何过滤参数
+          when: 调用count方法
+          then: 返回数据库中所有Issue的总数量
+        - name: count_issues_with_filters
+          given: 传入status或issue_type过滤参数
+          when: 调用count方法
+          then: 返回符合过滤条件的Issue数量
         - name: count_all_issues
           given: 不传入任何过滤参数
           when: 调用count方法
@@ -662,70 +702,142 @@ contexts:
   application:
     use_cases:
     - name: LinkIssueToTask
-      kind: command
       description: Link an issue to a task from Planning context
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[IssueRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: LinkIssueToTaskCommand
+          name: cmd
+        output:
+          type: LinkIssueToTaskResult
     - name: CloseIssue
-      kind: command
       description: Close an issue that is in RESOLVED status
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[IssueRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: CloseIssueCommand
+          name: cmd
+        output:
+          type: CloseIssueResult
     - name: UpdateIssueStatus
-      kind: command
       description: Update issue status with state machine validation
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[IssueRepository]
         name: uow
       - type: IssueStatusTransitionService
         name: status_transition_service
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: UpdateIssueStatusCommand
+          name: cmd
+        output:
+          type: UpdateIssueStatusResult
     - name: GetIssueDetails
-      kind: query
       description: Get full issue details including comments and labels
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[IssueRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: GetIssueDetailsQuery
+          name: query
+        output:
+          type: GetIssueDetailsResult
     - name: CreateIssue
-      kind: command
       description: Create a new issue with initial status NEW
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[IssueRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: CreateIssueCommand
+          name: cmd
+        output:
+          type: CreateIssueResult
     - name: UpdateIssueMetadata
-      kind: command
       description: Update issue metadata like type, severity, and labels
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[IssueRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: UpdateIssueMetadataCommand
+          name: cmd
+        output:
+          type: UpdateIssueMetadataResult
     - name: ListIssues
-      kind: query
       description: Paginated list of issues with filtering
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[IssueRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: ListIssuesQuery
+          name: query
+        output:
+          type: ListIssuesResult
     - name: UnlinkIssueFromTask
-      kind: command
       description: Unlink an issue from a task
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[IssueRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: UnlinkIssueFromTaskCommand
+          name: cmd
+        output:
+          type: UnlinkIssueFromTaskResult
     - name: AddComment
-      kind: command
       description: Add a comment to an issue
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[IssueRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: AddCommentCommand
+          name: cmd
+        output:
+          type: AddCommentResult
     dtos:
     - name: IssueSummaryDTO
       description: ''
@@ -1872,37 +1984,68 @@ contexts:
   application:
     use_cases:
     - name: SubmitTaskResult
-      kind: command
       description: Submit task execution result with artifacts and optional error.
         Updates task.output.
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: SubmitTaskResultCommand
+          name: cmd
+        output:
+          type: SubmitTaskResultResult
     - name: CreateTask
-      kind: command
       description: Create task
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: CreateTaskCommand
+          name: cmd
+        output:
+          type: CreateTaskResult
     - name: CompleteDelegatedTask
-      kind: command
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: CompleteDelegatedTaskCommand
+          name: cmd
+        output:
+          type: CompleteDelegatedTaskResult
     - name: UpdateTaskStatus
-      kind: command
       description: Updates a task's status and triggers chain reactions for dependents.
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
       - type: DependencyResolutionService
         name: resolution_service
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: UpdateTaskStatusCommand
+          name: cmd
+        output:
+          type: UpdateTaskStatusResult
     - name: DecomposeTask
-      kind: command
       description: 'Decompose a task into sub-tasks.
 
 
@@ -1917,49 +2060,97 @@ contexts:
         4. Marks the original task as DELEGATED.
 
         5. Persists the original task.'
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: DecomposeTaskCommand
+          name: cmd
+        output:
+          type: DecomposeTaskResult
     - name: SuggestNextAction
-      kind: query
       description: Returns the highest priority tasks that are ready to execute.
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
       - type: PriorityAnalysisService
         name: priority_service
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: SuggestNextActionQuery
+          name: query
+        output:
+          type: SuggestNextActionResult
     - name: GetTaskDetails
-      kind: query
       description: Use case to get details of a specific task.
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: GetTaskDetailsQuery
+          name: query
+        output:
+          type: GetTaskDetailsResult
     - name: ReviewTask
-      kind: command
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: ReviewTaskCommand
+          name: cmd
+        output:
+          type: ReviewTaskResult
     - name: DeleteTask
-      kind: command
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: DeleteTaskCommand
+          name: cmd
+        output:
+          type: DeleteTaskResult
     - name: UnlockTask
-      kind: command
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
       - type: DependencyResolutionService
         name: resolution_service
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: UnlockTaskCommand
+          name: cmd
+        output:
+          type: UnlockTaskResult
     - name: ModifyTaskDependencies
-      kind: command
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
@@ -1967,27 +2158,60 @@ contexts:
         name: cycle_detector
       - type: DependencyResolutionService
         name: dependency_resolver
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: ModifyTaskDependenciesCommand
+          name: cmd
+        output:
+          type: ModifyTaskDependenciesResult
     - name: ReviseTaskDetails
-      kind: command
       description: Revise a task's details like name, description, effort, or base
         value.
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: ReviseTaskDetailsCommand
+          name: cmd
+        output:
+          type: ReviseTaskDetailsResult
     - name: ClaimTask
-      kind: command
-      dependencies:
+      attributes:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
       - type: DependencyResolutionService
         name: dependency_service
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: ClaimTaskCommand
+          name: cmd
+        output:
+          type: ClaimTaskResult
     - name: ListTasks
-      kind: query
-      dependencies:
+      attributes:
       - type: TaskQueryService
         name: query_service
+      behaviors:
+      - name: execute
+        inputs:
+        - type: Self
+          name: self
+        - type: ListTasksQuery
+          name: query
+        output:
+          type: ListTasksResult
     ports:
     - name: TaskQueryService
       description: 'Read-only query interface for tasks (CQRS query side).
