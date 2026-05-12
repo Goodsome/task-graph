@@ -26,17 +26,17 @@ class SqlAlchemyTaskRepository(TaskRepository):
     def _save(self, aggregate: Task) -> None:
         model = self._to_model(aggregate)
         self.session.add(model)
+        self.session.flush()
 
     @override
     def _add(self, aggregate: Task) -> None:
         model = self._to_model(aggregate)
         self.session.add(model)
+        self.session.flush()
 
     @override
     def _get(self, id: TaskId) -> Task:
-        model = self.session.get(TaskModel, id.value)
-        if not model:
-            raise TaskNotFoundError(f"Task with ID {id.value} not found")
+        model = self._get_model_or_raise(id)
         return self._to_domain(model)
 
     @override
@@ -44,6 +44,7 @@ class SqlAlchemyTaskRepository(TaskRepository):
         model = self.session.get(TaskModel, id.value)
         if model:
             self.session.delete(model)
+            self.session.flush()
 
     @override
     def find_all_active(self, project_id: str | None = None) -> list[Task]:
@@ -94,12 +95,20 @@ class SqlAlchemyTaskRepository(TaskRepository):
             recurrence=None,  # Not currently in TaskModel
         )
 
-    def _to_model(self, task: Task) -> TaskModel:
-        model = self.session.get(TaskModel, task.id.value)
-
+    def _get_model_or_new(self, task_id: TaskId) -> TaskModel:
+        model = self.session.get(TaskModel, task_id.value)
         if not model:
-            model = TaskModel(id=task.id.value)
+            model = TaskModel(id=task_id.value)
+        return model
 
+    def _get_model_or_raise(self, task_id: TaskId) -> TaskModel:
+        model = self.session.get(TaskModel, task_id.value)
+        if model is None:
+            raise TaskNotFoundError(f"{task_id.value} not found")
+        return model
+
+    def _to_model(self, task: Task) -> TaskModel:
+        model = self._get_model_or_new(task.id)
         return self._sync_to_model(task, model)
 
     def _sync(self, task: Task) -> None:
@@ -139,13 +148,10 @@ class SqlAlchemyTaskRepository(TaskRepository):
         ] or None
 
         # Handle dependencies
-        dep_ids = [tid.value for tid in task.dependencies]
-        if dep_ids:
-            dep_stmt = select(TaskModel).where(TaskModel.id.in_(dep_ids))
-            dependencies = self.session.execute(dep_stmt).scalars().all()
-            model.dependencies = list(dependencies)
-        else:
-            model.dependencies = []
+        dep_ids = [tid for tid in task.dependencies]
+        for dep_id in dep_ids:
+            dep_model = self._get_model_or_raise(dep_id)
+            model.dependencies.append(dep_model)
 
         return model
 
