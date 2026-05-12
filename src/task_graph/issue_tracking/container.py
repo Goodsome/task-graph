@@ -1,5 +1,4 @@
-import functools
-from dependency_injector.providers import Callable, Dependency, Configuration, Singleton
+from dependency_injector.providers import Dependency, Configuration, Singleton
 from task_graph.issue_tracking.domain.services.issue_status_transition_service import (
     IssueStatusTransitionService,
 )

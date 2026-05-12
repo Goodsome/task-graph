@@ -1,9 +1,7 @@
 import asyncio
 import json
 import psycopg
-from datetime import datetime
 
-from task_graph import planning
 from task_graph.bootstrap import create_container
 
 async def event_handler(payload: str, channel_name: str):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-from typing import Any, Self, override
+from typing import Self, override
 
 from task_graph.issue_tracking.domain.enums import IssueStatus, IssueType, Severity
 from task_graph.issue_tracking.domain.entities.comment import Comment

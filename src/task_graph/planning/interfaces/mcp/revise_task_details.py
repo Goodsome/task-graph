@@ -1,9 +1,13 @@
 from task_graph.planning.application.use_cases.revise_task_details import (
     ReviseTaskDetails,
-    ReviseTaskDetailsCommand,
-    ReviseTaskDetailsResult,
 )
 from dependency_injector.wiring import Provide, inject
+from task_graph.planning.application.dtos.revise_task_details_command import (
+    ReviseTaskDetailsCommand,
+)
+from task_graph.planning.application.dtos.revise_task_details_result import (
+    ReviseTaskDetailsResult,
+)
 
 
 @inject
@@ -15,5 +19,5 @@ def _revise_task_details(
 
 
 def revise_task_details(cmd: ReviseTaskDetailsCommand) -> ReviseTaskDetailsResult:
-    """update task details"""
+    """Revise a task's details like name, description, effort, or base value."""
     return _revise_task_details(cmd)

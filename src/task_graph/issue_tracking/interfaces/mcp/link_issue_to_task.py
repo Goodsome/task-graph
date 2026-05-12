@@ -1,9 +1,13 @@
 from task_graph.issue_tracking.application.use_cases.link_issue_to_task import (
     LinkIssueToTask,
-    LinkIssueToTaskCommand,
-    LinkIssueToTaskResult,
 )
 from dependency_injector.wiring import Provide, inject
+from task_graph.issue_tracking.application.dtos.link_issue_to_task_command import (
+    LinkIssueToTaskCommand,
+)
+from task_graph.issue_tracking.application.dtos.link_issue_to_task_result import (
+    LinkIssueToTaskResult,
+)
 
 
 @inject

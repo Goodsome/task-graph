@@ -1,9 +1,11 @@
-from task_graph.issue_tracking.application.use_cases.create_issue import (
-    CreateIssue,
+from task_graph.issue_tracking.application.use_cases.create_issue import CreateIssue
+from dependency_injector.wiring import Provide, inject
+from task_graph.issue_tracking.application.dtos.create_issue_command import (
     CreateIssueCommand,
+)
+from task_graph.issue_tracking.application.dtos.create_issue_result import (
     CreateIssueResult,
 )
-from dependency_injector.wiring import Provide, inject
 
 
 @inject

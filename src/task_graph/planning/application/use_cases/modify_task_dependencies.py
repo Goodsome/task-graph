@@ -1,9 +1,7 @@
 from task_graph.shared.application.ports.unit_of_work import UnitOfWork
 from task_graph.planning.domain.ports.task_repository import TaskRepository
-from dataclasses import dataclass, field
-from task_graph.planning.domain.services import CycleDetectionService
+from dataclasses import dataclass
 from task_graph.planning.domain.value_objects import TaskId
-from pydantic import BaseModel, Field
 from task_graph.planning.domain.services.cycle_detection_service import (
     CycleDetectionService,
 )
@@ -11,34 +9,24 @@ from task_graph.planning.domain.services.dependency_resolution_service import (
     DependencyResolutionService,
 )
 from task_graph.planning.domain.enums import TaskStatus
-
-
-@dataclass(frozen=True)
-class ModifyTaskDependenciesCommand:
-
-    task_id: str
-    added_dependencies: list[str] = field(default_factory=list)
-    removed_dependencies: list[str] = field(default_factory=list)
-
-
-@dataclass(frozen=True)
-class ModifyTaskDependenciesResult:
-
-    success: bool
-    error: str = field(default_factory=str)
+from task_graph.planning.application.dtos.modify_task_dependencies_command import (
+    ModifyTaskDependenciesCommand,
+)
+from task_graph.planning.application.dtos.modify_task_dependencies_result import (
+    ModifyTaskDependenciesResult,
+)
+from typing import Self
 
 
 @dataclass
 class ModifyTaskDependencies:
-
     uow: UnitOfWork[TaskRepository]
     cycle_detector: CycleDetectionService
     dependency_resolver: DependencyResolutionService
 
     def execute(
-        self, cmd: ModifyTaskDependenciesCommand
+        self: Self, cmd: ModifyTaskDependenciesCommand
     ) -> ModifyTaskDependenciesResult:
-
         try:
             with self.uow:
                 target_id = TaskId.reconstitute(cmd.task_id)
@@ -50,23 +38,24 @@ class ModifyTaskDependencies:
                 for add_id_str in cmd.added_dependencies:
                     add_id = TaskId.reconstitute(add_id_str)
                     _ = self.uow.repository.get(add_id)
-                    if self.cycle_detector.detect_cycle(target_id, add_id, self.uow.repository):
+                    if self.cycle_detector.detect_cycle(
+                        target_id, add_id, self.uow.repository
+                    ):
                         return ModifyTaskDependenciesResult(
-                            False, f"Cycle detected when adding dependency {add_id_str}"
+                            success=False,
+                            error=f"Cycle detected when adding dependency {add_id_str}"
                         )
                     task.dependencies.add(add_id)
-                
-                # Recalculate status based on new dependencies
-                is_blocked = self.dependency_resolver.evaluate_blocking_status(task, self.uow.repository)
+                is_blocked = self.dependency_resolver.evaluate_blocking_status(
+                    task, self.uow.repository
+                )
                 if is_blocked:
                     if task.status == TaskStatus.READY:
                         task.mark_pending()
-                else:
-                    if task.status in (TaskStatus.PENDING, TaskStatus.BLOCKED):
-                        task.mark_ready()
-
+                elif task.status in (TaskStatus.PENDING, TaskStatus.BLOCKED):
+                    task.mark_ready()
                 self.uow.repository.save(task)
                 self.uow.commit()
-                return ModifyTaskDependenciesResult(True)
+                return ModifyTaskDependenciesResult(success=True)
         except Exception as e:
-            return ModifyTaskDependenciesResult(False, str(e))
+            return ModifyTaskDependenciesResult(success=False,error=str(e))

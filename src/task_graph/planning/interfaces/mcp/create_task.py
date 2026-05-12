@@ -1,9 +1,7 @@
 from dependency_injector.wiring import Provide, inject
-from task_graph.planning.application.use_cases.create_task import (
-    CreateTask,
-    CreateTaskCommand,
-    CreateTaskResult,
-)
+from task_graph.planning.application.use_cases.create_task import CreateTask
+from task_graph.planning.application.dtos.create_task_result import CreateTaskResult
+from task_graph.planning.application.dtos.create_task_command import CreateTaskCommand
 
 
 @inject

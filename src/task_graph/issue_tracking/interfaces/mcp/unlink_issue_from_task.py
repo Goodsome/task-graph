@@ -1,9 +1,13 @@
 from task_graph.issue_tracking.application.use_cases.unlink_issue_from_task import (
     UnlinkIssueFromTask,
-    UnlinkIssueFromTaskCommand,
-    UnlinkIssueFromTaskResult,
 )
 from dependency_injector.wiring import Provide, inject
+from task_graph.issue_tracking.application.dtos.unlink_issue_from_task_command import (
+    UnlinkIssueFromTaskCommand,
+)
+from task_graph.issue_tracking.application.dtos.unlink_issue_from_task_result import (
+    UnlinkIssueFromTaskResult,
+)
 
 
 @inject

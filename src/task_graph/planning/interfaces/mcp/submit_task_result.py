@@ -1,7 +1,11 @@
 from dependency_injector.wiring import Provide, inject
 from task_graph.planning.application.use_cases.submit_task_result import (
     SubmitTaskResult,
+)
+from task_graph.planning.application.dtos.submit_task_result_command import (
     SubmitTaskResultCommand,
+)
+from task_graph.planning.application.dtos.submit_task_result_result import (
     SubmitTaskResultResult,
 )
 

@@ -1,27 +1,14 @@
 from task_graph.shared.application.ports.unit_of_work import UnitOfWork
 from task_graph.planning.domain.ports.task_repository import TaskRepository
-from typing import Union
-from dataclasses import dataclass, field
-
-from task_graph.planning.domain.value_objects import TaskId, StoryPoint, ValueScore
-
-
-from pydantic import BaseModel
-
-class ReviseTaskDetailsCommand(BaseModel):
-
-    task_id: str
-    name: str | None = None
-    description: str | None = None
-    effort: int | None = None
-    base_value: float | None = None
-
-
-@dataclass(frozen=True)
-class ReviseTaskDetailsResult:
-
-    success: bool
-    error: str = ""
+from typing import Self
+from dataclasses import dataclass
+from task_graph.planning.domain.value_objects import StoryPoint, TaskId, ValueScore
+from task_graph.planning.application.dtos.revise_task_details_command import (
+    ReviseTaskDetailsCommand,
+)
+from task_graph.planning.application.dtos.revise_task_details_result import (
+    ReviseTaskDetailsResult,
+)
 
 
 @dataclass
@@ -30,29 +17,21 @@ class ReviseTaskDetails:
 
     uow: UnitOfWork[TaskRepository]
 
-    def execute(self, cmd: ReviseTaskDetailsCommand) -> ReviseTaskDetailsResult:
+    def execute(self: Self, cmd: ReviseTaskDetailsCommand) -> ReviseTaskDetailsResult:
         try:
             with self.uow:
                 task_id = TaskId.reconstitute(cmd.task_id)
                 task = self.uow.repository.get(task_id)
-
-                # 增量更新
                 if cmd.name is not None:
                     task.name = cmd.name
-
                 if cmd.description is not None:
                     task.description = cmd.description
-
                 if cmd.effort is not None:
-                    # 触发 Pydantic 校验
                     task.effort = StoryPoint.create(cmd.effort)
-
                 if cmd.base_value is not None:
                     task.base_value = ValueScore.create(cmd.base_value)
-
                 self.uow.repository.save(task)
                 self.uow.commit()
-                return ReviseTaskDetailsResult(True)
-
+                return ReviseTaskDetailsResult(success=True)
         except Exception as e:
-            return ReviseTaskDetailsResult(False, str(e))
+            return ReviseTaskDetailsResult(success=False, error=str(e))

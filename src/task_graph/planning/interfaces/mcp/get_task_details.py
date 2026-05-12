@@ -1,8 +1,10 @@
 from dependency_injector.wiring import Provide, inject
-from task_graph.planning.application.use_cases.get_task_details import (
-    GetTaskDetails,
-    GetTaskDetailsQuery,
+from task_graph.planning.application.use_cases.get_task_details import GetTaskDetails
+from task_graph.planning.application.dtos.get_task_details_result import (
     GetTaskDetailsResult,
+)
+from task_graph.planning.application.dtos.get_task_details_query import (
+    GetTaskDetailsQuery,
 )
 
 

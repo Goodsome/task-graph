@@ -4,6 +4,8 @@ from task_graph.planning.application.use_cases.claim_task import (
     ClaimTaskResult,
 )
 from dependency_injector.wiring import Provide, inject
+from task_graph.planning.application.dtos.claim_task_command import ClaimTaskCommand
+from task_graph.planning.application.dtos.claim_task_result import ClaimTaskResult
 
 
 @inject

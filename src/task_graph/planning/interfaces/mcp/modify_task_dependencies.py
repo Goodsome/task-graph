@@ -1,9 +1,13 @@
 from task_graph.planning.application.use_cases.modify_task_dependencies import (
     ModifyTaskDependencies,
-    ModifyTaskDependenciesCommand,
-    ModifyTaskDependenciesResult,
 )
 from dependency_injector.wiring import Provide, inject
+from task_graph.planning.application.dtos.modify_task_dependencies_command import (
+    ModifyTaskDependenciesCommand,
+)
+from task_graph.planning.application.dtos.modify_task_dependencies_result import (
+    ModifyTaskDependenciesResult,
+)
 
 
 @inject

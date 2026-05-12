@@ -1,8 +1,12 @@
 from dependency_injector.wiring import Provide, inject
 from task_graph.planning.application.use_cases.update_task_status import (
     UpdateTaskStatus,
-    UpdateTaskStatusCommand,
+)
+from task_graph.planning.application.dtos.update_task_status_result import (
     UpdateTaskStatusResult,
+)
+from task_graph.planning.application.dtos.update_task_status_command import (
+    UpdateTaskStatusCommand,
 )
 
 

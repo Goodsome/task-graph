@@ -1,6 +1,5 @@
 import time
 import sys
-import argparse
 import logging
 from sqlalchemy import text, create_engine
 from task_graph.bootstrap import create_container

@@ -1,71 +1,56 @@
-"""创建一个新的规划任务"""
-
-from typing import Annotated
-
 import typer
+from typing import Annotated
 from rich.console import Console
 from dependency_injector.wiring import Provide, inject
-
-from task_graph.planning.application.use_cases.create_task import (
-    CreateTaskCommand,
-    CreateTask,
-    CreateTaskResult,
-)
+from task_graph.planning.application.use_cases.create_task import CreateTask
 from task_graph.planning.domain.enums import (
-    CompletionLogic,
-    ScopeLevel,
     ArchitectureLayer,
+    ScopeLevel,
 )
-from task_graph.planning.interfaces.cli.app import planning_app
+from task_graph.planning.application.dtos.create_task_result import CreateTaskResult
+from task_graph.planning.domain.value_objects.scenario import Scenario
+from task_graph.planning.application.dtos.create_task_command import CreateTaskCommand
 
 console = Console()
 
 
 @inject
 def _create_task(
-    cmd: CreateTaskCommand, use_case: CreateTask = Provide["planning.create_task"]
+    cmd: CreateTaskCommand,
+    use_case: CreateTask = Provide["planning_container.create_task"],
 ) -> CreateTaskResult:
     return use_case.execute(cmd)
 
 
-@planning_app.command(name="create-task")
 def create_task(
-    project_id: Annotated[str, typer.Argument(help="项目标识符")],
-    name: Annotated[str, typer.Argument(help="任务名称")],
-    description: Annotated[str, typer.Argument(help="任务描述")],
-    effort: Annotated[
-        int, typer.Argument(help="工作量估算 (斐波那契数列: 1, 2, 3, 5, 8, 13...)")
-    ],
-    base_value: Annotated[float, typer.Argument(help="业务价值评分 (1.0-10.0)")],
-    scope_level: Annotated[
-        str,
-        typer.Option(
-            "--level",
-            "-l",
-            help="任务范围层级: project, context, architecture, component",
-        ),
-    ] = "component",
-    dependencies: Annotated[
-        list[str] | None, typer.Option("--dep", help="前置任务ID (可多次指定)")
-    ] = None,
-    parent_id: Annotated[str | None, typer.Option("--parent", help="父任务ID")] = None,
+    project_id: Annotated[str, typer.Argument()],
+    name: Annotated[str, typer.Argument()],
+    description: Annotated[str, typer.Argument()],
+    effort: Annotated[int, typer.Argument()],
+    base_value: Annotated[float, typer.Argument()],
+    scope_level: Annotated[ScopeLevel, typer.Argument()],
+    dependencies: Annotated[list[str], typer.Option("--dependencies", "-d")] = "list",
+    parent_id: Annotated[str | None, typer.Option("--parent-id", "-pi")] = None,
     bounded_context: Annotated[
-        str | None, typer.Option("--bounded-context", "-b", help="所属限界上下文")
+        str | None, typer.Option("--bounded-context", "-bc")
     ] = None,
     architecture_layer: Annotated[
-        str | None, typer.Option("--architecture-layer", "-a", help="所属架构层")
+        ArchitectureLayer | None, typer.Option("--architecture-layer", "-al")
     ] = None,
-) -> None:
-    """
-    创建一个新的规划任务。
-    """
+    component_name: Annotated[
+        str | None, typer.Option("--component-name", "-cn")
+    ] = None,
+    acceptance_criteria: Annotated[
+        list[Scenario], typer.Option("--acceptance-criteria", "-ac")
+    ] = "list",
+) -> CreateTaskResult:
+    """创建一个新的规划任务。"""
     try:
         level = ScopeLevel(scope_level.lower())
     except ValueError:
         console.print(f"[red]错误: 无效的 scope_level: {scope_level}[/red]")
         console.print("可选值: project, context, architecture, component")
         raise typer.Exit(1)
-
     arch_layer = None
     if architecture_layer:
         try:
@@ -78,7 +63,6 @@ def create_task(
                 "可选值: domain, application, infrastructure, interfaces, cross_cutting, none"
             )
             raise typer.Exit(1)
-
     cmd = CreateTaskCommand(
         project_id=project_id,
         name=name,
@@ -91,9 +75,7 @@ def create_task(
         bounded_context=bounded_context,
         architecture_layer=arch_layer,
     )
-
     result = _create_task(cmd)
-
     if result.success:
         console.print("[green]✓ 任务创建成功[/green]")
         console.print(f"  Task ID: {result.task_id}")

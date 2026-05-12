@@ -1,7 +1,11 @@
 from dependency_injector.wiring import Provide, inject
 from task_graph.issue_tracking.application.use_cases.update_issue_status import (
     UpdateIssueStatus,
+)
+from task_graph.issue_tracking.application.dtos.update_issue_status_command import (
     UpdateIssueStatusCommand,
+)
+from task_graph.issue_tracking.application.dtos.update_issue_status_result import (
     UpdateIssueStatusResult,
 )
 

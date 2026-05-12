@@ -14,7 +14,6 @@ from textual.widgets import (
     Input,
     Label,
     Select,
-    Static,
     Button,
 )
 from rich.text import Text

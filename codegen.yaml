@@ -232,7 +232,7 @@ contexts:
           container: type
           name: cls
         - type: Any
-          custom_type_string: Union[UUID, str]
+          custom_type_string: UUID | str
           name: value
         output:
           type: Self
@@ -334,7 +334,7 @@ contexts:
           container: type
           name: cls
         - type: Any
-          custom_type_string: Union[UUID, str]
+          custom_type_string: UUID | str
           name: value
         output:
           type: IssueId
@@ -374,7 +374,7 @@ contexts:
           container: type
           name: cls
         - type: Any
-          custom_type_string: Union[TaskId, str]
+          custom_type_string: TaskId | str
           name: task_id
         output:
           type: TaskLink
@@ -385,7 +385,7 @@ contexts:
           container: type
           name: cls
         - type: Any
-          custom_type_string: Union[dict, object]
+          custom_type_string: dict | object
           name: data
         output:
           type: dict
@@ -446,7 +446,7 @@ contexts:
           container: type
           name: cls
         - type: Any
-          custom_type_string: Union[dict, object]
+          custom_type_string: dict | object
           name: data
         output:
           type: dict
@@ -663,17 +663,6 @@ contexts:
     use_cases:
     - name: LinkIssueToTask
       kind: command
-      inputs:
-      - type: string
-        name: issue_id
-      - type: string
-        name: task_id
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        name: error
-        default: ''
       description: Link an issue to a task from Planning context
       dependencies:
       - type: Any
@@ -681,18 +670,6 @@ contexts:
         name: uow
     - name: CloseIssue
       kind: command
-      inputs:
-      - type: string
-        name: issue_id
-      - type: string
-        optional: true
-        name: resolution
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        name: error
-        default: ''
       description: Close an issue that is in RESOLVED status
       dependencies:
       - type: Any
@@ -700,19 +677,6 @@ contexts:
         name: uow
     - name: UpdateIssueStatus
       kind: command
-      inputs:
-      - type: string
-        name: issue_id
-      - type: IssueStatus
-        name: new_status
-      - type: string
-        name: changed_by
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        name: error
-        default: ''
       description: Update issue status with state machine validation
       dependencies:
       - type: Any
@@ -722,10 +686,81 @@ contexts:
         name: status_transition_service
     - name: GetIssueDetails
       kind: query
-      inputs:
+      description: Get full issue details including comments and labels
+      dependencies:
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
+        name: uow
+    - name: CreateIssue
+      kind: command
+      description: Create a new issue with initial status NEW
+      dependencies:
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
+        name: uow
+    - name: UpdateIssueMetadata
+      kind: command
+      description: Update issue metadata like type, severity, and labels
+      dependencies:
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
+        name: uow
+    - name: ListIssues
+      kind: query
+      description: Paginated list of issues with filtering
+      dependencies:
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
+        name: uow
+    - name: UnlinkIssueFromTask
+      kind: command
+      description: Unlink an issue from a task
+      dependencies:
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
+        name: uow
+    - name: AddComment
+      kind: command
+      description: Add a comment to an issue
+      dependencies:
+      - type: Any
+        custom_type_string: UnitOfWork[IssueRepository]
+        name: uow
+    dtos:
+    - name: IssueSummaryDTO
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
       - type: string
-        name: issue_id
-      outputs:
+        name: id
+      - type: string
+        name: project_id
+      - type: string
+        name: title
+      - type: IssueType
+        name: type
+      - type: Severity
+        name: severity
+      - type: IssueStatus
+        name: status
+      - type: string
+        name: submitter_name
+      - type: integer
+        name: comment_count
+      - type: integer
+        name: label_count
+      - type: integer
+        name: task_link_count
+      - type: datetime
+        name: created_at
+      - type: datetime
+        name: updated_at
+    - name: GetIssueDetailsResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
       - type: boolean
         name: success
       - type: IssueDetailsDTO
@@ -734,14 +769,11 @@ contexts:
       - type: string
         name: error
         default: ''
-      description: Get full issue details including comments and labels
-      dependencies:
-      - type: Any
-        custom_type_string: UnitOfWork[IssueRepository]
-        name: uow
-    - name: CreateIssue
-      kind: command
-      inputs:
+    - name: CreateIssueCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
       - type: string
         name: project_id
       - type: string
@@ -754,7 +786,31 @@ contexts:
         name: severity
       - type: string
         name: submitter_name
-      outputs:
+    - name: UpdateIssueStatusResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: error
+        default: ''
+    - name: UnlinkIssueFromTaskResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: error
+        default: ''
+    - name: CreateIssueResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
       - type: boolean
         name: success
       - type: string
@@ -762,14 +818,37 @@ contexts:
       - type: string
         name: error
         default: ''
-      description: Create a new issue with initial status NEW
-      dependencies:
-      - type: Any
-        custom_type_string: UnitOfWork[IssueRepository]
-        name: uow
-    - name: UpdateIssueMetadata
-      kind: command
-      inputs:
+    - name: CloseIssueResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: error
+        default: ''
+    - name: SubmitterDTO
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: name
+    - name: TaskLinkDTO
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
+      - type: datetime
+        name: linked_at
+    - name: UpdateIssueMetadataCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
       - type: string
         name: issue_id
       - type: IssueType
@@ -786,20 +865,81 @@ contexts:
         container: list
         optional: true
         name: remove_labels
-      outputs:
+    - name: IssueDetailsDTO
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: id
+      - type: string
+        name: project_id
+      - type: string
+        name: title
+      - type: string
+        name: description
+      - type: IssueType
+        name: type
+      - type: Severity
+        name: severity
+      - type: IssueStatus
+        name: status
+      - type: SubmitterDTO
+        name: submitter
+      - type: LabelDTO
+        container: list
+        name: labels
+      - type: CommentDTO
+        container: list
+        name: comments
+      - type: TaskLinkDTO
+        container: list
+        name: task_links
+      - type: datetime
+        name: created_at
+      - type: datetime
+        name: updated_at
+    - name: AddCommentResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
       - type: boolean
         name: success
       - type: string
+        name: comment_id
+      - type: string
         name: error
         default: ''
-      description: Update issue metadata like type, severity, and labels
-      dependencies:
-      - type: Any
-        custom_type_string: UnitOfWork[IssueRepository]
-        name: uow
-    - name: ListIssues
-      kind: query
-      inputs:
+    - name: CommentDTO
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: id
+      - type: string
+        name: content
+      - type: string
+        name: author
+      - type: datetime
+        name: created_at
+    - name: UpdateIssueStatusCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: issue_id
+      - type: IssueStatus
+        name: new_status
+      - type: string
+        name: changed_by
+    - name: ListIssuesQuery
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
       - type: IssueStatus
         optional: true
         name: status
@@ -822,7 +962,21 @@ contexts:
       - type: integer
         name: offset
         default: 0
-      outputs:
+    - name: LinkIssueToTaskResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: error
+        default: ''
+    - name: ListIssuesResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
       - type: IssueSummaryDTO
         container: list
         name: issues
@@ -831,51 +985,69 @@ contexts:
       - type: string
         name: error
         default: ''
-      description: Paginated list of issues with filtering
-      dependencies:
-      - type: Any
-        custom_type_string: UnitOfWork[IssueRepository]
-        name: uow
-    - name: UnlinkIssueFromTask
-      kind: command
-      inputs:
+    - name: GetIssueDetailsQuery
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
       - type: string
         name: issue_id
-      - type: string
-        name: task_id
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        name: error
-        default: ''
-      description: Unlink an issue from a task
-      dependencies:
-      - type: Any
-        custom_type_string: UnitOfWork[IssueRepository]
-        name: uow
-    - name: AddComment
-      kind: command
-      inputs:
+    - name: AddCommentCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
       - type: string
         name: issue_id
       - type: string
         name: content
       - type: string
         name: author
-      outputs:
+    - name: LinkIssueToTaskCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: issue_id
+      - type: string
+        name: task_id
+    - name: UpdateIssueMetadataResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
       - type: boolean
         name: success
       - type: string
-        name: comment_id
-      - type: string
         name: error
         default: ''
-      description: Add a comment to an issue
-      dependencies:
-      - type: Any
-        custom_type_string: UnitOfWork[IssueRepository]
-        name: uow
+    - name: LabelDTO
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: name
+    - name: UnlinkIssueFromTaskCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: issue_id
+      - type: string
+        name: task_id
+    - name: CloseIssueCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: issue_id
+      - type: string
+        optional: true
+        name: resolution
   infrastructure:
     implementations:
     - name: SqlAlchemyIssueRepository
@@ -1118,7 +1290,39 @@ contexts:
         - name: two_phase_processing_with_name_to_id_mapping
           given: 包含多个 SubTaskInfo 的列表
           when: 调用 generate_sub_tasks() 方法
-          then: 第一阶段创建所有 Task 实例并建立 name 到 TaskId 的映射表，第二阶段解析 dependencies 中的 name 为对应 TaskId
+          then: 第一阶段创建所有 Task 实例并建立 name 到 TaskId 的映射表，第二阶段解析 dependencies 中的 name
+            为对应 TaskId
+      - name: _create_child_task
+        description: 创建单个子任务实例（第一阶段辅助方法）。
+        inputs:
+        - type: Self
+          name: self
+        - type: SubTaskInfo
+          name: sub_info
+        - type: ScopeLevel
+          name: child_scope_level
+        output:
+          type: Task
+      - name: _resolve_sub_task_dependencies
+        description: "解析子任务的依赖关系（第二阶段辅助方法）。\n\n显式依赖: 通过 SubTaskInfo.dependencies 中的\
+          \ name 查找对应的 TaskId。\n隐式依赖: 无显式依赖且非第一个子任务时，隐式依赖列表中的前一个子任务。\n\nRaises:\n\
+          \    ValueError: 当显式依赖的 name 在子任务列表中不存在时"
+        inputs:
+        - type: Self
+          name: self
+        - type: SubTaskInfo
+          name: sub_info
+        - type: Task
+          container: list
+          name: all_sub_tasks
+        - type: Task
+          name: current_task
+        - type: Task
+          container: map
+          name: name_to_task
+        output:
+          type: TaskId
+          container: set
       - name: mark_decomposition_completed
         description: "标记任务分解完成。\n\nRaises:\n    IllegalStateTransitionError: 如果当前状态不是\
           \ DECOMPOSING 或 DELEGATED"
@@ -1500,7 +1704,7 @@ contexts:
           container: type
           name: cls
         - type: Any
-          custom_type_string: Union[UUID, str]
+          custom_type_string: UUID | str
           name: value
         output:
           type: any
@@ -1669,28 +1873,6 @@ contexts:
     use_cases:
     - name: SubmitTaskResult
       kind: command
-      inputs:
-      - type: string
-        name: task_id
-      - type: string
-        name: summary
-      - type: string
-        container: list
-        name: artifacts
-        default: list
-      - type: string
-        optional: true
-        name: error
-      - type: SubTaskInfo
-        container: list
-        name: sub_tasks
-        default: list
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        optional: true
-        name: error
       description: Submit task execution result with artifacts and optional error.
         Updates task.output.
       dependencies:
@@ -1699,46 +1881,6 @@ contexts:
         name: uow
     - name: CreateTask
       kind: command
-      inputs:
-      - type: string
-        name: project_id
-      - type: string
-        name: name
-      - type: string
-        name: description
-      - type: integer
-        name: effort
-      - type: float
-        name: base_value
-      - type: ScopeLevel
-        name: scope_level
-      - type: string
-        container: list
-        name: dependencies
-        default: list
-      - type: string
-        optional: true
-        name: parent_id
-      - type: string
-        optional: true
-        name: bounded_context
-      - type: ArchitectureLayer
-        optional: true
-        name: architecture_layer
-      - type: string
-        optional: true
-        name: component_name
-      - type: Scenario
-        container: list
-        name: acceptance_criteria
-        default: list
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        name: task_id
-      - type: string
-        name: error
       description: Create task
       dependencies:
       - type: Any
@@ -1746,36 +1888,12 @@ contexts:
         name: uow
     - name: CompleteDelegatedTask
       kind: command
-      inputs:
-      - type: string
-        name: task_id
-      outputs:
-      - type: string
-        name: status
-      - type: string
-        name: task_id
-      - type: string
-        name: message
       dependencies:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
     - name: UpdateTaskStatus
       kind: command
-      inputs:
-      - type: string
-        name: task_id
-      - type: string
-        name: new_status
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        container: list
-        name: affected_tasks
-      - type: string
-        name: error
-        default: ''
       description: Updates a task's status and triggers chain reactions for dependents.
       dependencies:
       - type: Any
@@ -1785,21 +1903,6 @@ contexts:
         name: resolution_service
     - name: DecomposeTask
       kind: command
-      inputs:
-      - type: string
-        name: task_id
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        name: task_id
-      - type: string
-        container: list
-        name: sub_task_ids
-        default: list
-      - type: string
-        optional: true
-        name: error
       description: 'Decompose a task into sub-tasks.
 
 
@@ -1820,16 +1923,6 @@ contexts:
         name: uow
     - name: SuggestNextAction
       kind: query
-      inputs:
-      - type: integer
-        name: top_n
-      - type: string
-        optional: true
-        name: project_id
-      outputs:
-      - type: Task
-        container: list
-        name: tasks
       description: Returns the highest priority tasks that are ready to execute.
       dependencies:
       - type: Any
@@ -1839,18 +1932,6 @@ contexts:
         name: priority_service
     - name: GetTaskDetails
       kind: query
-      inputs:
-      - type: string
-        name: task_id
-      outputs:
-      - type: boolean
-        name: success
-      - type: Task
-        optional: true
-        name: task
-      - type: string
-        optional: true
-        name: error
       description: Use case to get details of a specific task.
       dependencies:
       - type: Any
@@ -1858,61 +1939,18 @@ contexts:
         name: uow
     - name: ReviewTask
       kind: command
-      inputs:
-      - type: string
-        name: task_id
-      - type: boolean
-        name: approved
-      - type: string
-        name: feedback
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        name: task_id
-      - type: string
-        container: list
-        name: affected_tasks
-        default: list
-      - type: string
-        name: error
-        default: ''
       dependencies:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
     - name: DeleteTask
       kind: command
-      inputs:
-      - type: string
-        name: task_id
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        optional: true
-        name: error
-        default: ''
       dependencies:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
         name: uow
     - name: UnlockTask
       kind: command
-      inputs:
-      - type: string
-        name: task_id
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        name: task_id
-      - type: string
-        name: error
-        default: str
-      - type: string
-        name: error_code
-        default: str
       dependencies:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
@@ -1921,23 +1959,6 @@ contexts:
         name: resolution_service
     - name: ModifyTaskDependencies
       kind: command
-      inputs:
-      - type: string
-        name: task_id
-      - type: string
-        container: list
-        name: added_dependencies
-        default: list
-      - type: string
-        container: list
-        name: removed_dependencies
-        default: list
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        name: error
-        default: str
       dependencies:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
@@ -1948,27 +1969,6 @@ contexts:
         name: dependency_resolver
     - name: ReviseTaskDetails
       kind: command
-      inputs:
-      - type: string
-        name: task_id
-      - type: string
-        optional: true
-        name: name
-      - type: string
-        optional: true
-        name: description
-      - type: integer
-        optional: true
-        name: effort
-      - type: float
-        optional: true
-        name: base_value
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        name: error
-        default: ''
       description: Revise a task's details like name, description, effort, or base
         value.
       dependencies:
@@ -1977,23 +1977,6 @@ contexts:
         name: uow
     - name: ClaimTask
       kind: command
-      inputs:
-      - type: string
-        name: task_id
-      - type: string
-        name: executor_id
-        default: str
-      outputs:
-      - type: boolean
-        name: success
-      - type: string
-        name: task_id
-      - type: string
-        name: error
-        default: str
-      - type: string
-        name: error_code
-        default: str
       dependencies:
       - type: Any
         custom_type_string: UnitOfWork[TaskRepository]
@@ -2002,39 +1985,6 @@ contexts:
         name: dependency_service
     - name: ListTasks
       kind: query
-      inputs:
-      - type: string
-        optional: true
-        name: project_id
-      - type: integer
-        name: page
-        default: 1
-      - type: integer
-        name: page_size
-        default: 10
-      - type: TaskStatus
-        optional: true
-        name: status
-      - type: ScopeLevel
-        optional: true
-        name: scope_level
-      - type: string
-        optional: true
-        name: search
-        default: ''
-      outputs:
-      - type: SummaryTask
-        container: list
-        name: tasks
-      - type: integer
-        name: total_count
-      - type: integer
-        name: total_pages
-      - type: integer
-        name: current_page
-      - type: string
-        optional: true
-        name: error
       dependencies:
       - type: TaskQueryService
         name: query_service
@@ -2084,6 +2034,166 @@ contexts:
           type: SummaryTask
           container: list
     dtos:
+    - name: SubmitTaskResultResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        optional: true
+        name: error
+    - name: DecomposeTaskCommand
+      description: Command to decompose a task into sub-tasks.
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
+    - name: GetTaskDetailsQuery
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
+    - name: UpdateTaskStatusCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
+      - type: string
+        name: new_status
+    - name: ListTasksResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: SummaryTask
+        container: list
+        name: tasks
+      - type: integer
+        name: total_count
+      - type: integer
+        name: total_pages
+      - type: integer
+        name: current_page
+      - type: string
+        optional: true
+        name: error
+    - name: ModifyTaskDependenciesResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: error
+        default: str
+    - name: ClaimTaskCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
+      - type: string
+        name: executor_id
+        default: str
+    - name: ModifyTaskDependenciesCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
+      - type: string
+        container: list
+        name: added_dependencies
+        default: list
+      - type: string
+        container: list
+        name: removed_dependencies
+        default: list
+    - name: DeleteTaskResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        optional: true
+        name: error
+        default: ''
+    - name: CreateTaskResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: task_id
+      - type: string
+        name: error
+    - name: SuggestNextActionResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: Task
+        container: list
+        name: tasks
+    - name: SuggestNextActionQuery
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: integer
+        name: top_n
+      - type: string
+        optional: true
+        name: project_id
+    - name: CompleteDelegatedTaskResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: status
+      - type: string
+        name: task_id
+      - type: string
+        name: message
+    - name: ReviseTaskDetailsResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: error
+        default: ''
+    - name: UnlockTaskCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
+    - name: CompleteDelegatedTaskCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
     - name: SummaryTask
       description: Summary representation of a task for query-side read models.
       attributes:
@@ -2107,6 +2217,211 @@ contexts:
         name: effort
       - type: float
         name: base_value
+    - name: UnlockTaskResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: task_id
+      - type: string
+        name: error
+        default: str
+      - type: string
+        name: error_code
+        default: str
+    - name: ReviewTaskResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: task_id
+      - type: string
+        container: list
+        name: affected_tasks
+        default: list
+      - type: string
+        name: error
+        default: ''
+    - name: GetTaskDetailsResult
+      description: Result of getting task details.
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: Task
+        optional: true
+        name: task
+      - type: string
+        optional: true
+        name: error
+    - name: ClaimTaskResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: task_id
+      - type: string
+        name: error
+        default: str
+      - type: string
+        name: error_code
+        default: str
+    - name: SubmitTaskResultCommand
+      description: Command to submit task execution result.
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
+      - type: string
+        name: summary
+      - type: string
+        container: list
+        name: artifacts
+        default: list
+      - type: string
+        optional: true
+        name: error
+      - type: SubTaskInfo
+        container: list
+        name: sub_tasks
+        default: list
+    - name: ListTasksQuery
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        optional: true
+        name: project_id
+      - type: integer
+        name: page
+        default: 1
+      - type: integer
+        name: page_size
+        default: 10
+      - type: TaskStatus
+        optional: true
+        name: status
+      - type: ScopeLevel
+        optional: true
+        name: scope_level
+      - type: string
+        optional: true
+        name: search
+        default: ''
+    - name: ReviewTaskCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
+      - type: boolean
+        name: approved
+      - type: string
+        name: feedback
+    - name: DecomposeTaskResult
+      description: Result of the DecomposeTask use case.
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: task_id
+      - type: string
+        container: list
+        name: sub_task_ids
+        default: list
+      - type: string
+        optional: true
+        name: error
+    - name: ReviseTaskDetailsCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
+      - type: string
+        optional: true
+        name: name
+      - type: string
+        optional: true
+        name: description
+      - type: integer
+        optional: true
+        name: effort
+      - type: float
+        optional: true
+        name: base_value
+    - name: CreateTaskCommand
+      description: '创建一个新的规划任务。
+
+        用于 Agent (Planner) 将用户需求转化为具体的执行单元。'
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: project_id
+      - type: string
+        name: name
+      - type: string
+        name: description
+      - type: integer
+        name: effort
+      - type: float
+        name: base_value
+      - type: ScopeLevel
+        name: scope_level
+      - type: string
+        container: list
+        name: dependencies
+        default: list
+      - type: string
+        optional: true
+        name: parent_id
+      - type: string
+        optional: true
+        name: bounded_context
+      - type: ArchitectureLayer
+        optional: true
+        name: architecture_layer
+      - type: string
+        optional: true
+        name: component_name
+      - type: Scenario
+        container: list
+        name: acceptance_criteria
+        default: list
+    - name: UpdateTaskStatusResult
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: boolean
+        name: success
+      - type: string
+        name: error
+        default: ''
+    - name: DeleteTaskCommand
+      description: ''
+      base_types:
+      - BaseModel
+      attributes:
+      - type: string
+        name: task_id
   infrastructure:
     implementations:
     - name: SqlAlchemyTaskQueryService

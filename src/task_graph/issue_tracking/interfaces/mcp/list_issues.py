@@ -1,9 +1,9 @@
-from task_graph.issue_tracking.application.use_cases.list_issues import (
-    ListIssues,
-    ListIssuesQuery,
+from task_graph.issue_tracking.application.use_cases.list_issues import ListIssues
+from dependency_injector.wiring import Provide, inject
+from task_graph.issue_tracking.application.dtos.list_issues_query import ListIssuesQuery
+from task_graph.issue_tracking.application.dtos.list_issues_result import (
     ListIssuesResult,
 )
-from dependency_injector.wiring import Provide, inject
 
 
 @inject

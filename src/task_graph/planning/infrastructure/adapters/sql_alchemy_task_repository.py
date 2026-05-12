@@ -1,6 +1,6 @@
-from typing import cast, override
+from typing import override
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func, or_
+from sqlalchemy import select
 from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.exceptions import TaskNotFoundError

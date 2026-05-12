@@ -2,27 +2,14 @@ from task_graph.shared.application.ports.unit_of_work import UnitOfWork
 from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.value_objects.task_id import TaskId
 from task_graph.planning.domain.value_objects.task_output import TaskOutput
-from task_graph.planning.domain.value_objects.sub_task_info import SubTaskInfo
-from dataclasses import dataclass, field
-from typing import Union, Optional
-
-from pydantic import BaseModel, Field
-
-
-class SubmitTaskResultCommand(BaseModel):
-    """Command to submit task execution result."""
-    task_id: str
-    summary: str
-    artifacts: list[str] = Field(default_factory=list)
-    error: Optional[str] = None
-    sub_tasks: list[SubTaskInfo] = Field(default_factory=list)
-
-
-@dataclass(frozen=True)
-class SubmitTaskResultResult:
-
-    success: bool
-    error: str | None = field(default=None)
+from dataclasses import dataclass
+from typing import Self
+from task_graph.planning.application.dtos.submit_task_result_command import (
+    SubmitTaskResultCommand,
+)
+from task_graph.planning.application.dtos.submit_task_result_result import (
+    SubmitTaskResultResult,
+)
 
 
 @dataclass
@@ -31,33 +18,20 @@ class SubmitTaskResult:
 
     uow: UnitOfWork[TaskRepository]
 
-    def execute(self, cmd: SubmitTaskResultCommand) -> SubmitTaskResultResult:
+    def execute(self: Self, cmd: SubmitTaskResultCommand) -> SubmitTaskResultResult:
         try:
             with self.uow:
-                # 1. 查找任务
                 task_id = TaskId.reconstitute(cmd.task_id)
                 task = self.uow.repository.get(task_id)
-                
-                # 2. 创建 TaskOutput
                 task_output = TaskOutput(
                     summary=cmd.summary,
                     artifacts=cmd.artifacts if cmd.artifacts else [],
                     error=cmd.error,
-                    sub_tasks=cmd.sub_tasks
+                    sub_tasks=cmd.sub_tasks,
                 )
-                
-                # 3. 设置任务输出
                 task.set_output(task_output)
-                
-                # 4. 保存任务
                 self.uow.repository.save(task)
                 self.uow.commit()
-                
                 return SubmitTaskResultResult(success=True)
-                
         except Exception as e:
-            return SubmitTaskResultResult(
-                success=False,
-                error=str(e)
-            )
-
+            return SubmitTaskResultResult(success=False, error=str(e))

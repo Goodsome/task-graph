@@ -1,6 +1,5 @@
-import functools
 from dependency_injector import containers
-from dependency_injector.providers import Callable, Configuration, Dependency, Factory, Singleton
+from dependency_injector.providers import Configuration, Dependency, Factory, Singleton
 
 from task_graph.planning.application.use_cases.claim_task import ClaimTask
 from task_graph.planning.application.use_cases.complete_delegated_task import (

@@ -1,21 +1,14 @@
 from dataclasses import dataclass
-from pydantic import BaseModel, Field
 from task_graph.shared.application.ports.unit_of_work import UnitOfWork
 from task_graph.planning.domain.ports.task_repository import TaskRepository
-from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.value_objects.task_id import TaskId
-
-
-class GetTaskDetailsQuery(BaseModel):
-    task_id: str = Field(..., description="The ID of the task to retrieve details for")
-
-
-class GetTaskDetailsResult(BaseModel):
-    """Result of getting task details."""
-
-    success: bool
-    task: Task | None = None
-    error: str | None = None
+from task_graph.planning.application.dtos.get_task_details_result import (
+    GetTaskDetailsResult,
+)
+from task_graph.planning.application.dtos.get_task_details_query import (
+    GetTaskDetailsQuery,
+)
+from typing import Self
 
 
 @dataclass
@@ -24,7 +17,7 @@ class GetTaskDetails:
 
     uow: UnitOfWork[TaskRepository]
 
-    def execute(self, query: GetTaskDetailsQuery) -> GetTaskDetailsResult:
+    def execute(self: Self, query: GetTaskDetailsQuery) -> GetTaskDetailsResult:
         try:
             with self.uow:
                 task_id = TaskId.reconstitute(query.task_id)

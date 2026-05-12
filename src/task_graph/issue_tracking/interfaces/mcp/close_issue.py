@@ -1,9 +1,11 @@
-from task_graph.issue_tracking.application.use_cases.close_issue import (
-    CloseIssue,
+from task_graph.issue_tracking.application.use_cases.close_issue import CloseIssue
+from dependency_injector.wiring import Provide, inject
+from task_graph.issue_tracking.application.dtos.close_issue_command import (
     CloseIssueCommand,
+)
+from task_graph.issue_tracking.application.dtos.close_issue_result import (
     CloseIssueResult,
 )
-from dependency_injector.wiring import Provide, inject
 
 
 @inject

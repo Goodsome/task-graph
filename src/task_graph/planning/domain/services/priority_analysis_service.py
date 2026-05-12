@@ -1,8 +1,8 @@
 from task_graph.planning.domain.aggregates.task import Task
 from task_graph.planning.domain.ports.task_repository import TaskRepository
 from task_graph.planning.domain.value_objects.task_id import TaskId
-from dataclasses import dataclass, field
-from typing import Dict, List, Set, Optional
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 
 @dataclass

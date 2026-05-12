@@ -1,9 +1,13 @@
 from task_graph.issue_tracking.application.use_cases.get_issue_details import (
     GetIssueDetails,
-    GetIssueDetailsQuery,
-    GetIssueDetailsResult,
 )
 from dependency_injector.wiring import Provide, inject
+from task_graph.issue_tracking.application.dtos.get_issue_details_result import (
+    GetIssueDetailsResult,
+)
+from task_graph.issue_tracking.application.dtos.get_issue_details_query import (
+    GetIssueDetailsQuery,
+)
 
 
 @inject
