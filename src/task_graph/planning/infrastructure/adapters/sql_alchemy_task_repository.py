@@ -1,3 +1,5 @@
+import logging
+
 from typing import override
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -15,6 +17,7 @@ from task_graph.planning.domain.value_objects.scenario import Scenario
 from task_graph.planning.infrastructure.orm_models.task_model import TaskModel
 from dataclasses import dataclass
 
+logger = logging.getLogger(__name__)
 
 @dataclass
 class SqlAlchemyTaskRepository(TaskRepository):
@@ -26,13 +29,11 @@ class SqlAlchemyTaskRepository(TaskRepository):
     def _save(self, aggregate: Task) -> None:
         model = self._to_model(aggregate)
         self.session.add(model)
-        self.session.flush()
 
     @override
     def _add(self, aggregate: Task) -> None:
         model = self._to_model(aggregate)
         self.session.add(model)
-        self.session.flush()
 
     @override
     def _get(self, id: TaskId) -> Task:
@@ -99,11 +100,13 @@ class SqlAlchemyTaskRepository(TaskRepository):
         model = self.session.get(TaskModel, task_id.value)
         if not model:
             model = TaskModel(id=task_id.value)
+            self.session.add(model)
         return model
 
     def _get_model_or_raise(self, task_id: TaskId) -> TaskModel:
         model = self.session.get(TaskModel, task_id.value)
         if model is None:
+            logger.error(f"{task_id.value} not found")
             raise TaskNotFoundError(f"{task_id.value} not found")
         return model
 
@@ -149,9 +152,11 @@ class SqlAlchemyTaskRepository(TaskRepository):
 
         # Handle dependencies
         dep_ids = [tid for tid in task.dependencies]
+        new_dependencies: list[TaskModel] = []
         for dep_id in dep_ids:
             dep_model = self._get_model_or_raise(dep_id)
-            model.dependencies.append(dep_model)
+            new_dependencies.append(dep_model)
+        model.dependencies = new_dependencies
 
         return model
 

@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 
 from task_graph.planning.application.ports.task_query_service import TaskQueryService
@@ -12,6 +13,8 @@ from task_graph.planning.application.use_cases.unlock_task import (
 from task_graph.planning.domain.events import TaskCompleted
 from task_graph.planning.domain.value_objects.task_id import TaskId
 
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class OnTaskCompleted:
@@ -29,5 +32,6 @@ class OnTaskCompleted:
         dependents = self.task_query_service.find_dependents(task_id)
 
         for dependent in dependents:
+            logger.info(f"unlock_task: {event.task_id}, dep_task: {dependent.id}")
             cmd = UnlockTaskCommand(task_id=dependent.id)
             self.unlock_task.execute(cmd)

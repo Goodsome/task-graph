@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from task_graph.shared.application.ports.unit_of_work import UnitOfWork
 from task_graph.planning.domain.ports.task_repository import TaskRepository
@@ -9,6 +10,9 @@ from task_graph.planning.application.dtos.decompose_task_result import (
     DecomposeTaskResult,
 )
 from typing import Self
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass

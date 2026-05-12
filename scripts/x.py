@@ -16,9 +16,10 @@ def main():
     print(data)
 
     with uow:
-        task_id = TaskId.reconstitute("60ac14d8-5683-423c-ab74-a9d1282807ab")
+        tid = "1fe0399a-aff4-4504-be6d-5fb01f7dfa5e"
+        task_id = TaskId.reconstitute(tid)
         task = uow.repository.get(task_id)
-    print(task.dependencies)
+        print(task.dependencies)
 
 
 if __name__ == "__main__":
