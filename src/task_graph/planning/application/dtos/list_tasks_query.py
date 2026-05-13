@@ -7,5 +7,6 @@ class ListTasksQuery(BaseModel):
     page: int = Field(default=1)
     page_size: int = Field(default=10)
     status: TaskStatus | None = Field(default=None)
+    exclude_status: TaskStatus | None = Field(default=None)
     scope_level: ScopeLevel | None = Field(default=None)
     search: str | None = Field(default="")

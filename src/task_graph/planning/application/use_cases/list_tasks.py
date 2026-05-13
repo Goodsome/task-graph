@@ -19,6 +19,7 @@ class ListTasks:
                 search=query.search,
                 page=query.page,
                 page_size=query.page_size,
+                exclude_status=query.exclude_status,
             )
             total_pages = (
                 math.ceil(total_count / query.page_size) if total_count > 0 else 1

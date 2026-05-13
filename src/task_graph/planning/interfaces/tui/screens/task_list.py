@@ -254,9 +254,12 @@ class TaskListScreen(Screen):
         self, use_case: ListTasks = Provide["planning.list_tasks"]
     ) -> None:
         """从 use case 加载任务数据（在工作线程中执行同步 DB 操作）。"""
+        exclude_status = TaskStatus.DONE if self._filter_status is None else None
+
         query = ListTasksQuery(
             project_id=self._filter_project,
             status=self._filter_status,
+            exclude_status=exclude_status,
             scope_level=self._filter_scope,
             page=self._current_page,
             page_size=self._page_size,

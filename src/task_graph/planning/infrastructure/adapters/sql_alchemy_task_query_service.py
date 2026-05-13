@@ -53,11 +53,14 @@ class SqlAlchemyTaskQueryService(TaskQueryService):
         project_id: str | None,
         scope_level: ScopeLevel | None,
         search: str | None,
+        exclude_status: TaskStatus | None = None,
     ) -> tuple[list[SummaryTask], int]:
         with self.session_factory() as session:
             stmt = select(TaskModel)
             if status:
                 stmt = stmt.where(TaskModel.status == status.value)
+            elif exclude_status:
+                stmt = stmt.where(TaskModel.status != exclude_status.value)
             if project_id:
                 stmt = stmt.where(TaskModel.project_id == project_id)
             if scope_level:

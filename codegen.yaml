@@ -2244,6 +2244,9 @@ contexts:
         - type: string
           optional: true
           name: search
+        - type: TaskStatus
+          optional: true
+          name: exclude_status
         output:
           type: Any
           custom_type_string: tuple[list[SummaryTask], int]
@@ -2537,6 +2540,9 @@ contexts:
       - type: TaskStatus
         optional: true
         name: status
+      - type: TaskStatus
+        optional: true
+        name: exclude_status
       - type: ScopeLevel
         optional: true
         name: scope_level

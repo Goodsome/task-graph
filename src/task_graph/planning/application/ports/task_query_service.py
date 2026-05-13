@@ -22,6 +22,7 @@ class TaskQueryService(ABC):
         project_id: str | None,
         scope_level: ScopeLevel | None,
         search: str | None,
+        exclude_status: TaskStatus | None = None,
     ) -> tuple[list[SummaryTask], int]:
         """Return a paginated list of task summaries and the total count."""
         ...
