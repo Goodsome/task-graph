@@ -26,3 +26,4 @@ def delete_task(task_id: Annotated[str, typer.Argument()]) -> DeleteTaskResult:
     else:
         console.print(f"[red]✗ 删除失败: {result.error}[/red]")
         raise typer.Exit(1)
+    return result

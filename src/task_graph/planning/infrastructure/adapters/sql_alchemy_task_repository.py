@@ -29,11 +29,13 @@ class SqlAlchemyTaskRepository(TaskRepository):
     def _save(self, aggregate: Task) -> None:
         model = self._to_model(aggregate)
         self.session.add(model)
+        self.session.flush()
 
     @override
     def _add(self, aggregate: Task) -> None:
         model = self._to_model(aggregate)
         self.session.add(model)
+        self.session.flush()
 
     @override
     def _get(self, id: TaskId) -> Task:
@@ -106,7 +108,6 @@ class SqlAlchemyTaskRepository(TaskRepository):
     def _get_model_or_raise(self, task_id: TaskId) -> TaskModel:
         model = self.session.get(TaskModel, task_id.value)
         if model is None:
-            logger.error(f"{task_id.value} not found")
             raise TaskNotFoundError(f"{task_id.value} not found")
         return model
 

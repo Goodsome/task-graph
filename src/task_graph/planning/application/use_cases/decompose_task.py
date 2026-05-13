@@ -29,20 +29,17 @@ class DecomposeTask:
     uow: UnitOfWork[TaskRepository]
 
     def execute(self: Self, cmd: DecomposeTaskCommand) -> DecomposeTaskResult:
-        try:
-            with self.uow:
-                task_id = TaskId.reconstitute(cmd.task_id)
-                task = self.uow.repository.get(task_id)
-                sub_tasks = task.generate_sub_tasks()
-                for sub_task in sub_tasks:
-                    self.uow.repository.add(sub_task)
-                task.mark_delegated()
-                self.uow.repository.save(task)
-                self.uow.commit()
-                return DecomposeTaskResult(
-                    success=True,
-                    task_id=str(task.id),
-                    sub_task_ids=[str(st.id) for st in sub_tasks],
-                )
-        except Exception as e:
-            return DecomposeTaskResult(success=False, task_id=cmd.task_id, error=str(e))
+        with self.uow:
+            task_id = TaskId.reconstitute(cmd.task_id)
+            task = self.uow.repository.get(task_id)
+            sub_tasks = task.generate_sub_tasks()
+            for sub_task in sub_tasks:
+                self.uow.repository.add(sub_task)
+            task.mark_delegated()
+            self.uow.repository.save(task)
+            self.uow.commit()
+            return DecomposeTaskResult(
+                success=True,
+                task_id=str(task.id),
+                sub_task_ids=[str(st.id) for st in sub_tasks],
+            )

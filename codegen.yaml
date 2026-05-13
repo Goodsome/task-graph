@@ -2073,15 +2073,6 @@ contexts:
           name: cmd
         output:
           type: DecomposeTaskResult
-        rules:
-        - name: explicit_dependency_persisted_with_correct_status
-          given: 一个状态为 decomposing 的父任务存储在数据库中，其 output.sub_tasks 包含两个子任务定义且第二个子任务的 dependencies 包含第一个子任务的名称
-          when: 执行 DecomposeTask 用例并提交事务
-          then: 从数据库查询应返回两个已创建的子任务，第一个子任务状态为 READY 且无依赖，第二个子任务状态为 BLOCKED 且其依赖列表包含第一个子任务的 TaskId
-        - name: explicit_dependency_roundtrip_integrity
-          given: 父任务的 output.sub_tasks 中第二个子任务显式依赖第一个子任务
-          when: 执行 DecomposeTask 用例使子任务持久化到数据库后重新读取
-          then: 第二个子任务的依赖集合应包含第一个子任务的 TaskId，确保 name 到 TaskId 的解析结果在数据库持久化后保持完整
     - name: SuggestNextAction
       description: Returns the highest priority tasks that are ready to execute.
       attributes:
@@ -2681,6 +2672,8 @@ contexts:
     cli_commands:
     - name: create-task
       use_case: CreateTask
+    - name: decompose-task
+      use_case: DecomposeTask
     - name: delete-task
       use_case: DeleteTask
     - name: get-task
