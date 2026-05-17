@@ -333,12 +333,12 @@ class IssueListScreen(Screen):
 
             table.add_row(
                 short_id(issue.id),
-                issue.project_id,
+                Text(issue.project_id),
                 Text(issue.title),
-                f"[{type_color}]{issue.type.value}[/{type_color}]",
-                f"[{severity_color}]{issue.severity.value}[/{severity_color}]",
-                f"[{status_color}]{issue.status.value}[/{status_color}]",
-                issue.submitter_name,
+                Text(issue.type.value, style=type_color),
+                Text(issue.severity.value, style=severity_color),
+                Text(issue.status.value, style=status_color),
+                Text(issue.submitter_name),
                 str(issue.comment_count),
                 str(issue.task_link_count),
                 key=issue.id,

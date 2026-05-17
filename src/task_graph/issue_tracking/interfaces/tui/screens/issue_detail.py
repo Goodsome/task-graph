@@ -14,6 +14,7 @@ from textual.widgets import (
     Button,
     Rule,
 )
+from rich.text import Text
 from dependency_injector.wiring import Provide, inject
 
 from task_graph.issue_tracking.application.use_cases.get_issue_details import (
@@ -224,8 +225,10 @@ class IssueDetailScreen(Screen):
 
         if not result.success or result.issue is None:
             error_msg = result.error or "未知错误"
+            err_text = Text("加载失败: ", style="red bold")
+            err_text.append(error_msg)
             self.mount(
-                Static(f"[red bold]加载失败:[/] {error_msg}", id="issue-detail-error"),
+                Static(err_text, id="issue-detail-error"),
                 after=self.query_one("#issue-detail-header"),
             )
             return
@@ -249,7 +252,8 @@ class IssueDetailScreen(Screen):
         self._add_field(
             scroll,
             "类型",
-            f"[{type_color}]{issue.type.value}[/{type_color}]",
+            issue.type.value,
+            value_style=type_color,
         )
 
         # 严重度（带颜色）
@@ -257,7 +261,8 @@ class IssueDetailScreen(Screen):
         self._add_field(
             scroll,
             "严重度",
-            f"[{severity_color}]{issue.severity.value}[/{severity_color}]",
+            issue.severity.value,
+            value_style=severity_color,
         )
 
         # 状态（带颜色）
@@ -265,7 +270,8 @@ class IssueDetailScreen(Screen):
         self._add_field(
             scroll,
             "状态",
-            f"[{status_color}]{issue.status.value}[/{status_color}]",
+            issue.status.value,
+            value_style=status_color,
         )
 
         self._add_field(scroll, "提交者", issue.submitter.name)
@@ -276,7 +282,7 @@ class IssueDetailScreen(Screen):
         scroll.mount(Static(""))
         scroll.mount(Static("📝 描述", classes="issue-section-title"))
         scroll.mount(Rule())
-        scroll.mount(Static(issue.description))
+        scroll.mount(Static(issue.description, markup=False))
 
         # --- 标签 ---
         if issue.labels:
@@ -286,7 +292,7 @@ class IssueDetailScreen(Screen):
             labels_row = Horizontal(classes="issue-labels-row")
             scroll.mount(labels_row)
             for label in issue.labels:
-                labels_row.mount(Static(f" {label.name} ", classes="issue-label-tag"))
+                labels_row.mount(Static(label.name, classes="issue-label-tag", markup=False))
 
         # --- 关联 Task ---
         if issue.task_links:
@@ -305,23 +311,30 @@ class IssueDetailScreen(Screen):
             scroll.mount(Rule())
             for comment in issue.comments:
                 time_str = comment.created_at.strftime("%Y-%m-%d %H:%M")
+                
+                comment_header = Text("  ")
+                comment_header.append(comment.author, style="bold")
+                comment_header.append(f" · {time_str}", style="dim")
+                scroll.mount(Static(comment_header, classes="issue-comment-header"))
+                
                 scroll.mount(
-                    Static(
-                        f"  [bold]{comment.author}[/bold] · [dim]{time_str}[/dim]",
-                        classes="issue-comment-header",
-                    )
-                )
-                scroll.mount(
-                    Static(f"    {comment.content}", classes="issue-comment-body")
+                    Static(comment.content, classes="issue-comment-body", markup=False)
                 )
                 scroll.mount(Static(""))
 
     @staticmethod
     def _add_field(
-        container: VerticalScroll, label: str, value: str
+        container: VerticalScroll,
+        label: str,
+        value: str,
+        *,
+        value_style: str | None = None,
     ) -> None:
         """添加一个字段行（标签 + 值）。"""
         row = Horizontal(classes="issue-field-row")
         container.mount(row)
         row.mount(Static(label, classes="issue-field-label"))
-        row.mount(Static(value, classes="issue-field-value"))
+        if value_style:
+            row.mount(Static(Text(value, style=value_style), classes="issue-field-value"))
+        else:
+            row.mount(Static(value, classes="issue-field-value", markup=False))

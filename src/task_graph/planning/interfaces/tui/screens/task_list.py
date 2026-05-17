@@ -290,10 +290,10 @@ class TaskListScreen(Screen):
 
             table.add_row(
                 short_id(task.id),
-                task.project_id,
+                Text(task.project_id),
                 Text(task.name),
-                f"[{status_color}]{task.status}[/{status_color}]",
-                f"[{scope_color}]{task.scope_level}[/{scope_color}]",
+                Text(task.status, style=status_color),
+                Text(task.scope_level, style=scope_color),
                 short_id(task.parent_id) if task.parent_id else "-",
                 str(task.effort),
                 str(task.base_value),

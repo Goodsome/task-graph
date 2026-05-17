@@ -14,6 +14,7 @@ from textual.widgets import (
     Button,
     Rule,
 )
+from rich.text import Text
 from dependency_injector.wiring import Provide, inject
 
 from task_graph.planning.application.use_cases.get_task_details import (
@@ -204,8 +205,10 @@ class TaskDetailScreen(Screen):
 
         if not result.success or result.task is None:
             error_msg = result.error or "未知错误"
+            err_text = Text("加载失败: ", style="red bold")
+            err_text.append(error_msg)
             self.mount(
-                Static(f"[red bold]加载失败:[/] {error_msg}", id="detail-error"),
+                Static(err_text, id="detail-error"),
                 after=self.query_one("#detail-header"),
             )
             return
@@ -229,7 +232,8 @@ class TaskDetailScreen(Screen):
         self._add_field(
             scroll,
             "状态",
-            f"[{status_color}]{task.status.value}[/{status_color}]",
+            task.status.value,
+            value_style=status_color,
         )
 
         # 层级（带颜色）
@@ -237,7 +241,8 @@ class TaskDetailScreen(Screen):
         self._add_field(
             scroll,
             "层级",
-            f"[{scope_color}]{task.scope_level.value}[/{scope_color}]",
+            task.scope_level.value,
+            value_style=scope_color,
         )
 
         # 父任务 ID（可点击）
@@ -294,7 +299,7 @@ class TaskDetailScreen(Screen):
         scroll.mount(Static(""))
         scroll.mount(Static("📝 描述", classes="section-title"))
         scroll.mount(Rule())
-        scroll.mount(Static(task.description))
+        scroll.mount(Static(task.description, markup=False))
 
         # --- 依赖 ---
         if task.dependencies:
@@ -312,13 +317,15 @@ class TaskDetailScreen(Screen):
             scroll.mount(Static("✅ 验收标准", classes="section-title"))
             scroll.mount(Rule())
             for i, scenario in enumerate(task.acceptance_criteria, 1):
-                scroll.mount(
-                    Static(f"  [bold]{i}. {scenario.name}[/bold]")
-                )
+                scenario_text = Text(f"  {i}. ", style="bold")
+                scenario_text.append(scenario.name, style="bold")
+                scroll.mount(Static(scenario_text))
+                
                 for step in scenario.steps:
-                    scroll.mount(
-                        Static(f"    [dim]{step.keyword.value}:[/dim] {step.text}")
-                    )
+                    step_text = Text("    ")
+                    step_text.append(f"{step.keyword.value}:", style="dim")
+                    step_text.append(f" {step.text}")
+                    scroll.mount(Static(step_text))
                 scroll.mount(Static(""))
 
         # --- 输出 ---
@@ -335,7 +342,7 @@ class TaskDetailScreen(Screen):
                 )
             if task.output.error:
                 self._add_field(
-                    scroll, "错误", f"[red]{task.output.error}[/red]"
+                    scroll, "错误", task.output.error, value_style="red"
                 )
 
             # 子任务
@@ -344,12 +351,14 @@ class TaskDetailScreen(Screen):
                 scroll.mount(Static("📦 子任务规划", classes="section-title"))
                 scroll.mount(Rule())
                 for j, sub in enumerate(task.output.sub_tasks, 1):
-                    scroll.mount(
-                        Static(f"  [bold]{j}. {sub.name}[/bold]")
-                    )
-                    scroll.mount(
-                        Static(f"    描述: {sub.description}")
-                    )
+                    sub_title = Text(f"  {j}. ", style="bold")
+                    sub_title.append(sub.name, style="bold")
+                    scroll.mount(Static(sub_title))
+                    
+                    sub_desc = Text("    描述: ")
+                    sub_desc.append(sub.description)
+                    scroll.mount(Static(sub_desc))
+                    
                     scroll.mount(
                         Static(
                             f"    工作量: {sub.effort.value}  价值: {sub.base_value.value}"
@@ -357,17 +366,16 @@ class TaskDetailScreen(Screen):
                     )
                     if sub.acceptance_criteria:
                         for k, scenario in enumerate(sub.acceptance_criteria, 1):
-                            scroll.mount(
-                                Static(
-                                    f"    [dim]验收 {k}:[/dim] {scenario.name}"
-                                )
-                            )
+                            acc_text = Text("    ")
+                            acc_text.append(f"验收 {k}:", style="dim")
+                            acc_text.append(f" {scenario.name}")
+                            scroll.mount(Static(acc_text))
+                            
                             for step in scenario.steps:
-                                scroll.mount(
-                                    Static(
-                                        f"      [dim]{step.keyword.value}:[/dim] {step.text}"
-                                    )
-                                )
+                                sub_step_text = Text("      ")
+                                sub_step_text.append(f"{step.keyword.value}:", style="dim")
+                                sub_step_text.append(f" {step.text}")
+                                scroll.mount(Static(sub_step_text))
                     scroll.mount(Static(""))
 
         # --- 审核反馈 ---
@@ -380,16 +388,24 @@ class TaskDetailScreen(Screen):
             self._add_field(
                 scroll,
                 "决定",
-                f"[{decision_color}]{decision}[/{decision_color}]",
+                decision,
+                value_style=decision_color,
             )
             self._add_field(scroll, "意见", task.review_feedback.comment)
 
     @staticmethod
     def _add_field(
-        container: VerticalScroll, label: str, value: str
+        container: VerticalScroll,
+        label: str,
+        value: str,
+        *,
+        value_style: str | None = None,
     ) -> None:
         """添加一个字段行（标签 + 值）。"""
         row = Horizontal(classes="field-row")
         container.mount(row)
         row.mount(Static(label, classes="field-label"))
-        row.mount(Static(value, classes="field-value"))
+        if value_style:
+            row.mount(Static(Text(value, style=value_style), classes="field-value"))
+        else:
+            row.mount(Static(value, classes="field-value", markup=False))

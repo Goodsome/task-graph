@@ -46,23 +46,23 @@ def get_task(
 
     # 渲染任务详情
     console.print(Panel(f"[bold]{escape(task.name)}[/bold]", title=f"任务 {task_id}"))
-    console.print(f"[cyan]项目:[/cyan] {task.project_id}")
-    console.print(f"[cyan]状态:[/cyan] {task.status.value}")
-    console.print(f"[cyan]层级:[/cyan] {task.scope_level.value}")
+    console.print(f"[cyan]项目:[/cyan] {escape(task.project_id)}")
+    console.print(f"[cyan]状态:[/cyan] {escape(task.status.value)}")
+    console.print(f"[cyan]层级:[/cyan] {escape(task.scope_level.value)}")
     console.print(
         f"[cyan]父任务ID:[/cyan] {str(task.parent_id) if task.parent_id else '-'}"
     )
     console.print(f"[cyan]工作量:[/cyan] {task.effort.value}")
     console.print(f"[cyan]价值:[/cyan] {task.base_value.value}")
-    console.print(f"[cyan]完成逻辑:[/cyan] {task.completion_logic.value}")
+    console.print(f"[cyan]完成逻辑:[/cyan] {escape(task.completion_logic.value)}")
 
     # 展示范围上下文
     if task.scope_context:
         console.print(
-            f"[cyan]所属领域:[/cyan] {task.scope_context.bounded_context if task.scope_context.bounded_context else '-'}"
+            f"[cyan]所属领域:[/cyan] {escape(task.scope_context.bounded_context) if task.scope_context.bounded_context else '-'}"
         )
         console.print(
-            f"[cyan]架构层级:[/cyan] {task.scope_context.architecture_layer.value if task.scope_context.architecture_layer else '-'}"
+            f"[cyan]架构层级:[/cyan] {escape(task.scope_context.architecture_layer.value) if task.scope_context.architecture_layer else '-'}"
         )
 
     # 展示重复策略
