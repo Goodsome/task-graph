@@ -161,3 +161,19 @@ class SqlAlchemyTaskRepository(TaskRepository):
 
         return model
 
+    def _get_tracked_model_or_raise(self, task_id: TaskId) -> TaskModel:
+        """
+        获取 TaskModel，支持从尚未 flush 的内存状态中查找，
+        专用于解决同一事务内部的对象依赖关联。
+        """
+        # 1. 尝试从当前 Session 尚未 flush 的新对象中查找
+        for obj in self.session.new:
+            if isinstance(obj, TaskModel) and obj.id == task_id.value:
+                return obj
+
+        # 2. 如果内存中没有，走标准的 Identity Map / 数据库查询
+        model = self.session.get(TaskModel, task_id.value)
+        if model is None:
+            raise TaskNotFoundError(f"Task dependency {task_id.value} not found")
+        
+        return model
