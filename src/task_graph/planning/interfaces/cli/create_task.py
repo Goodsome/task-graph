@@ -26,10 +26,8 @@ def create_task(
     project_id: Annotated[str, typer.Argument()],
     name: Annotated[str, typer.Argument()],
     description: Annotated[str, typer.Argument()],
-    effort: Annotated[int, typer.Argument()],
-    base_value: Annotated[float, typer.Argument()],
     scope_level: Annotated[ScopeLevel, typer.Argument()],
-    dependencies: Annotated[list[str], typer.Option("--dependencies", "-d")] = "list",
+    dependencies: Annotated[list[str] | None, typer.Option("--dependencies", "-d")] = None,
     parent_id: Annotated[str | None, typer.Option("--parent-id", "-pi")] = None,
     bounded_context: Annotated[
         str | None, typer.Option("--bounded-context", "-bc")
@@ -40,40 +38,20 @@ def create_task(
     component_name: Annotated[
         str | None, typer.Option("--component-name", "-cn")
     ] = None,
-    acceptance_criteria: Annotated[
-        list[Scenario], typer.Option("--acceptance-criteria", "-ac")
-    ] = "list",
-) -> CreateTaskResult:
+) -> None:
     """创建一个新的规划任务。"""
-    try:
-        level = ScopeLevel(scope_level.lower())
-    except ValueError:
-        console.print(f"[red]错误: 无效的 scope_level: {scope_level}[/red]")
-        console.print("可选值: project, context, architecture, component")
-        raise typer.Exit(1)
-    arch_layer = None
-    if architecture_layer:
-        try:
-            arch_layer = ArchitectureLayer(architecture_layer.lower())
-        except ValueError:
-            console.print(
-                f"[red]错误: 无效的 architecture_layer: {architecture_layer}[/red]"
-            )
-            console.print(
-                "可选值: domain, application, infrastructure, interfaces, cross_cutting, none"
-            )
-            raise typer.Exit(1)
     cmd = CreateTaskCommand(
         project_id=project_id,
         name=name,
         description=description,
-        effort=effort,
-        base_value=base_value,
-        scope_level=level,
+        effort=1,
+        base_value=1,
+        scope_level=scope_level,
         dependencies=dependencies or [],
         parent_id=parent_id,
         bounded_context=bounded_context,
-        architecture_layer=arch_layer,
+        architecture_layer=architecture_layer,
+        component_name=component_name,
     )
     result = _create_task(cmd)
     if result.success:
